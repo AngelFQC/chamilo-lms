@@ -2,7 +2,8 @@
 /* For licensing terms, see /license.txt */
 
 require_once 'career.lib.php';
-require_once 'fckeditor/fckeditor.php';
+//require_once 'fckeditor/fckeditor.php';
+
 
 define ('PROMOTION_STATUS_ACTIVE',  1);
 define ('PROMOTION_STATUS_INACTIVE', 0);
@@ -159,12 +160,12 @@ class Promotion extends Model
 
     function return_form($url, $action = 'add')
     {
-		$oFCKeditor = new FCKeditor('description') ;
+		/*$oFCKeditor = new FCKeditor('description') ;
 		$oFCKeditor->ToolbarSet = 'careers';
 		$oFCKeditor->Width		= '100%';
 		$oFCKeditor->Height		= '200';
 		$oFCKeditor->Value		= '';
-		$oFCKeditor->CreateHtml();
+		$oFCKeditor->CreateHtml();*/
 
 		$form = new FormValidator('promotion', 'post', $url);
         // Setting the form elements
