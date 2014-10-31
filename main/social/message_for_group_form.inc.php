@@ -16,7 +16,8 @@ if (api_get_setting('allow_social_tool') != 'true') {
     api_not_allowed();
 }
 
-require_once api_get_path(LIBRARY_PATH) . 'fckeditor/fckeditor.php';
+//require_once api_get_path(LIBRARY_PATH) . 'fckeditor/fckeditor.php';
+require_once api_get_path(LIBRARY_PATH) . 'ckeditor/ckeditor.php';
 require_once api_get_path(LIBRARY_PATH) . 'fileDisplay.lib.php';
 
 $tok = Security::get_token();
@@ -119,13 +120,14 @@ $page_topic = !empty($_GET['topics_page_nr']) ? intval(
                             }
                             //echo api_xml_http_response_encode(get_lang('Description')).' :<br />';
 
-                            $oFCKeditor = new FCKeditor('content');
+                            $oFCKeditor = new CKeditor();
                             $oFCKeditor->ToolbarSet = 'messages';
                             $oFCKeditor->Width = '95%';
                             $oFCKeditor->Height = $height;
                             $oFCKeditor->Value = $message;
 
-                            $return = $oFCKeditor->CreateHtml();
+                            //$return = $oFCKeditor->CreateHtml();
+                            $return = $oFCKeditor->editor('content');
                             echo $return;
                             if ($allowed_action == 'add_message_group') {
                                 echo '<div><span style="color:red"> * </span>' . get_lang(
