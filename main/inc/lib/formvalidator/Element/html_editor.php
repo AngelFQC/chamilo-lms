@@ -3,7 +3,8 @@
 /* For licensing terms, see /license.txt */
 
 require_once 'HTML/QuickForm/textarea.php';
-require_once api_get_path(LIBRARY_PATH) . 'fckeditor/fckeditor.php';
+//require_once api_get_path(LIBRARY_PATH) . 'fckeditor/fckeditor.php';
+require_once api_get_path(LIBRARY_PATH) . 'ckeditor/ckeditor.php';
 
 /**
  * A html editor field to use with QuickForm
@@ -33,8 +34,8 @@ class HTML_QuickForm_html_editor extends HTML_QuickForm_textarea {
         $this->fullPage = false;
 
         $name = $this->getAttribute('name');
-        $this->fck_editor = new FCKeditor($name);
-
+        //$this->fck_editor = new FCKeditor($name);
+        $this->fck_editor = new CKeditor();
         $this->fck_editor->ToolbarSet = $fck_attribute['ToolbarSet'];
         $this->fck_editor->Width = !empty($fck_attribute['Width']) ? $fck_attribute['Width'] : '990';
         $this->fck_editor->Height = !empty($fck_attribute['Height']) ? $fck_attribute['Height'] : '400';
@@ -103,11 +104,12 @@ class HTML_QuickForm_html_editor extends HTML_QuickForm_textarea {
      * Build this element using FCKeditor
      */
     function build_FCKeditor() {
-        if (!FCKeditor :: IsCompatible()) {
+        /*if (!FCKeditor :: IsCompatible()) {
             return parent::toHTML();
-        }
+        }*/
         $this->fck_editor->Value = $this->getValue();
-        $result = $this->fck_editor->CreateHtml();
+        //$result = $this->fck_editor->CreateHtml();
+        $result = $this->fck_editor->editor($this->getAttribute('name'), $this->fck_editor->Value);
 
         if (isset($this->fck_editor->Config['LoadAsciiMath'])) {
             if (isset($_SESSION['ascii_math_loaded']) &&
