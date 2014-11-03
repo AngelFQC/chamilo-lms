@@ -484,10 +484,11 @@ function show_new_personal_item_form($id = "") {
 	// ********** The text field ********** \\
 	echo '<br /><div class="formw">';
 
-	require_once api_get_path(LIBRARY_PATH) . "/fckeditor/fckeditor.php";
+	//require_once api_get_path(LIBRARY_PATH) . "/fckeditor/fckeditor.php";
+    require_once api_get_path(LIBRARY_PATH) . "/ckeditor/ckeditor.php";
 
-	$oFCKeditor = new FCKeditor('frm_content') ;
-
+	//$oFCKeditor = new FCKeditor('frm_content') ;
+    $oFCKeditor = new CKeditor();
 	$oFCKeditor->Width		= '80%';
 	$oFCKeditor->Height		= '200';
 
@@ -497,7 +498,8 @@ function show_new_personal_item_form($id = "") {
 		$oFCKeditor->ToolbarSet = 'Agenda';
 	}
 	$oFCKeditor->Value		= $content;
-	$return =	$oFCKeditor->CreateHtml();
+	//$return =	$oFCKeditor->CreateHtml();
+    $return = $oFCKeditor->editor('frm_content', $oFCKeditor->Value);
 	echo $return;
 
 	echo '</div>';

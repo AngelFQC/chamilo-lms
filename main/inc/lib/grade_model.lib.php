@@ -12,7 +12,7 @@
  * @package chamilo.library
  */
 
-require_once 'fckeditor/fckeditor.php';
+//require_once 'fckeditor/fckeditor.php';
 /**
  * Class GradeModel
  */
@@ -66,13 +66,14 @@ class GradeModel extends Model
      */
     public function return_form($url, $action)
     {
+        /*
         $oFCKeditor = new FCKeditor('description') ;
         $oFCKeditor->ToolbarSet = 'grade_model';
         $oFCKeditor->Width		= '100%';
         $oFCKeditor->Height		= '200';
         $oFCKeditor->Value		= '';
         $oFCKeditor->CreateHtml();
-
+        */
         $form = new FormValidator('grades', 'post', $url);
 
         // Setting the form elements

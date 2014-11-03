@@ -1478,17 +1478,18 @@ function show_add_form($id = '') {
 		<td colspan="4">
 
 			<?php
-			require_once api_get_path(LIBRARY_PATH) . "/fckeditor/fckeditor.php";
-
-			$oFCKeditor = new FCKeditor('content') ;
+			//require_once api_get_path(LIBRARY_PATH) . "/fckeditor/fckeditor.php";
+            require_once api_get_path(LIBRARY_PATH) . "/ckeditor/ckeditor.php";
+			//$oFCKeditor = new FCKeditor('content') ;
+            $oFCKeditor = new CKeditor() ;
 
 			$oFCKeditor->ToolbarSet = 'GlobalAgenda';
 			$oFCKeditor->Width		= '100%';
 			$oFCKeditor->Height		= '175';
 			$oFCKeditor->Value		= $content;
 
-			$return =	$oFCKeditor->CreateHtml();
-
+			//$return =	$oFCKeditor->CreateHtml();
+            $return = $oFCKeditor->editor('content', $oFCKeditor->Value);
 			echo $return;
 
  ?>

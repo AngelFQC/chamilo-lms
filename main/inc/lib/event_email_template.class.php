@@ -57,13 +57,14 @@ class EventEmailTemplate extends Model {
      */
     public function return_form($url, $action) {
 
+		/*
 		$oFCKeditor = new FCKeditor('description') ;
 		$oFCKeditor->ToolbarSet = 'careers';
 		$oFCKeditor->Width		= '100%';
 		$oFCKeditor->Height		= '200';
 		$oFCKeditor->Value		= '';
 		$oFCKeditor->CreateHtml();
-
+		*/
         $form = new FormValidator('career', 'post', $url);
         // Setting the form elements
         $header = get_lang('Add');

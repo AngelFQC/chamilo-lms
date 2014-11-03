@@ -13,7 +13,8 @@
  */
 
 // The initialization class for the online editor is needed here.
-require_once dirname(__FILE__).'/../inc/lib/fckeditor/fckeditor.php';
+//require_once dirname(__FILE__).'/../inc/lib/fckeditor/fckeditor.php';
+require_once dirname(__FILE__).'/../inc/lib/ckeditor/ckeditor.php';
 
 /**
  * Shows a question
@@ -140,13 +141,15 @@ function showQuestion(
     	} elseif ($answerType == FREE_ANSWER) {
     		$fck_content = isset($user_choice[0]) && !empty($user_choice[0]['answer']) ? $user_choice[0]['answer']:null;
 
-    		$oFCKeditor = new FCKeditor("choice[".$questionId."]") ;
+    		//$oFCKeditor = new FCKeditor("choice[".$questionId."]") ;
+            $oFCKeditor = new CKeditor();
 
     		$oFCKeditor->ToolbarSet = 'TestFreeAnswer';
     		$oFCKeditor->Width      = '100%';
     		$oFCKeditor->Height     = '200';
     		$oFCKeditor->Value      = $fck_content;
-            $s .= $oFCKeditor->CreateHtml();
+            //$s .= $oFCKeditor->CreateHtml();
+            $s .= $oFCKeditor->editor("choice[".$questionId."]", $oFCKeditor->Value);
     	} elseif ($answerType == ORAL_EXPRESSION) {
     		//Add nanog
     		if (api_get_setting('enable_nanogong') == 'true') {
@@ -171,13 +174,15 @@ function showQuestion(
     			echo $nano->show_button();
     		}
 
-    		$oFCKeditor = new FCKeditor("choice[".$questionId."]") ;
+    		//$oFCKeditor = new FCKeditor("choice[".$questionId."]") ;
+            $oFCKeditor = new CKeditor();
     		$oFCKeditor->ToolbarSet = 'TestFreeAnswer';
     		$oFCKeditor->Width  = '100%';
     		$oFCKeditor->Height = '150';
     		$oFCKeditor->ToolbarStartExpanded = false;
     		$oFCKeditor->Value	= '' ;
-    		$s .= $oFCKeditor->CreateHtml();
+    		//$s .= $oFCKeditor->CreateHtml();
+            $s .= $oFCKeditor->editor("choice[".$questionId."]", $oFCKeditor->Value);
     	}
 
     	// Now navigate through the possible answers, using the max number of
