@@ -110,7 +110,7 @@ class GradeModel extends Model
 
         $form->addElement('hidden', 'maxvalue', '100');
 		$form->addElement('hidden', 'minvalue', '0');
-
+        $form->addElement('hidden', 'ckdescription', '');
         $renderer = & $form->defaultRenderer();
 
         $component_array = array();
@@ -167,11 +167,12 @@ class GradeModel extends Model
         $form->addElement('advanced_settings', get_lang('AllMustWeight100'));
 
         if ($action == 'edit') {
-        	$form->addElement('style_submit_button', 'submit', get_lang('Modify'), 'class="save"');
+            //$form->addElement('style_submit_button', 'submit', get_lang('Modify'), 'class="save"');
+            $form->addElement('style_submit_button', 'submit', get_lang('Modify'), 'class="save"');
         } else {
-        	$form->addElement('style_submit_button', 'submit', get_lang('Add'), 'class="save"');
+            //$form->addElement('style_submit_button', 'submit', get_lang('Add'), 'class="save"');
+            $form->addElement('style_submit_button', 'submit', get_lang('Add'), 'class="save"');
         }
-
         if (!empty($components)) {
             $counter = 0;
             foreach ($components as $component) {
