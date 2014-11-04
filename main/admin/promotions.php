@@ -105,6 +105,8 @@ switch ($action) {
         if ($form->validate()) {
             if ($check) {
                 $values = $form->exportValues();
+                $values['description'] = $values['ckdescription'];
+                unset($values['ckdescription']);
                 $res    = $promotion->save($values);
                 if ($res) {
                     Display::display_confirmation_message(get_lang('ItemAdded'));
@@ -129,6 +131,8 @@ switch ($action) {
         if ($form->validate()) {
             if ($check) {
                 $values = $form->exportValues();
+                $values['description'] = $values['ckdescription'];
+                unset($values['ckdescription']);
                 $res    = $promotion->update($values);
                 $promotion->update_all_sessions_status_by_promotion_id($values['id'], $values['status']);  
                 if ($res) {
@@ -172,3 +176,25 @@ switch ($action) {
         break;
 }
 Display::display_footer();
+echo "
+<script>
+    $(function(){
+        $('form').submit(function(){
+            // Get the iframe
+            var iFrame = document.getElementById('cke_contents_description').children[1];
+            // Get the iframe content
+            var iFrameContent = iFrame.contentDocument || iFrame.contentWindow.document;
+            // Get ckEditor control
+            var ckEditor = iFrameContent.getElementsByClassName('cke_show_borders');
+            // Get ckEditor control content
+            var description = '';
+            for (i = 0; i < (ckEditor[0]).children.length; i++) {
+                description += (ckEditor[0]).children[i].innerHTML;
+            }
+            //var description = (ckEditor[0]).children[0].innerHTML;
+            document.getElementsByName('ckdescription')[0].value = description;
+            console.log(document.getElementsByName('ckdescription')[0].value);
+        });
+    });
+</script>
+";
