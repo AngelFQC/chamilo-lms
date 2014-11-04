@@ -117,14 +117,12 @@ switch ($action) {
 
         $url  = api_get_self().'?action='.Security::remove_XSS($_GET['action']);
         $form = $obj->return_form($url, 'add');
-
         // The validation or display
         if ($form->validate()) {
             if ($check) {
                 $values = $form->exportValues();
-                $description = $values['ckdescription'];
+                $values['description'] = $values['ckdescription'];
                 unset($values['ckdescription']);
-                $values['description'] = $description;
                 $res    = $obj->save($values);
                 if ($res) {
                     Display::display_confirmation_message(get_lang('ItemAdded'));
@@ -149,9 +147,8 @@ switch ($action) {
         if ($form->validate()) {            
             if ($check) {
                 $values = $form->exportValues();
-                $description = $values['ckdescription'];
+                $values['description'] = $values['ckdescription'];
                 unset($values['ckdescription']);
-                $values['description'] = $description;
                 $res    = $obj->update($values);
                 Display::display_confirmation_message(get_lang('ItemUpdated'), false);                
             }            
@@ -182,22 +179,28 @@ switch ($action) {
 Display :: display_footer();
 echo "
 <script>
-    $(function(){
-        $('form').submit(function(){
-            // Get the iframe
-            var iFrame = document.getElementById('cke_contents_description').children[1];
-            // Get the iframe content
-            var iFrameContent = iFrame.contentDocument || iFrame.contentWindow.document;
-            // Get ckEditor control
-            var ckEditor = iFrameContent.getElementsByClassName('cke_show_borders');
-            // Get ckEditor control content
-            var description = '';
-            for (i = 0; i < (ckEditor[0]).children.length; i++) {
-                description += (ckEditor[0]).children[i].innerHTML;
-            }
-            //var description = (ckEditor[0]).children[0].innerHTML;
-            document.getElementsByName('ckdescription')[0].value = description;
-        });
+    // Fix CKEditor initial position
+    $(document).on('DOMNodeInserted', function(e) {
+        if ($(e.target).is('#cke_description')) {
+           var destination = $('.controls')[1];
+           $('#cke_description').detach().appendTo(destination);
+        }
+    });
+    // Store CKEditor content just before submitting
+    $('form').submit(function(){
+        // Get the iframe
+        var iFrame = document.getElementById('cke_contents_description').children[1];
+        // Get the iframe content
+        var iFrameContent = iFrame.contentDocument || iFrame.contentWindow.document;
+        // Get ckEditor control
+        var ckEditor = iFrameContent.getElementsByClassName('cke_show_borders');
+        // Get ckEditor control content
+        var description = '';
+        for (i = 0; i < (ckEditor[0]).children.length; i++) {
+            description += (ckEditor[0]).children[i].innerHTML;
+        }
+        //var description = (ckEditor[0]).children[0].innerHTML;
+        document.getElementsByName('ckdescription')[0].value = description;
     });
 </script>
 ";

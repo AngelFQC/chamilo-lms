@@ -123,7 +123,7 @@ class Career extends Model
             $form->addElement('text', 'created_at', get_lang('CreatedAt'));
             $form->freeze('created_at');
         }
-
+        $form->addElement('hidden', 'ckdescription', '');
         if ($action == 'edit') {
         	$form->addElement('style_submit_button', 'submit', get_lang('Modify'), 'class="save"');
         } else {

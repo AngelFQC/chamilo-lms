@@ -92,6 +92,8 @@ switch ($action) {
         if ($form->validate()) {
             if ($check) {
                 $values = $form->exportValues();
+                $values['description'] = $values['ckdescription'];
+                unset($values['ckdescription']);
                 $res    = $career->save($values);
                 if ($res) {
                     Display::display_confirmation_message(get_lang('ItemAdded'));
@@ -116,6 +118,8 @@ switch ($action) {
         if ($form->validate()) {
             if ($check) {
                 $values = $form->exportValues();
+                $values['description'] = $values['ckdescription'];
+                unset($values['ckdescription']);
                 $career->update_all_promotion_status_by_career_id($values['id'], $values['status']);
                 $old_status = $career->get_status($values['id']);
                 $res    = $career->update($values);
@@ -165,3 +169,30 @@ switch ($action) {
         break;
 }
 Display :: display_footer();
+echo "
+<script>
+    // Fix CKEditor initial position
+    $(document).on('DOMNodeInserted', function(e) {
+        if ($(e.target).is('#cke_description')) {
+           var destination = $('.controls')[1];
+           $('#cke_description').detach().appendTo(destination);
+        }
+    });
+    // Store CKEditor content just before submitting
+    $('form').submit(function(){
+        // Get the iframe
+        var iFrame = document.getElementById('cke_contents_description').children[1];
+        // Get the iframe content
+        var iFrameContent = iFrame.contentDocument || iFrame.contentWindow.document;
+        // Get ckEditor control
+        var ckEditor = iFrameContent.getElementsByClassName('cke_show_borders');
+        // Get ckEditor control content
+        var description = '';
+        for (i = 0; i < (ckEditor[0]).children.length; i++) {
+            description += (ckEditor[0]).children[i].innerHTML;
+        }
+        //var description = (ckEditor[0]).children[0].innerHTML;
+        document.getElementsByName('ckdescription')[0].value = description;
+    });
+</script>
+";

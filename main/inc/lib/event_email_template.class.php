@@ -80,6 +80,7 @@ class EventEmailTemplate extends Model {
         $form->add_html_editor('description', get_lang('Description'), false, false, array('ToolbarSet' => 'careers','Width' => '100%', 'Height' => '250'));
 	    $status_list = $this->get_status_list();
         $form->addElement('select', 'status', get_lang('Status'), $status_list);
+        $form->addElement('hidden', 'ckdescription', '');
         if ($action == 'edit') {
             $form->addElement('text', 'created_at', get_lang('CreatedAt'));
             $form->freeze('created_at');
