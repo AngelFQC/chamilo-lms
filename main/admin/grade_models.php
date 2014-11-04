@@ -122,9 +122,8 @@ switch ($action) {
         if ($form->validate()) {
             if ($check) {
                 $values = $form->exportValues();
-                $description = $values['ckdescription'];
+                $values['description'] = $values['ckdescription'];
                 unset($values['ckdescription']);
-                $values['description'] = $description;
                 $res    = $obj->save($values);
                 if ($res) {
                     Display::display_confirmation_message(get_lang('ItemAdded'));
@@ -149,9 +148,8 @@ switch ($action) {
         if ($form->validate()) {            
             if ($check) {
                 $values = $form->exportValues();
-                $description = $values['ckdescription'];
+                $values['description'] = $values['ckdescription'];
                 unset($values['ckdescription']);
-                $values['description'] = $description;
                 $res    = $obj->update($values);
                 Display::display_confirmation_message(get_lang('ItemUpdated'), false);                
             }            
