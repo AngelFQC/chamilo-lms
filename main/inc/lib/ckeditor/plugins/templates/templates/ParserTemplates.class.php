@@ -159,9 +159,9 @@ class ParserTemplates
             $row['content'] = str_replace($search, $replace, $row['content']);
 
             $this->templates[] = array(
-                'title' => $row['title'],
+                'title' => get_lang($row['title']),
                 'image' => $image,
-                'desription' => $row['comment'],
+                'desription' => get_lang($row['comment']),
                 'html' => $row['content']
             );
         }
@@ -174,9 +174,9 @@ class ParserTemplates
         $certificateTemplateHTML = str_replace($search, $replace, $certificateTemplateContent);
 
         $this->templates[] = array(
-            'title' => 'TemplateCertificateTitle',
+            'title' => get_lang('TemplateCertificateTitle'),
             'image' => $certificateTemplateThumb,
-            'description' => 'TemplateCertificateDescription',
+            'description' => get_lang('TemplateCertificateDescription'),
             'html' => $certificateTemplateHTML
         );
     }
