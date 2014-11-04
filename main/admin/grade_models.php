@@ -117,14 +117,15 @@ switch ($action) {
 
         $url  = api_get_self().'?action='.Security::remove_XSS($_GET['action']);
         $form = $obj->return_form($url, 'add');
-        
-        
-        
+
         // The validation or display
-        if ($form->validate()) {            
-            if ($check) {     
+        if ($form->validate()) {
+            if ($check) {
                 $values = $form->exportValues();
-                $res    = $obj->save($values);            
+                $description = $values['ckdescription'];
+                unset($values['ckdescription']);
+                $values['description'] = $description;
+                $res    = $obj->save($values);
                 if ($res) {
                     Display::display_confirmation_message(get_lang('ItemAdded'));
                 }
@@ -147,7 +148,10 @@ switch ($action) {
         // The validation or display
         if ($form->validate()) {            
             if ($check) {
-                $values = $form->exportValues();                
+                $values = $form->exportValues();
+                $description = $values['ckdescription'];
+                unset($values['ckdescription']);
+                $values['description'] = $description;
                 $res    = $obj->update($values);
                 Display::display_confirmation_message(get_lang('ItemUpdated'), false);                
             }            
@@ -176,3 +180,24 @@ switch ($action) {
         break;
 }
 Display :: display_footer();
+echo "
+<script>
+    $(function(){
+        $('form').submit(function(){
+            // Get the iframe
+            var iFrame = document.getElementById('cke_contents_description').children[1];
+            // Get the iframe content
+            var iFrameContent = iFrame.contentDocument || iFrame.contentWindow.document;
+            // Get ckEditor control
+            var ckEditor = iFrameContent.getElementsByClassName('cke_show_borders');
+            // Get ckEditor control content
+            var description = '';
+            for (i = 0; i < (ckEditor[0]).children.length; i++) {
+                description += (ckEditor[0]).children[i].innerHTML;
+            }
+            //var description = (ckEditor[0]).children[0].innerHTML;
+            document.getElementsByName('ckdescription')[0].value = description;
+        });
+    });
+</script>
+";
