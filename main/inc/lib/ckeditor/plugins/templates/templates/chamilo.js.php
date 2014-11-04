@@ -29,6 +29,6 @@ $parseTemplates->loadPersonalTemplates(api_get_user_id());
 ?>
 
 CKEDITOR.addTemplates('default', {
-    imagesPath: CKEDITOR.getUrl(CKEDITOR.plugins.getPath('templates')),
+    imagesPath: '<?php echo api_get_path(WEB_PATH) ?>',
     templates: <?php echo json_encode($parseTemplates->getTemplates()); ?>
 });

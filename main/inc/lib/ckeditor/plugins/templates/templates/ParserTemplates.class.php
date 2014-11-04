@@ -1,5 +1,6 @@
 <?php
 /* For licensing terms, see /license.txt */
+
 /**
  * Class for get the CKEditor templates
  * @author Angel Fernando Quiroz Campos <angel.quiroz@beeznest.com>
@@ -12,21 +13,25 @@ class ParserTemplates
      * @var string  
      */
     private $css;
+
     /**
      * Image directory
      * @var string
      */
     private $img_dir;
+
     /**
      * Default course directory
      * @var string
      */
     private $default_course_dir;
+
     /**
      * JS directory
      * @var string
      */
     private $js;
+
     /**
      * The templates
      * @var array
@@ -128,7 +133,7 @@ class ParserTemplates
     {
         $this->templates[] = array(
             'title' => 'Empty',
-            'image' => api_get_path(WEB_PATH) . 'home/default_platform_document/template_thumb/empty.gif',
+            'image' => 'home/default_platform_document/template_thumb/empty.gif',
             'description' => '',
             'html' => '<p><br/></p>'
         );
@@ -152,7 +157,7 @@ class ParserTemplates
             api_get_path(REL_PATH),
             $this->default_course_dir, api_get_path(WEB_PATH)
         );
-        $templateThumb = api_get_path(WEB_PATH) . 'home/default_platform_document/template_thumb/';
+        $templateThumb = 'home/default_platform_document/template_thumb/';
 
         while ($row = Database::fetch_array($result)) {
             $image = empty($row['image']) ? $templateThumb . 'empty.gif' : $templateThumb . $row['image'];
@@ -166,8 +171,7 @@ class ParserTemplates
             );
         }
 
-        $certificateTemplateThumb = api_get_path(WEB_PATH);
-        $certificateTemplateThumb .= 'main/gradebook/certificate_template/certificate_template.png';
+        $certificateTemplateThumb = 'main/gradebook/certificate_template/certificate_template.png';
         $certificateTemplateContent = file_get_contents(
             api_get_path(SYS_PATH) . 'main/gradebook/certificate_template/template.html'
         );
@@ -186,25 +190,31 @@ class ParserTemplates
      */
     public function loadStudentTemplates()
     {
-        $fckeditor_template_path = api_get_path(LIBRARY_PATH) . '/main/inc/lib/fckeditor/editor/dialog/fck_template/images/';
+        $fckeditorTemplatePath = 'main/inc/lib/fckeditor/editor/dialog/fck_template/images/';
 
         $this->templates[] = array(
             'title' => 'Image and Title',
-            'image' => api_get_path(WEB_PATH) . $fckeditor_template_path . 'template1.gif',
+            'image' => $fckeditorTemplatePath . 'template1.gif',
             'description' => 'One main image with a title and text that surround the image.',
-            'html' => '<img style="MARGIN-RIGHT: 10px" height="100" alt="" width="100" align="left"/><h3>Type the title here</h3>Type the text here'
+            'html' => '<img style="MARGIN-RIGHT: 10px" height="100" alt="" width="100" align="left"/>'
+            . '<h3>Type the title here</h3>Type the text here'
         );
         $this->templates[] = array(
             'title' => 'Strange Template',
-            'image' => api_get_path(WEB_PATH) . $fckeditor_template_path . 'template2.gif',
+            'image' => $fckeditorTemplatePath . 'template2.gif',
             'description' => 'A template that defines two colums, each one with a title, and some text.',
             'html' => ''
         );
         $this->templates[] = array(
             'title' => 'Text and Table',
-            'image' => api_get_path(WEB_PATH) . $fckeditor_template_path . 'template3.gif',
+            'image' => $fckeditorTemplatePath . 'template3.gif',
             'description' => 'A title with some text and a table.',
-            'html' => '<div style="width: 80%"><h3>Title goes here</h3><table style="width:150px;float: right" cellspacing="0" cellpadding="0" border="1"><caption style="border:solid 1px black"><strong>Table title</strong></caption></tr><tr><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td></tr><tr><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td></tr><tr><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td></tr></table><p>Type the text here</p></div>'
+            'html' => '<div style="width: 80%"><h3>Title goes here</h3>'
+            . '<table style="width:150px;float: right" cellspacing="0" cellpadding="0" border="1">'
+            . '<caption style="border:solid 1px black"><strong>Table title</strong></caption>'
+            . '</tr><tr><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td></tr><tr><td>&nbsp;</td><td>&nbsp;</td>'
+            . '<td>&nbsp;</td></tr><tr><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td></tr></table>'
+            . '<p>Type the text here</p></div>'
         );
     }
 
@@ -253,9 +263,9 @@ class ParserTemplates
             //$row['content'] = api_get_path(SYS_COURSE_PATH).$_course['path'].'/document'.$row['path'];
 
             if (!empty($row['image'])) {
-                $image = api_get_path(WEB_PATH) . 'courses/' . $_course['path'] . '/upload/template_thumbnails/' . $row['image'];
+                $image = 'courses/' . $_course['path'] . '/upload/template_thumbnails/' . $row['image'];
             } else {
-                $image = api_get_path(WEB_PATH) . 'home/default_platform_document/template_thumb/noimage.gif';
+                $image = 'home/default_platform_document/template_thumb/noimage.gif';
             }
 
             $this->templates[] = array(
