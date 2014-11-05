@@ -150,12 +150,13 @@ class ParserTemplates
         $sql = "SELECT title, image, comment, content FROM $systemTemplateTable";
         $result = Database::query($sql);
 
-        $search = array('{CSS}', '{IMG_DIR}', '{REL_PATH}', '{COURSE_DIR}', '{WEB_PATH}');
+        $search = array('{CSS}', '{IMG_DIR}', '{REL_PATH}', '{COURSE_DIR}', '{WEB_PATH}', '{REL_CODE_PATH}');
         $replace = array(
             $this->css . $this->js,
             $this->img_dir,
             api_get_path(REL_PATH),
-            $this->default_course_dir, api_get_path(WEB_PATH)
+            $this->default_course_dir, api_get_path(WEB_PATH),
+            api_get_path(REL_CODE_PATH)
         );
         $templateThumb = 'home/default_platform_document/template_thumb/';
 
