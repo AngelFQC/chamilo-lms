@@ -54,10 +54,19 @@ $(document).ready(function() {
             $.each(templatesConfig.templates, function () {
                 var template = this;
                 var $templateLi = $("<li>");
+
+                var templateHTML = "<img src=\"" + templatesConfig.imagesPath + template.image + "\" ><div>";
+                templateHTML += "<b>" + template.title + "</b>";
+
+                if (template.description) {
+                    templateHTML += "<br>" + template.description;
+                }
+                
+                templateHTML += "</div>";
+
                 $("<a>", {
                     href: "#",
-                    html: "<img src=\"" + templatesConfig.imagesPath + template.image + "\" >" +
-                        "<div><b>" + template.title + "</b><br>" + template.description + "</div>",
+                    html: templateHTML,
                     click: function (e) {
                         e.preventDefault();
 
