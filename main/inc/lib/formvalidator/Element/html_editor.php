@@ -36,6 +36,7 @@ class HTML_QuickForm_html_editor extends HTML_QuickForm_textarea {
         //$name = $this->getAttribute('name');
         //$this->fck_editor = new FCKeditor($name);
         $this->fck_editor = new CKeditor();
+        $this->fck_editor->returnOutput = true;
         $this->fck_editor->ToolbarSet = $fck_attribute['ToolbarSet'];
         $this->fck_editor->Width = !empty($fck_attribute['Width']) ? $fck_attribute['Width'] : '990';
         $this->fck_editor->Height = !empty($fck_attribute['Height']) ? $fck_attribute['Height'] : '400';

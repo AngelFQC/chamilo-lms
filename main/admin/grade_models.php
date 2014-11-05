@@ -179,13 +179,6 @@ switch ($action) {
 Display :: display_footer();
 echo "
 <script>
-    // Fix CKEditor initial position
-    $(document).on('DOMNodeInserted', function(e) {
-        if ($(e.target).is('#cke_description')) {
-           var destination = $('.controls')[1];
-           $('#cke_description').detach().appendTo(destination);
-        }
-    });
     // Store CKEditor content just before submitting
     $('form').submit(function(){
         // Get the iframe
