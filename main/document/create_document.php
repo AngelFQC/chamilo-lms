@@ -43,6 +43,40 @@ $(document).ready(function() {
             $(this).css("background-image", \'url("../img/hide0.png")\');
         }
     );
+
+    var showTemplates = function () {
+        CKEDITOR.editorConfig(CKEDITOR.config);
+        CKEDITOR.loadTemplates(CKEDITOR.config.templates_files, function (a){
+            var templatesConfig = CKEDITOR.getTemplates("default");
+
+            var $templatesUL = $("<ul>");
+
+            $.each(templatesConfig.templates, function () {
+                var template = this;
+                var $templateLi = $("<li>");
+                $("<a>", {
+                    href: "#",
+                    html: "<img src=\"" + templatesConfig.imagesPath + template.image + "\" >" +
+                        "<div><b>" + template.title + "</b><br>" + template.description + "</div>",
+                    click: function (e) {
+                        e.preventDefault();
+
+                        CKEDITOR.instances.content.setData(template.html, function () {
+                            this.checkDirty();
+                        });
+                    }
+                }).appendTo($templateLi);
+
+                $templatesUL.append($templateLi);
+            });
+
+            $templatesUL.appendTo("#frmModel");
+        });
+    };
+
+    CKEDITOR.on("instanceReady", function (e) {
+        showTemplates();
+    });
 });
 
 function InnerDialogLoaded() {
