@@ -9,7 +9,7 @@
  * Code
  */
 require_once 'promotion.lib.php';
-require_once 'fckeditor/fckeditor.php';
+//require_once 'fckeditor/fckeditor.php';
 
 define ('CAREER_STATUS_ACTIVE',  1);
 define ('CAREER_STATUS_INACTIVE',0);
@@ -96,13 +96,14 @@ class Career extends Model
     */
     public function return_form($url, $action)
     {
+		/*
 		$oFCKeditor = new FCKeditor('description');
-		$oFCKeditor->ToolbarSet = 'careers';
+		oFCKeditor->ToolbarSet = 'careers';
 		$oFCKeditor->Width		= '100%';
 		$oFCKeditor->Height		= '200';
 		$oFCKeditor->Value		= '';
 		$oFCKeditor->CreateHtml();
-
+		*/
         $form = new FormValidator('career', 'post', $url);
         // Setting the form elements
         $header = get_lang('Add');
@@ -122,7 +123,7 @@ class Career extends Model
             $form->addElement('text', 'created_at', get_lang('CreatedAt'));
             $form->freeze('created_at');
         }
-
+        $form->addElement('hidden', 'ckdescription', '');
         if ($action == 'edit') {
         	$form->addElement('style_submit_button', 'submit', get_lang('Modify'), 'class="save"');
         } else {

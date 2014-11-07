@@ -62,7 +62,8 @@ $lib = api_get_path(LIBRARY_PATH); //avoid useless function calls
 require_once $lib.'groupmanager.lib.php';
 require_once $lib.'mail.lib.inc.php';
 require_once $lib.'tracking.lib.php';
-require_once $lib.'fckeditor/fckeditor.php';
+//require_once $lib.'fckeditor/fckeditor.php';
+require_once $lib.'ckeditor/ckeditor.php';
 require_once $lib.'fileUpload.lib.php';
 require_once 'announcements.inc.php';
 
@@ -729,7 +730,8 @@ if ($display_form) {
 
 	echo '<input type="hidden" name="id" value="'.$announcement_to_modify.'" />';
 
-    $oFCKeditor = new FCKeditor('newContent') ;
+    //$oFCKeditor = new FCKeditor('newContent') ;
+    $oFCKeditor = new CKeditor();
 	$oFCKeditor->Width		= '100%';
 	$oFCKeditor->Height		= '300';
 
@@ -745,7 +747,8 @@ if ($display_form) {
 
 	echo Display::display_normal_message(get_lang('Tags').' <br /><br />'.implode('<br />', AnnouncementManager::get_tags()), false);
 
-	echo $oFCKeditor->CreateHtml();
+	//echo $oFCKeditor->CreateHtml();
+    echo $oFCKeditor->editor('newContent', $oFCKeditor->Value);
 	echo '</div></div>';
 
     //File attachment

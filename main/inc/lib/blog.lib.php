@@ -1201,7 +1201,8 @@ class Blog {
 			echo '<div><span class="form_required">*</span>'.get_lang('Title') . ': <input name="post_title" id="post_title" type="text" size="60" onblur="check_if_still_empty()" /></div><br />';
 
 			// article text
-			$oFCKeditor = new FCKeditor('post_full_text') ;
+			//$oFCKeditor = new FCKeditor('post_full_text') ;
+            $oFCKeditor = new CKeditor();
 			$oFCKeditor->Width		= '100%';
 			$oFCKeditor->Height		= '200';
 			if(!api_is_allowed_to_edit()) {
@@ -1212,7 +1213,8 @@ class Blog {
 			$oFCKeditor->Value = isset($_POST['post_full_text'])?stripslashes($_POST['post_full_text']):'';
 
 			echo '<div class="control-group">';
-			$oFCKeditor->Create();
+            //$oFCKeditor->Create();
+            $oFCKeditor->editor('post_full_text');
 			echo '</div>';
 
 			// attachment
@@ -1285,7 +1287,8 @@ class Blog {
 		echo '<div><span class="form_required">*</span>' . get_lang('Title') . ': <input name="post_title" id="post_title" type="text" size="60" value="'.stripslashes($blog_post['title']) . '" /><br /></div>';
 
 		// article text
-		$oFCKeditor = new FCKeditor('post_full_text') ;
+		//$oFCKeditor = new FCKeditor('post_full_text') ;
+        $oFCKeditor = new CKeditor();
 
 		$oFCKeditor->Width		= '100%';
 		$oFCKeditor->Height		= '200';
@@ -1297,7 +1300,8 @@ class Blog {
 		}
 		$oFCKeditor->Value		= isset($_POST['post_full_text'])?stripslashes($_POST['post_full_text']):$blog_post_text;
 		echo '<div class="controls">';
-		echo $oFCKeditor->Create();
+		//echo $oFCKeditor->Create();
+        $oFCKeditor->editor('post_full_text', $oFCKeditor->Value);
 		echo '</div>';
 
 		// submit
@@ -2343,7 +2347,8 @@ class Blog {
 		echo '<div><span class="form_required">*</span>' . get_lang('Title') . ': <input name="comment_title" id="comment_title" type="text" size="60" value="Re: '.stripslashes($title) . '" /></div><br />';
 
 		// comment text
-		$oFCKeditor = new FCKeditor('comment_text') ;
+		//$oFCKeditor = new FCKeditor('comment_text') ;
+        $oFCKeditor = new CKeditor();
 		$oFCKeditor->Width		= '100%';
 		$oFCKeditor->Height		= '200';
 		if(!api_is_allowed_to_edit())
@@ -2356,7 +2361,8 @@ class Blog {
 		}
 		$oFCKeditor->Value		= isset($_POST['comment_text'])?stripslashes($_POST['comment_text']):'';
 		echo '<div class="controls">';
-		echo $oFCKeditor->Create() ;
+		//echo $oFCKeditor->Create() ;
+        $oFCKeditor->editor('comment_text');
 		echo '
 				</div>';
 

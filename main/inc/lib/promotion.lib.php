@@ -2,7 +2,8 @@
 /* For licensing terms, see /license.txt */
 
 require_once 'career.lib.php';
-require_once 'fckeditor/fckeditor.php';
+//require_once 'fckeditor/fckeditor.php';
+
 
 define ('PROMOTION_STATUS_ACTIVE',  1);
 define ('PROMOTION_STATUS_INACTIVE', 0);
@@ -159,12 +160,12 @@ class Promotion extends Model
 
     function return_form($url, $action = 'add')
     {
-		$oFCKeditor = new FCKeditor('description') ;
+		/*$oFCKeditor = new FCKeditor('description') ;
 		$oFCKeditor->ToolbarSet = 'careers';
 		$oFCKeditor->Width		= '100%';
 		$oFCKeditor->Height		= '200';
 		$oFCKeditor->Value		= '';
-		$oFCKeditor->CreateHtml();
+		$oFCKeditor->CreateHtml();*/
 
 		$form = new FormValidator('promotion', 'post', $url);
         // Setting the form elements
@@ -185,7 +186,7 @@ class Promotion extends Model
             $career_list[$item['id']] = $item['name'];
         }
         $form->addElement('select', 'career_id', get_lang('Career'), $career_list);
-
+        $form->addElement('hidden', 'ckdescription', '');
         $status_list = $this->get_status_list();
         $form->addElement('select', 'status', get_lang('Status'), $status_list);
         if ($action == 'edit') {

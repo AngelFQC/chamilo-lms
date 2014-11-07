@@ -57,6 +57,49 @@ $(document).ready(function() {
             $(this).css("background-image", \'url("../img/hide0.png")\');
         }
     );
+
+    var showTemplates = function () {
+        CKEDITOR.editorConfig(CKEDITOR.config);
+        CKEDITOR.loadTemplates(CKEDITOR.config.templates_files, function (a){
+            var templatesConfig = CKEDITOR.getTemplates("default");
+
+            var $templatesUL = $("<ul>");
+
+            $.each(templatesConfig.templates, function () {
+                var template = this;
+                var $templateLi = $("<li>");
+
+                var templateHTML = "<img src=\"" + templatesConfig.imagesPath + template.image + "\" ><div>";
+                templateHTML += "<b>" + template.title + "</b>";
+
+                if (template.description) {
+                    templateHTML += "<br>" + template.description;
+                }
+                
+                templateHTML += "</div>";
+
+                $("<a>", {
+                    href: "#",
+                    html: templateHTML,
+                    click: function (e) {
+                        e.preventDefault();
+
+                        CKEDITOR.instances.content.setData(template.html, function () {
+                            this.checkDirty();
+                        });
+                    }
+                }).appendTo($templateLi);
+
+                $templatesUL.append($templateLi);
+            });
+
+            $templatesUL.appendTo("#frmModel");
+        });
+    };
+
+    CKEDITOR.on("instanceReady", function (e) {
+        showTemplates();
+    });
 });
 
 function InnerDialogLoaded() {

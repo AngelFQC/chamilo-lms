@@ -33,7 +33,8 @@ if(isset($_GET['id_session'])) {
 
 $lib_path = api_get_path(LIBRARY_PATH);
 require_once $lib_path.'blog.lib.php';
-require_once $lib_path.'fckeditor/fckeditor.php';
+//require_once $lib_path.'fckeditor/fckeditor.php';
+require_once $lib_path.'ckeditor/ckeditor.php';
 
 $blog_table_attachment 	= Database::get_course_table(TABLE_BLOGS_ATTACHMENT);
 

@@ -3,7 +3,8 @@
 /* For licensing terms, see /license.txt */
 
 require_once 'HTML/QuickForm/textarea.php';
-require_once api_get_path(LIBRARY_PATH) . 'fckeditor/fckeditor.php';
+//require_once api_get_path(LIBRARY_PATH) . 'fckeditor/fckeditor.php';
+require_once api_get_path(LIBRARY_PATH) . 'ckeditor/ckeditor.php';
 
 /**
  * A html editor field to use with QuickForm
@@ -32,9 +33,10 @@ class HTML_QuickForm_html_editor extends HTML_QuickForm_textarea {
         $this->_type = 'html_editor';
         $this->fullPage = false;
 
-        $name = $this->getAttribute('name');
-        $this->fck_editor = new FCKeditor($name);
-
+        //$name = $this->getAttribute('name');
+        //$this->fck_editor = new FCKeditor($name);
+        $this->fck_editor = new CKeditor();
+        $this->fck_editor->returnOutput = true;
         $this->fck_editor->ToolbarSet = $fck_attribute['ToolbarSet'];
         $this->fck_editor->Width = !empty($fck_attribute['Width']) ? $fck_attribute['Width'] : '990';
         $this->fck_editor->Height = !empty($fck_attribute['Height']) ? $fck_attribute['Height'] : '400';
@@ -103,11 +105,13 @@ class HTML_QuickForm_html_editor extends HTML_QuickForm_textarea {
      * Build this element using FCKeditor
      */
     function build_FCKeditor() {
-        if (!FCKeditor :: IsCompatible()) {
+        /*if (!FCKeditor :: IsCompatible()) {
             return parent::toHTML();
-        }
+        }*/
         $this->fck_editor->Value = $this->getValue();
-        $result = $this->fck_editor->CreateHtml();
+
+        //$result = $this->fck_editor->CreateHtml();
+        $result = $this->fck_editor->editor($this->getAttribute('name'), $this->fck_editor->Value);
 
         if (isset($this->fck_editor->Config['LoadAsciiMath'])) {
             if (isset($_SESSION['ascii_math_loaded']) &&
@@ -118,6 +122,7 @@ class HTML_QuickForm_html_editor extends HTML_QuickForm_textarea {
             }
         }
 
+        //error_log(serialize($dom->getElementsByTagName('p')));
         //Add a link to open the allowed html tags window
         //$result .= '<small><a href="#" onclick="MyWindow=window.open('."'".api_get_path(WEB_CODE_PATH)."help/allowed_html_tags.php?fullpage=". ($this->fullPage ? '1' : '0')."','MyWindow','toolbar=no,location=no,directories=no,status=yes,menubar=no,scrollbars=yes,resizable=yes,width=500,height=600,left=200,top=20'".'); return false;">'.get_lang('AllowedHTMLTags').'</a></small>';
         return $result;
