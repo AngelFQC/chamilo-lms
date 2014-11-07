@@ -44,18 +44,17 @@ $(document).ready(function() {
         CKEDITOR.editorConfig(CKEDITOR.config);
         CKEDITOR.loadTemplates(CKEDITOR.config.templates_files, function (a){
             var templatesConfig = CKEDITOR.getTemplates("default");
-
             var $templatesUL = $("<ul>");
 
             $.each(templatesConfig.templates, function () {
                 var template = this;
                 var $templateLi = $("<li>");
 
-                var templateHTML = "<img src=\"" + templatesConfig.imagesPath + template.image + "\" ><div>";
-                templateHTML += "<b>" + template.title + "</b>";
+                var templateHTML = "<img src=\"" + templatesConfig.imagesPath + template.image + "\" >";
+                templateHTML += "<div class=title>" + template.title + "</div>";
 
                 if (template.description) {
-                    templateHTML += "<br>" + template.description;
+                    templateHTML += "<div class=description>" + template.description;
                 }
                 
                 templateHTML += "</div>";
@@ -710,8 +709,8 @@ if ($form->validate()) {
 	}
     // HTML-editor
     echo '<div class="row-fluid" style="overflow:hidden">
-            <div id="template_col" class="span2" style="width:162px">
-                <div id="frmModel" style="overflow: visible;"></div>
+            <div id="template_col" class="span3" style="width:200px">
+                <div id="frmModel" ></div>
             </div>
             <div id="hide_bar_template"></div>
             <div id="doc_form" class="span9">

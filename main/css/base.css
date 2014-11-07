@@ -3538,11 +3538,6 @@ form .formw .freeze {
   margin-bottom: .5em;
 }
 
-
-/* ****************************************************
-                     END SKILL
- **************************************************** */
-
 .skill_root {
     box-shadow: 2px 2px 19px #aaa;
     -o-box-shadow: 2px 2px 19px #aaa;
@@ -3596,6 +3591,32 @@ form .formw .freeze {
     margin-top:10px;
     position:relative;
 }
+
+/* ****************************************************
+                     END SKILL
+ **************************************************** */
+
+/* list template document */
+#frmModel{
+  height: 700px;
+  min-height: 100%;
+  overflow-y: scroll;
+  overflow-x: hidden
+}
+#frmModel ul{
+  list-style: none;
+  margin: 0;
+  padding: 0 .5em 0 1em;
+}
+#frmModel ul li{
+  text-align: center;
+}
+#frmModel ul li .title, #frmModel ul li .description{
+  padding-top: .5em;
+  padding-bottom: .5em;
+  width: 180px;
+}
+/* end list template document */
 
 .done_window {
     background-color: #73982C;
