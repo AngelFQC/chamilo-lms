@@ -581,7 +581,7 @@ class Wiki
     {
         $toolBar = api_is_allowed_to_edit(null,true)
             ? array('ToolbarSet' => 'Wiki', 'Width' => '100%', 'Height' => '400')
-            : array('ToolbarSet' => 'WikiStudent', 'Width' => '100%', 'Height' => '400', 'UserStatus' => 'student');
+            : array('ToolbarSet' => 'Wiki_Student', 'Width' => '100%', 'Height' => '400', 'UserStatus' => 'student');
 
         $form->add_html_editor('content', get_lang('Content'), false, false, $toolBar);
         //$content
