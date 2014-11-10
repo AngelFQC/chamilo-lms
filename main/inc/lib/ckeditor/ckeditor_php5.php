@@ -20,7 +20,7 @@ class CKEditor
 	/**
 	 * The version of %CKEditor.
 	 */
-	const version = '3.6.6';
+	const version = '4.4.5';
 	/**
 	 * A constant string unique for each release of %CKEditor.
 	 */
@@ -139,11 +139,25 @@ class CKEditor
 			$out .= $this->init();
 		}
 
+        $conf = $this->get_custom_configuration();
+        $this->read_configuration($conf);
+        $config['toolbar'] = $conf['ToolbarSets']['Normal'];
+        $config['smallToolbar'] = $conf['ToolbarSets']['Normal'];
+        $config['maximizedToolbar'] = $conf['ToolbarSets']['Maximized'];
+
 		$_config = $this->configSettings($config, $events);
 
 		$js = $this->returnGlobalEvents();
 		if (!empty($_config))
 			$js .= "CKEDITOR.replace('".$name."', ".$this->jsEncode($_config).");";
+            /*$js .= "CKEDITOR.replace(
+                '".$name."',
+                {
+                    toolbar: ".$config['toolbar'].",
+                    smallToolbar: ".$config['smallToolbar'].",
+                    maximizedToolbar: ".$config['maximizedToolbar']."
+                }
+            );";*/
 		else
 			$js .= "CKEDITOR.replace('".$name."');";
 
@@ -553,4 +567,95 @@ class CKEditor
 
 		return '"' . str_replace(array("\\", "/", "\n", "\t", "\r", "\x08", "\x0c", '"'), array('\\\\', '\\/', '\\n', '\\t', '\\r', '\\b', '\\f', '\"'), $val) . '"';
 	}
+
+    /**
+     * This method reads configuration data for the current editor's instance without overriding settings that already exist.
+     * @return array
+     */
+    function read_configuration(& $config) {
+        $toolbar_set = $this->ToolbarSet;
+        $toolbar_set_maximized = $this->ToolbarSet.'Maximized';
+        foreach ($config as $key => $value) {
+            switch ($key) {
+                case 'ToolbarSets':
+                    if (!empty($toolbar_set) && $toolbar_set != 'Default') {
+                        if (is_array($value)) {
+                            if (isset($value['Normal'])) {
+                                if (!isset($this->Config[$key][$toolbar_set])) {
+                                    $this->Config[$key][$toolbar_set] = $value['Normal'];
+                                }
+                            }
+                            if (isset($value['Maximized'])) {
+                                if (!isset($this->Config[$key][$toolbar_set_maximized])) {
+                                    $this->Config[$key][$toolbar_set_maximized] = $value['Maximized'];
+                                }
+                            }
+                        }
+                    }
+                    break;
+                case 'Width':
+                    $this->Config[$key] = (string) $value;
+                    $this->Width = $this->Config[$key];
+                    break;
+                case 'Height':
+                    $this->Config[$key] = (string) $value;
+                    $this->Height = $this->Config[$key];
+                    break;
+                default:
+                    if (!isset($this->Config[$key])) {
+                        $this->Config[$key] = $value;
+                    }
+            }
+        }
+    }
+
+    /**
+     * This method returns editor's custom configuration settings read from php-files.
+     * @return array	Custom configuration data.
+     */
+    private function & get_custom_configuration() {
+        static $config;
+        if (!isset($config)) {
+            require api_get_path(LIBRARY_PATH).'ckeditor/myconfig.php';
+        }
+        $toolbar_dir = isset($config['ToolbarSets']['Directory']) ? $config['ToolbarSets']['Directory'] : 'default';
+        $return = array_merge($config, $this->get_custom_toolbar_configuration($toolbar_dir));
+        return $return;
+    }
+
+    /**
+     * This method returns editor's toolbar configuration settings read from a php-file.
+     * @return array	Toolbar configuration data.
+     */
+    private function & get_custom_toolbar_configuration($toolbar_dir) {
+        static $toolbar_config = array('Default' => array());
+        if (!isset($toolbar_config[$this->ToolbarSet])) {
+            $toolbar_config[$this->ToolbarSet] = array();
+            if (preg_match('/[a-zA-Z_]+/', $toolbar_dir) && preg_match('/[a-zA-Z_]+/', $this->ToolbarSet)) { // A security check.
+                // Seeking the toolbar.
+                @include api_get_path(LIBRARY_PATH).'ckeditor/toolbars/'.$toolbar_dir.'/'.api_camel_case_to_underscore($this->ToolbarSet).'.php';
+                if (!isset($config['ToolbarSets']['Normal'])) {
+                    // No toolbar has been found yet.
+                    if ($toolbar_dir == 'default') {
+                        // It does not exist in default toolbar definitions, giving up.
+                        $this->ToolbarSet = 'Default';
+                    } else {
+                        // The custom toolbar does not exist, then trying to load the default one.
+                        @include api_get_path(LIBRARY_PATH).'ckeditor/toolbars/default/'.api_camel_case_to_underscore($this->ToolbarSet).'.php';
+                        if (!isset($config['ToolbarSets']['Normal'])) {
+                            // It does not exist in default toolbar definitions, giving up.
+                            $this->ToolbarSet = 'Default';
+                        } else {
+                            $toolbar_config[$this->ToolbarSet] = $config;
+                        }
+                    }
+                } else {
+                    $toolbar_config[$this->ToolbarSet] = $config;
+                }
+            } else {
+                $this->ToolbarSet = 'Default';
+            }
+        }
+        return $toolbar_config[$this->ToolbarSet];
+    }
 }
