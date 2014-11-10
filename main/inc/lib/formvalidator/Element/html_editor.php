@@ -111,7 +111,10 @@ class HTML_QuickForm_html_editor extends HTML_QuickForm_textarea {
         $this->fck_editor->Value = $this->getValue();
 
         //$result = $this->fck_editor->CreateHtml();
-        $result = $this->fck_editor->editor($this->getAttribute('name'), $this->fck_editor->Value);
+        $result = $this->fck_editor->editor(
+            $this->getAttribute('name'),
+            $this->fck_editor->Value
+        );
 
         if (isset($this->fck_editor->Config['LoadAsciiMath'])) {
             if (isset($_SESSION['ascii_math_loaded']) &&
