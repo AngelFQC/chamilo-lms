@@ -10,5 +10,7 @@ CKEDITOR.editorConfig = function( config ) {
 
     config.extraPlugins = 'button,maximize,toolbar,toolbarswitch';
     config.allowedContent = true;
-    console.log(config);
+    config.templates_files = [
+        '/main/inc/lib/ckeditor/plugins/templates/templates/chamilo.js.php'
+    ];
 };
