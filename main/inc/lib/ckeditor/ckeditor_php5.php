@@ -144,14 +144,14 @@ class CKEditor
         $config['toolbar'] = $conf['ToolbarSets']['Normal'];
         $config['smallToolbar'] = $conf['ToolbarSets']['Normal'];
         $config['maximizedToolbar'] = $conf['ToolbarSets']['Maximized'];
-
+        
 		$js = $this->returnGlobalEvents();
-		if (!empty($_config))
+		if (!empty($conf))
 			//$js .= "CKEDITOR.replace('".$name."', ".$this->jsEncode($_config).");";
             $js .= "CKEDITOR.replace(
                 '".$name."',
                 {
-                    customConfig: '/toolbars/extended/".strtolower($config['ToolbarSet']).".js'
+                    customConfig: 'toolbars/".$conf['Directory']."/".strtolower($config['ToolbarSet']).".js'
                 }
             );";
 		else
@@ -616,6 +616,7 @@ class CKEditor
         }
         $toolbar_dir = isset($config['ToolbarSets']['Directory']) ? $config['ToolbarSets']['Directory'] : 'default';
         $return = array_merge($config, $this->get_custom_toolbar_configuration($toolbar_dir));
+        $return['Directory'] = $toolbar_dir;
         return $return;
     }
 
