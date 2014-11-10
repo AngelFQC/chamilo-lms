@@ -134,7 +134,7 @@ class CKEditor
 		foreach ($this->textareaAttributes as $key => $val) {
 			$attr.= " " . $key . '="' . str_replace('"', '&quot;', $val) . '"';
 		}
-		$out = "<textarea name=\"" . $name . "\"" . $attr . ">" . htmlspecialchars($value) . "</textarea>\n";
+		$out = "<textarea id=\"" . $name . "\" name=\"" . $name . "\"" . $attr . ">" . htmlspecialchars($value) . "</textarea>\n";
 		if (!$this->initialized) {
 			$out .= $this->init();
 		}
@@ -145,19 +145,15 @@ class CKEditor
         $config['smallToolbar'] = $conf['ToolbarSets']['Normal'];
         $config['maximizedToolbar'] = $conf['ToolbarSets']['Maximized'];
 
-		$_config = $this->configSettings($config, $events);
-
 		$js = $this->returnGlobalEvents();
 		if (!empty($_config))
-			$js .= "CKEDITOR.replace('".$name."', ".$this->jsEncode($_config).");";
-            /*$js .= "CKEDITOR.replace(
+			//$js .= "CKEDITOR.replace('".$name."', ".$this->jsEncode($_config).");";
+            $js .= "CKEDITOR.replace(
                 '".$name."',
                 {
-                    toolbar: ".$config['toolbar'].",
-                    smallToolbar: ".$config['smallToolbar'].",
-                    maximizedToolbar: ".$config['maximizedToolbar']."
+                    customConfig: '/toolbars/extended/".strtolower($config['ToolbarSet']).".js'
                 }
-            );";*/
+            );";
 		else
 			$js .= "CKEDITOR.replace('".$name."');";
 

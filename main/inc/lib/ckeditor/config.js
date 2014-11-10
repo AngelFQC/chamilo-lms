@@ -9,6 +9,20 @@ CKEDITOR.editorConfig = function( config ) {
 	// config.uiColor = '#AADC6E';
 
     config.extraPlugins = 'button,maximize,toolbar,toolbarswitch';
+    config.toolbar_Basic =
+        [
+            ['Toolbarswitch']
+        ];
+    config.toolbar_Full =
+        [
+            ['Toolbarswitch', 'Save']
+        ];
+    config.toolbar = 'Basic';
+    config.smallToolbar = 'Basic';
+    config.maximizedToolbar = 'Full';
     config.allowedContent = true;
-    console.log(config);
+};
+
+function CKeditor_OnComplete(ckEditorInstance) {
+
 };

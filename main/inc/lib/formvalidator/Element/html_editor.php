@@ -27,7 +27,6 @@ class HTML_QuickForm_html_editor extends HTML_QuickForm_textarea {
     function HTML_QuickForm_html_editor($elementName = null, $elementLabel = null, $attributes = null, $config = null) {
         // The global variable $fck_attribute has been deprecated. It stays here for supporting old external code.
         global $fck_attribute;
-
         HTML_QuickForm_element :: HTML_QuickForm_element($elementName, $elementLabel, $attributes);
         $this->_persistantFreeze = true;
         $this->_type = 'html_editor';
@@ -109,11 +108,11 @@ class HTML_QuickForm_html_editor extends HTML_QuickForm_textarea {
             return parent::toHTML();
         }*/
         $this->fck_editor->Value = $this->getValue();
-
         //$result = $this->fck_editor->CreateHtml();
         $result = $this->fck_editor->editor(
             $this->getAttribute('name'),
-            $this->fck_editor->Value
+            $this->fck_editor->Value,
+            $this->fck_editor->Config
         );
 
         if (isset($this->fck_editor->Config['LoadAsciiMath'])) {
