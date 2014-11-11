@@ -1029,7 +1029,7 @@ class Exercise
 			</a>
 		');
 
-        $editor_config = array('ToolbarSet' => 'TestQuestionDescription', 'Width' => '100%', 'Height' => '150');
+        $editor_config = array('ToolbarSet' => 'Test_Question_Description', 'Width' => '100%', 'Height' => '150');
         if (is_array($type)){
             $editor_config = array_merge($editor_config, $type);
         }
