@@ -2353,7 +2353,7 @@ class Blog {
 		$oFCKeditor->Height		= '200';
 		if(!api_is_allowed_to_edit())
 		{
-			$oFCKeditor->ToolbarSet = 'ProjectCommentStudent';
+			$oFCKeditor->ToolbarSet = 'Project_Comment_Student';
 		}
 		else
 		{
