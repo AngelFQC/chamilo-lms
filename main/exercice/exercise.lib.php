@@ -144,7 +144,7 @@ function showQuestion(
     		//$oFCKeditor = new FCKeditor("choice[".$questionId."]") ;
             $oFCKeditor = new CKeditor();
 
-    		$oFCKeditor->ToolbarSet = 'TestFreeAnswer';
+    		$oFCKeditor->ToolbarSet = 'Test_Free_Answer';
     		$oFCKeditor->Width      = '100%';
     		$oFCKeditor->Height     = '200';
     		$oFCKeditor->Value      = $fck_content;
@@ -176,7 +176,7 @@ function showQuestion(
 
     		//$oFCKeditor = new FCKeditor("choice[".$questionId."]") ;
             $oFCKeditor = new CKeditor();
-    		$oFCKeditor->ToolbarSet = 'TestFreeAnswer';
+    		$oFCKeditor->ToolbarSet = 'Test_Free_Answer';
     		$oFCKeditor->Width  = '100%';
     		$oFCKeditor->Height = '150';
     		$oFCKeditor->ToolbarStartExpanded = false;
