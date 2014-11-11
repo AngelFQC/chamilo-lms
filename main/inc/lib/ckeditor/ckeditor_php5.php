@@ -151,7 +151,7 @@ class CKEditor
             $js .= "CKEDITOR.replace(
                 '".$name."',
                 {
-                    customConfig: 'toolbars/".$conf['Directory']."/".strtolower($config['ToolbarSet']).".js'
+                    customConfig: 'toolbars/".$conf['Directory']."/".strtolower($config['ToolbarSet']).".js.php'
                 }
             );";
 		else
