@@ -2357,7 +2357,7 @@ class Blog {
 		}
 		else
 		{
-			$oFCKeditor->ToolbarSet = 'ProjectComment';
+			$oFCKeditor->ToolbarSet = 'Project_Comment';
 		}
 		$oFCKeditor->Value		= isset($_POST['comment_text'])?stripslashes($_POST['comment_text']):'';
 		echo '<div class="controls">';
