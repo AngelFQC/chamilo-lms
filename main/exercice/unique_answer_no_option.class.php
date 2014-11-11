@@ -36,7 +36,7 @@ class UniqueAnswerNoOption extends Question
 		// getting the exercise list
 		$obj_ex = $_SESSION['objExercise'];
 
-		$editor_config = array('ToolbarSet' => 'TestProposedAnswer', 'Width' => '100%', 'Height' => '125');
+		$editor_config = array('ToolbarSet' => 'Test_Proposed_Answer', 'Width' => '100%', 'Height' => '125');
 
 		//this line define how many question by default appear when creating a choice question
 		$nb_answers  = isset($_POST['nb_answers']) ? (int) $_POST['nb_answers'] : 3;  // The previous default value was 2. See task #1759.
