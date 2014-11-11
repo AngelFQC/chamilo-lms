@@ -373,7 +373,7 @@ switch ($action){
             $form->addElement('html', $html);
         } else {
             $default[$name] = str_replace('{rel_path}', api_get_path(REL_PATH), $open);
-            $form->add_html_editor($name, '', true, false, array('ToolbarSet' => 'PortalHomePage', 'Width' => '100%', 'Height' => '400'));
+            $form->add_html_editor($name, '', true, false, array('ToolbarSet' => 'Portal_Home_Page', 'Width' => '100%', 'Height' => '400'));
         }
         $form->addElement('style_submit_button', null, get_lang('Save'), 'class="save"');
         $form->setDefaults($default);
