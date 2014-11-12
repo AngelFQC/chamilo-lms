@@ -7133,7 +7133,7 @@ class learnpath
             $renderer->setElementTemplate('<br />&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{label}<br />{element}', 'content_lp');
 
             $relative_prefix = '';
-            $editor_config = array( 'ToolbarSet' 			=> 'LearningPathDocuments',
+            $editor_config = array( 'ToolbarSet' 			=> 'Learning_Path_Documents',
                                     'Width' 				=> '100%',
                                     'Height' 				=> '500',
                                     'FullPage' 				=> true,
@@ -7420,7 +7420,7 @@ class learnpath
 							$relative_prefix = '../../';
                         }
 
-                        $editor_config = array( 'ToolbarSet' 			=> 'LearningPathDocuments',
+                        $editor_config = array( 'ToolbarSet' 			=> 'Learning_Path_Documents',
                         						'Width' 				=> '100%',
                         						'Height' 				=> '500',
                         						'FullPage' 				=> true,

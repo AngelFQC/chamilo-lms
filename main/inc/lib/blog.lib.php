@@ -1206,7 +1206,7 @@ class Blog {
 			$oFCKeditor->Width		= '100%';
 			$oFCKeditor->Height		= '200';
 			if(!api_is_allowed_to_edit()) {
-				$oFCKeditor->ToolbarSet = 'ProjectStudent';
+				$oFCKeditor->ToolbarSet = 'Project_Student';
 			} else {
 				$oFCKeditor->ToolbarSet = 'Project';
 			}
@@ -1294,7 +1294,7 @@ class Blog {
 		$oFCKeditor->Height		= '200';
 
 		if(!api_is_allowed_to_edit()) {
-			$oFCKeditor->ToolbarSet = 'ProjectStudent';
+			$oFCKeditor->ToolbarSet = 'Project_Student';
 		} else {
 			$oFCKeditor->ToolbarSet = 'Project';
 		}
@@ -2353,11 +2353,11 @@ class Blog {
 		$oFCKeditor->Height		= '200';
 		if(!api_is_allowed_to_edit())
 		{
-			$oFCKeditor->ToolbarSet = 'ProjectCommentStudent';
+			$oFCKeditor->ToolbarSet = 'Project_Comment_Student';
 		}
 		else
 		{
-			$oFCKeditor->ToolbarSet = 'ProjectComment';
+			$oFCKeditor->ToolbarSet = 'Project_Comment';
 		}
 		$oFCKeditor->Value		= isset($_POST['comment_text'])?stripslashes($_POST['comment_text']):'';
 		echo '<div class="controls">';

@@ -7,10 +7,4 @@ CKEDITOR.editorConfig = function( config ) {
 	// Define changes to default configuration here. For example:
 	// config.language = 'fr';
 	// config.uiColor = '#AADC6E';
-
-    config.extraPlugins = 'button,maximize,toolbar,toolbarswitch';
-    config.allowedContent = true;
-    config.templates_files = [
-        '/main/inc/lib/ckeditor/plugins/templates/templates/chamilo.js.php'
-    ];
 };

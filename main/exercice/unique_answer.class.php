@@ -39,7 +39,7 @@ class UniqueAnswer extends Question
         $obj_ex = $_SESSION['objExercise'];
 
         $editor_config = array(
-            'ToolbarSet' => 'TestProposedAnswer',
+            'ToolbarSet' => 'Test_Proposed_Answer',
             'Width' => '100%',
             'Height' => '125'
         );

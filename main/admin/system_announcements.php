@@ -148,7 +148,7 @@ if ($action_todo) {
     if (api_get_setting('wcag_anysurfer_public_pages')=='true') {
         $form->addElement('textarea', 'content', get_lang('Content'));
     } else {
-        $form->add_html_editor('content', get_lang('Content'), true, false, array('ToolbarSet' => 'PortalNews', 'Width' => '100%', 'Height' => '300'));
+        $form->add_html_editor('content', get_lang('Content'), true, false, array('ToolbarSet' => 'Portal_News', 'Width' => '100%', 'Height' => '300'));
     }
     $form->addDateRangePicker('range', get_lang('StartTimeWindow'), true, array('id' => 'date_range'));
 

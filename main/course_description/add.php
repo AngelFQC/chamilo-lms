@@ -58,7 +58,7 @@ $form->applyFilter('title','html_filter');
 if (api_get_setting('wcag_anysurfer_public_pages')=='true') {
 	WCAG_rendering::prepare_admin_form($description_content, $form);
 } else {
-	$form->add_html_editor('contentDescription', get_lang('Content'), true, false, array('ToolbarSet' => 'TrainingDescription', 'Width' => '100%', 'Height' => '200'));
+	$form->add_html_editor('contentDescription', get_lang('Content'), true, false, array('ToolbarSet' => 'Training_Description', 'Width' => '100%', 'Height' => '200'));
 }
 $form->addElement('style_submit_button', null, get_lang('Save'), 'class="save"');
 

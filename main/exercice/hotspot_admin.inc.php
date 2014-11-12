@@ -838,7 +838,7 @@ if ($modifyAnswers) {
                                     //$oFCKeditor = new FCKeditor("comment[$i]");
                                     $oFCKeditor = new CKeditor();
                                     $content = $comment[$i];
-                                    $oFCKeditor->ToolbarSet = 'TestProposedAnswer';
+                                    $oFCKeditor->ToolbarSet = 'Test_Proposed_Answer';
                                     $oFCKeditor->Config['ToolbarStartExpanded'] = 'false';
                                     $oFCKeditor->Width = '100%';
                                     $oFCKeditor->Height = '100';

@@ -869,7 +869,7 @@ switch ($action) {
 				$form->addElement('html', WCAG_Rendering::create_xhtml(isset($_POST['link_html'])?$_POST['link_html']:$link_html));
 			} else {
 				$default['link_html'] = isset($_POST['link_html']) ? $_POST['link_html'] : $link_html;
-				$form->add_html_editor('link_html', get_lang('Content'), false, false, array('ToolbarSet' => 'PortalHomePage', 'Width' => '100%', 'Height' => '400'));
+				$form->add_html_editor('link_html', get_lang('Content'), false, false, array('ToolbarSet' => 'Portal_Home_Page', 'Width' => '100%', 'Height' => '400'));
 			}
 			$form->addElement('style_submit_button', null, get_lang('Save'), 'class="save"');
 		} else {
@@ -879,7 +879,7 @@ switch ($action) {
                     $form->addElement('html', WCAG_Rendering::create_xhtml(isset($_POST['link_html'])?$_POST['link_html']:(!empty($link_html) ? $link_html : '')));
                 } else {
                     $default['link_html'] = isset($_POST['link_html']) ? $_POST['link_html'] : (!empty($link_html) ? $link_html : '');
-                    $form->add_html_editor('link_html', get_lang('Content'), false, false, array('ToolbarSet' => 'PortalHomePage', 'Width' => '100%', 'Height' => '400'));
+                    $form->add_html_editor('link_html', get_lang('Content'), false, false, array('ToolbarSet' => 'Portal_Home_Page', 'Width' => '100%', 'Height' => '400'));
                 }
             }
             $form->addElement('checkbox', 'all_langs', null, get_lang('ApplyAllLanguages'), array('id' => 'all_langs'));
@@ -953,7 +953,7 @@ switch ($action) {
 			$form->addElement('html', $html);
 		} else {
 			$default[$name] = str_replace('{rel_path}', api_get_path(REL_PATH), $open);
-			$form->add_html_editor($name, '', true, false, array('ToolbarSet' => 'PortalHomePage', 'Width' => '100%', 'Height' => '400'));
+			$form->add_html_editor($name, '', true, false, array('ToolbarSet' => 'Portal_Home_Page', 'Width' => '100%', 'Height' => '400'));
 		}
         $form->addElement('checkbox', 'all_langs', null, get_lang('ApplyAllLanguages'),array('id' => 'all_langs'));
         $form->addElement('html','<table id="table_langs" style="margin-left:5px;"><tr>');

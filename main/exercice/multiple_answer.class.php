@@ -109,10 +109,10 @@ class MultipleAnswer extends Question
 			$form->addElement('checkbox', 'correct['.$i.']', null, null, 'class="checkbox" style="margin-left: 0em;"');
 			$boxes_names[] = 'correct['.$i.']';
 
-			$form->addElement('html_editor', 'answer['.$i.']',null, 'style="vertical-align:middle"', array('ToolbarSet' => 'TestProposedAnswer', 'Width' => '100%', 'Height' => '100'));
+			$form->addElement('html_editor', 'answer['.$i.']',null, 'style="vertical-align:middle"', array('ToolbarSet' => 'Test_Proposed_Answer', 'Width' => '100%', 'Height' => '100'));
 			$form->addRule('answer['.$i.']', get_lang('ThisFieldIsRequired'), 'required');
 
-				$form->addElement('html_editor', 'comment['.$i.']',null, 'style="vertical-align:middle"', array('ToolbarSet' => 'TestProposedAnswer', 'Width' => '100%', 'Height' => '100'));
+				$form->addElement('html_editor', 'comment['.$i.']',null, 'style="vertical-align:middle"', array('ToolbarSet' => 'Test_Proposed_Answer', 'Width' => '100%', 'Height' => '100'));
 
 			$form->addElement('text', 'weighting['.$i.']',null, array('class' => "span1", 'value' => '0'));
 			$form -> addElement ('html', '</tr>');

@@ -72,7 +72,7 @@ Display::display_header($nameTools,"Exercise");
 		<!-- BEGIN error --><br /><span style="color: #ff0000;font-size:10px">{error}</span><!-- END error -->
 	</td>
 </tr>');
-	$form->add_html_editor('Feedback', $i.'.'.$ans, false, false, array('ToolbarSet' => 'TestAnswerFeedback', 'Width' => '600', 'Height' => '200'));
+	$form->add_html_editor('Feedback', $i.'.'.$ans, false, false, array('ToolbarSet' => 'Test_Answer_Feedback', 'Width' => '600', 'Height' => '200'));
 	$form->display();
 	echo "</td>";
 	}?>
