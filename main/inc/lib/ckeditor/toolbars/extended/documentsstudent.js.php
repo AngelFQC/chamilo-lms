@@ -19,7 +19,7 @@ $extraPlugins = array(
 );
 
 $toolbarBasic = array(
-    array('Save', 'NewPage', 'Templates', '-', 'PasteWord'),
+    array('Save', 'NewPage', 'Templates', '-', 'PasteFromWord'),
     array('Undo', 'Redo'),
     array('Link', 'Image', 'flvPlayer', 'Flash', 'YouTube', 'MP3', 'TableOC', 'mimetex', 'asciimath', 'asciisvg'),
     array('BulletedList', 'NumberedList', 'HorizontalRule'),
@@ -31,7 +31,7 @@ $toolbarBasic = array(
 
 $toolbarFull = array(
     array('Save', 'NewPage', 'Templates', '-', 'Preview', 'Print'),
-    array('Cut', 'Copy', 'Paste', 'PasteText', 'PasteWord'),
+    array('Cut', 'Copy', 'Paste', 'PasteText', 'PasteFromWord'),
     array('Undo', 'Redo', '-', 'SelectAll', 'Find', '-', 'RemoveFormat'),
     array('Link', 'Unlink', 'Anchor', 'Glossary'),
     array('Image', 'imgmapPopup', 'flvPlayer', 'EmbedMovies', 'YouTube', 'Flash', 'MP3', 'googlemaps', 'Smiley', 'SpecialChar', 'insertHtml', 'mimetex', 'asciimath', 'asciisvg', 'fckeditor_wiris_openFormulaEditor', 'fckeditor_wiris_openCAS'),
@@ -39,7 +39,7 @@ $toolbarFull = array(
     array('TableOC', 'Table', 'TableInsertRowAfter', 'TableDeleteRows', 'TableInsertColumnAfter', 'TableDeleteColumns', 'TableInsertCellAfter', 'TableDeleteCells', 'TableMergeCells', 'TableHorizontalSplitCell', 'TableVerticalSplitCell', 'TableCellProp', '-', 'CreateDiv'),
     array('BulletedList', 'NumberedList', 'HorizontalRule', '-', 'Outdent', 'Indent', 'Blockquote'),
     array('JustifyLeft', 'JustifyCenter', 'JustifyRight', 'JustifyBlock'),
-    array('Bold', 'Italic', 'Underline', 'StrikeThrough', '-', 'Subscript', 'Superscript', '-', 'TextColor', 'BGColor'),
+    array('Bold', 'Italic', 'Underline', 'Strike', '-', 'Subscript', 'Superscript', '-', 'TextColor', 'BGColor'),
     array($SpellChecker),
     array('Styles', 'Format', 'Font', 'FontSize'),
     array('PageBreak', 'ShowBlocks'),

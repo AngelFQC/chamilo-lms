@@ -19,7 +19,7 @@ $extraPlugins = array(
 );
 
 $toolbarBasic = array(
-    array('Save', 'NewPage', 'Templates', '-', 'PasteWord'),
+    array('Save', 'NewPage', 'Templates', '-', 'PasteFromWord'),
     array('Undo', 'Redo'),
     array('Link', 'Image', 'flvPlayer', 'Flash', 'YouTube', 'MP3', 'TableOC', 'mimetex', 'asciimath', 'asciisvg'),
     array('BulletedList', 'NumberedList', 'Rule'),
@@ -37,8 +37,8 @@ $toolbarFull = array(
     array('Image', 'imgmapPopup', 'flvPlayer', 'Flash', 'YouTube', 'EmbedMovies', 'MP3', 'googlemaps', 'Smiley', 'SpecialChar', 'insertHtml', 'mimetex', 'asciimath', 'asciisvg', 'fckeditor_wiris_openFormulaEditor', 'fckeditor_wiris_openCAS'),
     '/',
     array('TableOC', 'Table', 'TableInsertRowAfter', 'TableDeleteRows', 'TableInsertColumnAfter', 'TableDeleteColumns', 'TableInsertCellAfter', 'TableDeleteCells', 'TableMergeCells', 'TableHorizontalSplitCell', 'TableVerticalSplitCell', 'TableCellProp', '-', 'CreateDiv'),
-    array('BulletedList', 'NumberedList', 'Rule', '-', 'Outdent', 'Indent', 'Blockquote'),
-    array('JustifyLeft', 'JustifyCenter', 'JustifyRight', 'JustifyFull'),
+    array('BulletedList', 'NumberedList', 'HorizontalRule', '-', 'Outdent', 'Indent', 'Blockquote'),
+    array('JustifyLeft', 'JustifyCenter', 'JustifyRight', 'JustifyBlock'),
     array('Bold', 'Italic', 'Underline', 'Strike', '-', 'Subscript', 'Superscript', '-', 'TextColor', 'BGColor'),
     array('Abbr'),
     array($SpellChecker),

@@ -39,7 +39,7 @@ $toolbarFull = array(
     array('TableOC', 'Table', 'TableInsertRowAfter', 'TableDeleteRows', 'TableInsertColumnAfter', 'TableDeleteColumns', 'TableInsertCellAfter', 'TableDeleteCells', 'TableMergeCells', 'TableHorizontalSplitCell', 'TableVerticalSplitCell', 'TableCellProp', '-', 'CreateDiv'),
     array('BulletedList', 'NumberedList', 'HorizontalRule', '-', 'Outdent', 'Indent', 'Blockquote'),
     array('JustifyLeft', 'JustifyCenter', 'JustifyRight', 'JustifyBlock'),
-    array('Bold', 'Italic', 'Underline', 'StrikeThrough', '-', 'Subscript', 'Superscript', '-', 'TextColor', 'BGColor'),
+    array('Bold', 'Italic', 'Underline', 'Strike', '-', 'Subscript', 'Superscript', '-', 'TextColor', 'BGColor'),
     array($SpellChecker),
     array('Styles', 'Format', 'Font', 'FontSize'),
     array('PageBreak', 'ShowBlocks'),

@@ -40,7 +40,7 @@ $toolbarFull = array(
     array('JustifyLeft', 'JustifyCenter', 'JustifyRight', 'JustifyBlock'),
     array('Bold', 'Italic', 'Underline', 'Strike', '-', 'Subscript', 'Superscript', '-', 'TextColor', 'BGColor'),
     array($SpellChecker),
-    array('Style', 'Format', 'Font', 'FontSize'),
+    array('Styles', 'Format', 'Font', 'FontSize'),
     array('PageBreak', 'ShowBlocks', 'Source'),
     array('Toolbarswitch')
 );
