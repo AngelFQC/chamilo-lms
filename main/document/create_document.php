@@ -54,7 +54,7 @@ $(document).ready(function() {
                 templateHTML += "<div class=title>" + template.title + "</div>";
 
                 if (template.description) {
-                    templateHTML += "<div class=description>" + template.description;
+                    templateHTML += "<div class=description>" + template.description + "</div>";
                 }
                 
                 templateHTML += "</div>";

@@ -73,7 +73,7 @@ $(document).ready(function() {
                 templateHTML += "<b>" + template.title + "</b>";
 
                 if (template.description) {
-                    templateHTML += "<br>" + template.description;
+                    templateHTML += "<div class=description>" + template.description + "</div>";
                 }
                 
                 templateHTML += "</div>";
@@ -522,8 +522,8 @@ if ($owner_id == api_get_user_id() ||
 		Display::display_warning_message(get_lang('BrowserDontSupportsSVG'));
 	}
 	echo '<div class="row-fluid" style="overflow:hidden">
-            <div id="template_col" class="span2" style="width:162px">
-                <div id="frmModel" style="overflow: visible;"></div>
+            <div id="template_col" class="span3" style="width:200px">
+                <div id="frmModel"></div>
             </div>
             <div id="hide_bar_template"></div>
             <div id="doc_form" class="span9">
