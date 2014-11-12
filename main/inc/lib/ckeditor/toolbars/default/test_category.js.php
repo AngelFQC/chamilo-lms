@@ -22,3 +22,15 @@ $toolbarBasic = array(
     array('JustifyLeft', 'JustifyCenter', 'JustifyRight', '-', 'Source')
 );
 ?>
+
+CKEDITOR.editorConfig = function(config) {
+config.extraPlugins = '<?php echo implode(',', $extraPlugins) ?>';
+config.toolbar_Basic = <?php echo json_encode($toolbarBasic) ?>;
+config.toolbar = 'Basic';
+config.smallToolbar = 'Basic';
+config.allowedContent = true;
+};
+
+function CKeditor_OnComplete(ckEditorInstance) {
+
+}
