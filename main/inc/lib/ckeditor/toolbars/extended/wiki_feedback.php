@@ -1,67 +1,63 @@
 <?php
-// Chamilo LMS
-// See license terms in chamilo/documentation/license.txt
+/* For licensing terms, see /license.txt */
+/**
+ * CKEditor toolbar for Wiki Feedback form
+ * @author Imanol Losada Oriol <imanol.losada@beeznest.com>
+ */
+header('Content-Type: application/x-javascript');
 
-// Training tools
-// Wiki - feedback
+require_once '../../../main_api.lib.php';
 
-// For more information: http://docs.fckeditor.net/FCKeditor_2.x/Developers_Guide/Configuration/Configuration_Options
-
-//NOTE: Does not include Replace because it is redundant, being in the same tab to Find.
-
-//TODO: DocProps, asciimath don't run ok here
-
-
-// Hide/show SpellCheck buttom
+// Hide/show SpellCheck button
 if ((api_get_setting('allow_spellcheck') == 'true')) {
-	$VSpellCheck='SpellCheck';
+	$VSpellCheck='Scayt';
 }
 else{
 	$VSpellCheck='';	
 }
+
+$extraPlugins = array(
+    'toolbarswitch',
+);
+
 // This is the visible toolbar set when the editor has "normal" size.
-$config['ToolbarSets']['Normal'] = array(
+$toolbarBasic = array(
 	array('Link','Unlink','Bold','Italic','TextColor','BGColor','mimetex')
 );
 
 // This is the visible toolbar set when the editor is maximized.
 // If it has not been defined, then the toolbar set for the "normal" size is used.
-$config['ToolbarSets']['Maximized'] = array(
+$toolbarFull = array(
 	array('NewPage','Templates','-','Preview','Print'),
-	array('Cut','Copy','Paste','PasteText','PasteWord'),
+	array('Cut','Copy','Paste','PasteText','PasteFromWord'),
 	array('Undo','Redo','-','SelectAll','Find','-','RemoveFormat'),
 	array('Link','Unlink','Anchor','Glossary'),
 	array('Image','imgmapPopup','flvPlayer','EmbedMovies','YouTube','Flash','MP3','googlemaps','Smiley','SpecialChar','insertHtml','mimetex','fckeditor_wiris_openFormulaEditor','fckeditor_wiris_openCAS'),
 '/',
 	array('TableOC','Table','TableInsertRowAfter','TableDeleteRows','TableInsertColumnAfter','TableDeleteColumns','TableInsertCellAfter','TableDeleteCells','TableMergeCells','TableHorizontalSplitCell','TableVerticalSplitCell','TableCellProp','-','CreateDiv'),
-	array('UnorderedList','OrderedList','Rule','-','Outdent','Indent','Blockquote'),
-	array('JustifyLeft','JustifyCenter','JustifyRight','JustifyFull'),	
-	array('Bold','Italic','Underline','StrikeThrough','-','Subscript','Superscript','-','TextColor','BGColor'),
+	array('BulletedList','NumberedList','HorizontalRule','-','Outdent','Indent','Blockquote'),
+	array('JustifyLeft','JustifyCenter','JustifyRight','JustifyBlock'),
+	array('Bold','Italic','Underline','Strike','-','Subscript','Superscript','-','TextColor','BGColor'),
 	array($VSpellCheck),	
-	array('Style','FontFormat','FontName','FontSize'),	
+	array('Styles','Format','Font','FontSize'),
 	array('PageBreak','ShowBlocks','Source'),
-	array('FitWindow')
+	array('Toolbarswitch')
 	
 );
 
-// Sets whether the toolbar can be collapsed/expanded or not.
-// Possible values: true , false
-//$config['ToolbarCanCollapse'] = true;
-
-// Sets how the editor's toolbar should start - expanded or collapsed.
-// Possible values: true , false
 $config['ToolbarStartExpanded'] = false;
+?>
 
-//This option sets the location of the toolbar.
-// Possible values: 'In' , 'None' , 'Out:[TargetId]' , 'Out:[TargetWindow]([TargetId])'
-//$config['ToolbarLocation'] = 'In';
+CKEDITOR.editorConfig = function(config) {
+config.extraPlugins = '<?php echo implode(',', $extraPlugins) ?>';
+config.toolbar_Basic = <?php echo json_encode($toolbarBasic) ?>;
+config.toolbar_Full = <?php echo json_encode($toolbarFull) ?>;
+config.toolbar = 'Basic';
+config.smallToolbar = 'Basic';
+config.maximizedToolbar = 'Full';
+config.allowedContent = true;
+};
 
-// A setting for blocking copy/paste functions of the editor.
-// This setting activates on leaners only. For users with other statuses there is no blocking copy/paste.
-// Possible values: true , false
-//$config['BlockCopyPaste'] = false;
+function CKeditor_OnComplete(ckEditorInstance) {
 
-// Here new width and height of the editor may be set.
-// Possible values, examples: 300 , '250' , '100%' , ...
-//$config['Width'] = '100%';
-//$config['Height'] = '400';
+}
