@@ -74,7 +74,7 @@ class NotebookForm extends \FormValidator
         if (api_is_allowed_to_edit()) {
             $toolbar = array('ToolbarSet' => 'Notebook', 'Width' => '100%', 'Height' => '300');
         } else {
-            $toolbar = array('ToolbarSet' => 'NotebookStudent', 'Width' => '100%', 'Height' => '300', 'UserStatus' => 'student');
+            $toolbar = array('ToolbarSet' => 'Notebook_Student', 'Width' => '100%', 'Height' => '300', 'UserStatus' => 'student');
         }
         $this->add_html_editor('description', get_lang('NoteComment'), true, api_is_allowed_to_edit(), $toolbar);
         

@@ -78,7 +78,7 @@ if (isset($_GET['action']) && $_GET['action'] == 'addnote') {
 	//$form->applyFilter('note_title', 'html_filter');
 	$form->addElement('html_editor', 'note_comment', get_lang('NoteComment'), null, api_is_allowed_to_edit()
 		? array('ToolbarSet' => 'Notebook', 'Width' => '100%', 'Height' => '300')
-		: array('ToolbarSet' => 'NotebookStudent', 'Width' => '100%', 'Height' => '300', 'UserStatus' => 'student')
+		: array('ToolbarSet' => 'Notebook_Student', 'Width' => '100%', 'Height' => '300', 'UserStatus' => 'student')
 	);
 	$form->addElement('style_submit_button', 'SubmitNote', get_lang('AddNote'), 'class="add"');
 
@@ -125,7 +125,7 @@ elseif (isset($_GET['action']) && $_GET['action'] == 'editnote' && is_numeric($_
 	//$form->applyFilter('note_title', 'html_filter');
 	$form->addElement('html_editor', 'note_comment', get_lang('NoteComment'), null, api_is_allowed_to_edit()
 		? array('ToolbarSet' => 'Notebook', 'Width' => '100%', 'Height' => '300')
-		: array('ToolbarSet' => 'NotebookStudent', 'Width' => '100%', 'Height' => '300', 'UserStatus' => 'student')
+		: array('ToolbarSet' => 'Notebook_Student', 'Width' => '100%', 'Height' => '300', 'UserStatus' => 'student')
 	);
 	$form->addElement('style_submit_button', 'SubmitNote', get_lang('ModifyNote'), 'class="save"');
 
