@@ -24,7 +24,7 @@ $toolbarBasic = array(
 	array('Image','flvPlayer','Flash','EmbedMovies','YouTube','MP3','mimetex'),
 	array('Table','SpecialChar'),
     '/',
-	array('Style', 'Format','Font','FontSize'),
+	array('Styles', 'Format','Font','FontSize'),
     array('Bold','Italic','Underline'),
 	array('JustifyLeft','JustifyCenter','JustifyRight','-','NumberedList','BulletedList','-','Outdent','Indent','-','TextColor','BGColor'),
     array('Source')

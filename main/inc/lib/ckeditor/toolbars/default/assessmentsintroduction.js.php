@@ -25,7 +25,7 @@ $toolbarBasic = array(
     array('Table','SpecialChar'),
     array('NumberedList','BulletedList','-','Outdent','Indent','-','TextColor','BGColor'),
     '/',
-    array('Style','FontFormat','FontName','FontSize'),
+    array('Styles','Format','Font','FontSize'),
     array('Bold','Italic','Underline'),
     array('Subscript','Superscript','-','JustifyLeft','JustifyCenter','JustifyRight','JustifyBlock'),
     array('Source')

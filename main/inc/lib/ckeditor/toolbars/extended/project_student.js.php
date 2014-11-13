@@ -34,7 +34,7 @@ $toolbarBasic = array(
 // This is the visible toolbar set when the editor is maximized.
 // If it has not been defined, then the toolbar set for the "normal" size is used.
 
-$config['ToolbarSets']['Maximized'] = array(
+$toolbarFull = array(
 	array('Save','NewPage','Templates','-','Preview','Print'),
 	array('Cut','Copy','Paste','PasteText','PasteFromWord'),
 	array('Undo','Redo','-','SelectAll','Find','-','RemoveFormat'),

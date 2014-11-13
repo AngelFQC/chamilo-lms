@@ -27,7 +27,7 @@ $toolbarBasic = array(
 	array('Link','Image','flvPlayer','Flash','MP3','TableOC','mimetex','asciimath','asciisvg'),
 	array('BulletedList','NumberedList','HorizontalRule'),
 	array('JustifyLeft','JustifyCenter','JustifyRight','JustifyBlock'),
-	array('FontFormat','FontName','FontSize','Bold','Italic','Underline','TextColor','BGColor','Source'),
+	array('Format','Font','FontSize','Bold','Italic','Underline','TextColor','BGColor','Source'),
 	array('Toolbarswitch')
 );
 

@@ -22,7 +22,7 @@ $toolbarBasic = array(
     array('Save', 'NewPage', 'Templates', '-', 'PasteFromWord'),
     array('Undo', 'Redo'),
     array('Link', 'Image', 'flvPlayer', 'Flash', 'YouTube', 'MP3', 'TableOC', 'mimetex', 'asciimath', 'asciisvg'),
-    array('BulletedList', 'NumberedList', 'Rule'),
+    array('BulletedList', 'NumberedList', 'HorizontalRule'),
     array('JustifyLeft', 'JustifyCenter', 'JustifyBlock'),
     array('Abbr'),
     array('Format', 'Font', 'FontSize', 'Bold', 'Italic', 'Underline', 'TextColor', 'BGColor', 'Source'),

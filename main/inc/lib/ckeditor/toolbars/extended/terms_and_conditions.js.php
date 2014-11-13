@@ -14,7 +14,7 @@ $extraPlugins = array(
 
 // This is the visible toolbar set when the editor has "normal" size.
 $toolbarBasic = array(
-	array('Style','Format','Font','FontSize'),
+	array('Styles','Format','Font','FontSize'),
 	array('Bold','Italic','Underline'),
 	array('JustifyLeft','JustifyCenter','JustifyRight')
 );

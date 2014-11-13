@@ -14,7 +14,7 @@ $extraPlugins = array(
 
 // This is the visible toolbar set when the editor has "normal" size.
 $toolbarBasic = array(
-    array('Toolbarswitch','Bold','Image','Link','PasteWord','MP3','mimetex','Table','Subscript','Superscript','Source')
+    array('Toolbarswitch','Bold','Image','Link','PasteFromWord','MP3','mimetex','Table','Subscript','Superscript','Source')
 );
 
 $config['ToolbarStartExpanded'] = false;
