@@ -73,5 +73,5 @@ CKEDITOR.editorConfig = function(config) {
 };
 
 function CKeditor_OnComplete(ckEditorInstance) {
-    console.log(ckEditorInstance);
+
 }
