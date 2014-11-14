@@ -6,7 +6,7 @@
  */
 header('Content-Type: application/x-javascript');
 
-require_once '../../../main_api.lib.php';
+require_once '../../../../global.inc.php';
 
 // Hide/show SpellCheck button
 if ((api_get_setting('allow_spellcheck') == 'true')) {
@@ -57,6 +57,10 @@ $config['ToolbarStartExpanded'] = false;
 ?>
 
 CKEDITOR.editorConfig = function(config) {
+    config.templates_files = [
+        '<?php echo api_get_path(WEB_LIBRARY_PATH); ?>ckeditor/plugins/templates/templates/chamilo.js.php'
+    ];
+
 config.extraPlugins = '<?php echo implode(',', $extraPlugins) ?>';
 config.toolbar_Basic = <?php echo json_encode($toolbarBasic) ?>;
 config.toolbar_Full = <?php echo json_encode($toolbarFull) ?>;
