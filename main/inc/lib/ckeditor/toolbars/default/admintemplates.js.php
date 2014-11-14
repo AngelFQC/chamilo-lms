@@ -19,7 +19,7 @@ $extraPlugins = array(
 );
 
 $toolbarBasic = array(
-    array('NewPage','Templates','Save','Print','PageBreak','FitWindow','-','PasteWord','-','Undo','Redo','-','SelectAll','-','Find'),
+    array('NewPage','Templates','Save','Print','PageBreak','Toolbarswitch','-','PasteFromWord','-','Undo','Redo','-','SelectAll','-','Find'),
 	array('Bold','Italic','Underline'),
 	array('Link','Unlink','Anchor'),
 	array('Image','flvPlayer','Flash','EmbedMovies','YouTube','MP3','mimetex','asciimath'),
