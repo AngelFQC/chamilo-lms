@@ -7489,7 +7489,6 @@ class learnpath
                             $relative_prefix = '../../';
                         }
 
-<<<<<<< HEAD
                         $editor_config = array( 'ToolbarSet' 			=> 'Learning_Path_Documents',
                         						'Width' 				=> '100%',
                         						'Height' 				=> '500',
@@ -7497,15 +7496,7 @@ class learnpath
                             					'CreateDocumentDir' 	=> $relative_prefix,
                             					'CreateDocumentWebDir' 	=> api_get_path(WEB_COURSE_PATH) . api_get_course_path().'/document/',
                             					'BaseHref' 				=> api_get_path(WEB_COURSE_PATH) . api_get_course_path().'/document/'.$relative_path
-=======
-                        $editor_config = array( 'ToolbarSet' 			=> 'LearningPathDocuments',
-                            'Width' 				=> '100%',
-                            'Height' 				=> '500',
-                            'FullPage' 				=> true,
-                            'CreateDocumentDir' 	=> $relative_prefix,
-                            'CreateDocumentWebDir' 	=> api_get_path(WEB_COURSE_PATH) . api_get_course_path().'/document/',
-                            'BaseHref' 				=> api_get_path(WEB_COURSE_PATH) . api_get_course_path().'/document/'.$relative_path
->>>>>>> 8407c6cd991553245a3ad540ca14f29207b9ed74
+
                         );
 
                         if ($_GET['action'] == 'add_item') {
