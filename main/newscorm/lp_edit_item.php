@@ -47,6 +47,49 @@ function InnerDialogLoaded() {
     return B.ClickFrame();
 $};'.$_SESSION['oLP']->get_js_dropdown_array().'
 
+$(document).on("ready", function() {
+    var showTemplates = function () {
+        CKEDITOR.editorConfig(CKEDITOR.config);
+        CKEDITOR.loadTemplates(CKEDITOR.config.templates_files, function (a){
+            var templatesConfig = CKEDITOR.getTemplates("default");
+            var $templatesUL = $("<ul>");
+
+            $.each(templatesConfig.templates, function () {
+                var template = this;
+                var $templateLi = $("<li>");
+
+                var templateHTML = "<img src=\"" + templatesConfig.imagesPath + template.image + "\" >";
+                templateHTML += "<div class=title>" + template.title + "</div>";
+
+                if (template.description) {
+                    templateHTML += "<div class=description>" + template.description + "</div>";
+                }
+                
+                templateHTML += "</div>";
+
+                $("<a>", {
+                    href: "#",
+                    html: templateHTML,
+                    click: function (e) {
+                        e.preventDefault();
+
+                        CKEDITOR.instances.content_lp.setData(template.html, function () {
+                            this.checkDirty();
+                        });
+                    }
+                }).appendTo($templateLi);
+
+                $templatesUL.append($templateLi);
+            });
+
+            $templatesUL.appendTo("#frmModel");
+        });
+    };
+
+    CKEDITOR.on("instanceReady", function (e) {
+        showTemplates();
+    });
+});
 </script>';
 
 /* Constants and variables */
