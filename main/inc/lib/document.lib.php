@@ -2706,8 +2706,6 @@ class DocumentManager
                     if (!empty($documentId)) {
                         $table_document = Database::get_course_table(TABLE_DOCUMENT);
                         $params = array();
-                        error_log('dd');
-                        error_log($if_exists);
                         /*if ($if_exists == 'rename') {
                             // Remove prefix
                             $suffix = DocumentManager::getDocumentSuffix(
@@ -4615,7 +4613,7 @@ class DocumentManager
             $dir = null;
         }
 
-        if (!empty($dir)) {
+        if (!empty($dir) && $dir != '/') {
             $dir = $dir.'/';
         }
 
@@ -4709,14 +4707,14 @@ class DocumentManager
         $fileNameWithSuffix = Database::escape_string($fileNameWithSuffix);
 
         // Check if pathname already exists inside document table
-        $tbl_document = Database::get_course_table(TABLE_DOCUMENT);
-        $sql = "SELECT id, path FROM $tbl_document
+        $table = Database::get_course_table(TABLE_DOCUMENT);
+        $sql = "SELECT id, path FROM $table
                 WHERE
                     filetype = 'file' AND
                     c_id = $courseId AND
                     (
                         path = '".$fileNameEscape."' OR
-                        path ='$fileNameWithSuffix'
+                        path = '$fileNameWithSuffix'
                     ) AND
                     (session_id = 0 OR session_id = $sessionId)
         ";
@@ -4772,8 +4770,6 @@ class DocumentManager
     {
         $counter = 1;
         $filePath = $path.$name;
-        error_log('getUniqueFileName');
-        error_log($filePath);
         $uniqueName = $name;
         while($documentExists = self::documentExists(
             $filePath,
@@ -4783,10 +4779,9 @@ class DocumentManager
         )) {
             $uniqueName = self::addSuffixToFileName($name, '_'.$counter);
             $filePath = $path.$uniqueName;
-            error_log($filePath);
             $counter++;
         }
-        error_log($uniqueName);
+
         return $uniqueName;
     }
 
