@@ -3733,7 +3733,13 @@ form .formw .freeze {
 #frmModel ul li .title, #frmModel ul li .description{
   padding-top: .5em;
   padding-bottom: .5em;
-  width: 180px;
+  width: auto;
+}
+.lp-add-item{
+  display:block;
+  height:890px;
+  width:250px;
+  position:relative;
 }
 /* end list template document */
 

@@ -297,7 +297,7 @@ $message = isset($_REQUEST['message']) ? $_REQUEST['message'] : null;
 // Show the template list.
 if ($type == 'document' && !isset($_GET['file'])) {
     // Show the template list.
-    echo '<div id="frmModel" style="display:block; height:890px;width:100px; position:relative;"></div>';
+    echo '<div id="frmModel" class="lp-add-item"></div>';
 }
 
 echo '</div>';
