@@ -3727,8 +3727,14 @@ form .formw .freeze {
   margin: 0;
   padding: 0 .5em 0 1em;
 }
+#frmModel ul li:hover{
+  background-color: #FAFAFA;
+  border: 1px solid #F2F2F2;
+}
 #frmModel ul li{
   text-align: center;
+  padding-top: 1em;
+  padding-bottom: 1em;
 }
 #frmModel ul li .title, #frmModel ul li .description{
   padding-top: .5em;
