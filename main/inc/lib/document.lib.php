@@ -609,11 +609,12 @@ class DocumentManager
                 INNER JOIN $TABLE_DOCUMENT AS docs
                 ON (
                     docs.id = last.ref AND
-                    last.tool = '".TOOL_DOCUMENT."' AND
-                    docs.c_id = {$_course['real_id']} AND
-                    last.c_id = {$_course['real_id']}
+                    docs.c_id = last.c_id
                 )
-                WHERE
+                WHERE                                
+                    last.tool = '".TOOL_DOCUMENT."' AND 
+                    docs.c_id = {$_course['real_id']} AND
+                    last.c_id = {$_course['real_id']} AND
                     docs.path LIKE '" . Database::escape_string($path . $added_slash.'%'). "' AND
                     docs.path NOT LIKE '" . Database::escape_string($path . $added_slash.'%/%')."' AND
                     docs.path NOT LIKE '%_DELETED_%' AND
@@ -662,6 +663,7 @@ class DocumentManager
                     $template_result = Database::query($sql);
                     $row['is_template'] = (Database::num_rows($template_result) > 0) ? 1 : 0;
                 }
+                $row['basename'] = basename($row['path']);
                 // Just filling $document_data.
                 $document_data[$row['id']] = $row;
             }
@@ -744,6 +746,7 @@ class DocumentManager
      * @param int $groupIid iid
      * @param boolean $can_see_invisible
      * @param boolean $getInvisibleList
+     * @param string $path current path
      *
      * @return array with paths
      */
@@ -751,7 +754,8 @@ class DocumentManager
         $_course,
         $groupIid = 0,
         $can_see_invisible = false,
-        $getInvisibleList = false
+        $getInvisibleList = false,
+        $path = ''
     ) {
         $TABLE_ITEMPROPERTY = Database::get_course_table(TABLE_ITEM_PROPERTY);
         $TABLE_DOCUMENT = Database::get_course_table(TABLE_DOCUMENT);
@@ -763,8 +767,8 @@ class DocumentManager
             api_get_session_id()
         );
 
+        $conditionList = array();
         if (!empty($students)) {
-            $conditionList = array();
             foreach ($students as $studentId => $studentInfo) {
                 $conditionList[] = '/shared_folder/sf_user_' . $studentInfo['user_id'];
             }
@@ -783,7 +787,11 @@ class DocumentManager
         if ($can_see_invisible) {
             // condition for the session
             $session_id = api_get_session_id();
-            $condition_session = api_get_session_condition($session_id, true, false, 'docs.session_id');
+            //$condition_session = api_get_session_condition($session_id, true, false, 'docs.session_id');
+
+            $session_id = $session_id ?: api_get_session_id();
+            $condition_session = " AND (last.session_id = '$session_id' OR (last.session_id = '0' OR last.session_id IS NULL) )";
+            $condition_session .= self::getSessionFolderFilters($path, $session_id);
 
             if ($groupIid <> 0) {
                 $sql = "SELECT DISTINCT docs.id, path
@@ -791,11 +799,12 @@ class DocumentManager
                        INNER JOIN $TABLE_DOCUMENT  AS docs
                        ON (
                             docs.id = last.ref AND
+                            docs.c_id = last.c_id
+                       )
+                       WHERE                       
                             last.tool = '" . TOOL_DOCUMENT . "' AND
                             last.c_id = {$_course['real_id']} AND
-                            docs.c_id = {$_course['real_id']}
-                       )
-                       WHERE
+                            docs.c_id = {$_course['real_id']} AND
                             docs.filetype = 'folder' AND
                             $groupCondition AND
                             docs.path NOT LIKE '%shared_folder%' AND
@@ -808,11 +817,12 @@ class DocumentManager
                         INNER JOIN $TABLE_DOCUMENT  AS docs
                         ON (
                             docs.id = last.ref AND
-                            last.tool = '" . TOOL_DOCUMENT . "' AND
-                            last.c_id = {$_course['real_id']} AND
-                            docs.c_id = {$_course['real_id']}
+                            docs.c_id = last.c_id                          
                         )
                         WHERE
+                            last.tool = '" . TOOL_DOCUMENT . "' AND
+                            last.c_id = {$_course['real_id']} AND
+                            docs.c_id = {$_course['real_id']} AND
                             docs.filetype = 'folder' AND
                             docs.path NOT LIKE '%_DELETED_%' AND
                             $groupCondition AND
@@ -861,9 +871,9 @@ class DocumentManager
             //get visible folders
             $sql = "SELECT DISTINCT docs.id, path
                     FROM
-                        $TABLE_ITEMPROPERTY AS last INNER JOIN 
-                        $TABLE_DOCUMENT AS docs
-                        ON (docs.id = last.ref AND last.c_id = docs.c_id)
+                    $TABLE_ITEMPROPERTY AS last 
+                    INNER JOIN $TABLE_DOCUMENT AS docs
+                    ON (docs.id = last.ref AND last.c_id = docs.c_id)
                     WHERE
                         $fileType
                         last.tool = '" . TOOL_DOCUMENT . "' AND
@@ -890,7 +900,8 @@ class DocumentManager
             $condition_session = api_get_session_condition($session_id, true, false, 'docs.session_id');
             //get invisible folders
             $sql = "SELECT DISTINCT docs.id, path
-                    FROM $TABLE_ITEMPROPERTY AS last INNER JOIN $TABLE_DOCUMENT AS docs
+                    FROM $TABLE_ITEMPROPERTY AS last 
+                    INNER JOIN $TABLE_DOCUMENT AS docs
                     ON (docs.id = last.ref AND last.c_id = docs.c_id)
                     WHERE                        
                         docs.filetype = 'folder' AND
@@ -907,9 +918,10 @@ class DocumentManager
                 $condition_session = api_get_session_condition($session_id, true, false, 'docs.session_id');
                 //get visible folders in the invisible ones -> they are invisible too
                 $sql = "SELECT DISTINCT docs.id, path
-                        FROM $TABLE_ITEMPROPERTY AS last, $TABLE_DOCUMENT AS docs
-                        WHERE
-                            docs.id = last.ref AND
+                        FROM $TABLE_ITEMPROPERTY AS last 
+                        INNER JOIN $TABLE_DOCUMENT AS docs
+                        ON (docs.id = last.ref AND docs.c_id = last.c_id)
+                        WHERE                            
                             docs.path LIKE '" . Database::escape_string($row['path'].'/%') . "' AND
                             docs.filetype = 'folder' AND
                             last.tool = '" . TOOL_DOCUMENT . "' AND
@@ -983,12 +995,13 @@ class DocumentManager
                     $path = Database::escape_string($file);
                     // Check
                     $sql = "SELECT td.id, readonly, tp.insert_user_id
-                            FROM $TABLE_DOCUMENT td, $TABLE_PROPERTY tp
+                            FROM $TABLE_DOCUMENT td 
+                            INNER JOIN $TABLE_PROPERTY tp
+                            ON (td.c_id = tp.c_id AND tp.ref= td.id)
                             WHERE
                                 td.c_id = $course_id AND
                                 tp.c_id = $course_id AND
-                                td.session_id = $sessionId AND
-                                tp.ref= td.id AND
+                                td.session_id = $sessionId AND                                
                                 (path='" . $path . "' OR path LIKE BINARY '" . $path . "/%' ) ";
                     // Get all id's of documents that are deleted
                     $what_to_check_result = Database::query($sql);
@@ -1017,11 +1030,14 @@ class DocumentManager
 
         if (!empty($document_id)) {
             $sql = "SELECT a.insert_user_id, b.readonly
-                   FROM $TABLE_PROPERTY a, $TABLE_DOCUMENT b
+                   FROM $TABLE_PROPERTY a 
+                   INNER JOIN $TABLE_DOCUMENT b
+                   ON (a.c_id = b.c_id AND a.ref= b.id)
                    WHERE
             			a.c_id = $course_id AND
                         b.c_id = $course_id AND
-            			a.ref = b.id and a.ref = $document_id LIMIT 1";
+            			a.ref = $document_id 
+                    LIMIT 1";
             $result = Database::query($sql);
             $doc_details = Database ::fetch_array($result, 'ASSOC');
 
@@ -1437,6 +1453,7 @@ class DocumentManager
             $row['absolute_path_from_document'] = '/document' . $row['path'];
             $row['absolute_parent_path'] = api_get_path(SYS_COURSE_PATH).$course_info['path'].'/document'.$pathinfo['dirname'] . '/';
             $row['direct_url'] = $www . $path;
+            $row['basename'] = basename($row['path']);
 
             if (dirname($row['path']) == '.') {
                 $row['parent_id'] = '0';
@@ -1602,8 +1619,10 @@ class DocumentManager
         $sql = "SELECT visibility
                 FROM $docTable d
                 INNER JOIN $propTable ip
-                ON (d.id = ip.ref AND d.c_id  = $course_id AND ip.c_id = $course_id)
+                ON (d.id = ip.ref AND d.c_id = ip.c_id)
         		WHERE
+        		    d.c_id  = $course_id AND 
+        		    ip.c_id = $course_id AND
         		    ip.tool = '" . TOOL_DOCUMENT . "' $condition AND
         			filetype = '$file_type' AND
         			locate(concat(path,'/'), '$doc_path')=1
@@ -1645,7 +1664,8 @@ class DocumentManager
         $course_info,
         $session_id,
         $user_id,
-        $admins_can_see_everything = true
+        $admins_can_see_everything = true,
+        $userIsSubscribed = null
     ) {
         $user_in_course = false;
 
@@ -1662,12 +1682,18 @@ class DocumentManager
 
         //2. Course and Session visibility are handle in local.inc.php/global.inc.php
         //3. Checking if user exist in course/session
-
         if ($session_id == 0) {
-            if (CourseManager::is_user_subscribed_in_course($user_id, $course_info['code']) || api_is_platform_admin()
-            ) {
+            if (is_null($userIsSubscribed)) {
+                $userIsSubscribed = CourseManager::is_user_subscribed_in_course(
+                    $user_id,
+                    $course_info['code']
+                );
+            }
+
+            if ($userIsSubscribed === true || api_is_platform_admin()) {
                 $user_in_course = true;
             }
+
             // Check if course is open then we can consider that the student is registered to the course
             if (isset($course_info) &&
                 in_array(
@@ -1695,12 +1721,15 @@ class DocumentManager
         }
 
         // 4. Checking document visibility (i'm repeating the code in order to be more clear when reading ) - jm
-
         if ($user_in_course) {
-
             // 4.1 Checking document visibility for a Course
             if ($session_id == 0) {
-                $item_info = api_get_item_property_info($course_info['real_id'], 'document', $doc_id, 0);
+                $item_info = api_get_item_property_info(
+                    $course_info['real_id'],
+                    'document',
+                    $doc_id,
+                    0
+                );
 
                 if (isset($item_info['visibility'])) {
                     // True for admins if document exists
@@ -2009,7 +2038,7 @@ class DocumentManager
                 $sql_session = '';
             }
 
-            $sql = 'UPDATE ' . $tbl_category . ' SET document_id=null
+            $sql = 'UPDATE ' . $tbl_category . ' SET document_id = null
                     WHERE
                         course_code = "' . Database::escape_string($course_id) . '" AND
                         document_id="' . $default_certificate_id . '" ' . $sql_session;
@@ -2019,12 +2048,11 @@ class DocumentManager
 
     /**
      * Create directory certificate
-     * @param string $courseCode
+     * @param array $courseInfo
      * @return void
      */
-    public static function create_directory_certificate_in_course($courseCode)
+    public static function create_directory_certificate_in_course($courseInfo)
     {
-        $courseInfo = api_get_course_info($courseCode);
         if (!empty($courseInfo)) {
             $to_group_id = 0;
             $to_user_id = null;
@@ -2089,7 +2117,8 @@ class DocumentManager
     {
         $tbl_document = Database::get_course_table(TABLE_DOCUMENT);
         $course_id = api_get_course_int_id();
-        $sql = "SELECT id FROM $tbl_document WHERE c_id = $course_id AND path='/certificates' ";
+        $sql = "SELECT id FROM $tbl_document 
+                WHERE c_id = $course_id AND path='/certificates' ";
         $rs = Database::query($sql);
         $row = Database::fetch_array($rs);
         return $row['id'];
@@ -2129,7 +2158,7 @@ class DocumentManager
     {
         $max = 5;
         $attributes = array();
-        $wanted_attributes = array('src', 'url', '@import', 'href', 'value', 'flashvars');
+        $wanted_attributes = array('src', 'url', '@import', 'href', 'value', 'flashvars', 'poster');
         $explode_attributes = array('flashvars' => 'file');
         $abs_path = '';
 
@@ -2799,16 +2828,37 @@ class DocumentManager
     }
 
     /**
+     * Export document to PDF
+     *
      * @param int $document_id
-     * @param string $course_code
+     * @param string $courseCode
+     * @param string $orientation
+     * @param bool $showHeaderAndFooter
      */
-    public static function export_to_pdf($document_id, $course_code)
-    {
-        $course_data = api_get_course_info($course_code);
-        $document_data = self::get_document_data_by_id($document_id, $course_code);
+    public static function export_to_pdf(
+        $document_id,
+        $courseCode,
+        $orientation = 'landscape',
+        $showHeaderAndFooter = true
+    ) {
+        $course_data = api_get_course_info($courseCode);
+        $document_data = self::get_document_data_by_id($document_id, $courseCode);
         $file_path = api_get_path(SYS_COURSE_PATH) . $course_data['path'] . '/document' . $document_data['path'];
-        $pdf = new PDF('A4-L', 'L');
-        $pdf->html_to_pdf($file_path, $document_data['title'], $course_code);
+        if ($orientation == 'landscape') {
+            $pageFormat = 'A4-L';
+            $pdfOrientation = 'L';
+        } else {
+            $pageFormat = 'A4';
+            $pdfOrientation = 'P';
+        }
+        $pdf = new PDF($pageFormat, $pdfOrientation);
+        $pdf->html_to_pdf(
+            $file_path,
+            $document_data['title'],
+            $courseCode,
+            false,
+            $showHeaderAndFooter
+        );
     }
 
     /**
@@ -3154,7 +3204,8 @@ class DocumentManager
         $percentage = round($percentage, 1);
         $message = get_lang('YouAreCurrentlyUsingXOfYourX');
         $message = sprintf($message, $already_consumed_space_m, $percentage . '%', $course_quota_m . ' ');
-        echo Display::div($message, array('id' => 'document_quota'));
+
+        return Display::div($message, array('id' => 'document_quota'));
     }
 
     /**
@@ -3220,7 +3271,6 @@ class DocumentManager
     public static function generate_media_preview($i, $type = 'simple')
     {
         $i = intval($i);
-
         $extra_controls = $progress = '';
         if ($type == 'advanced') {
             $extra_controls = ' <li><a href="javascript:;" class="jp-stop" tabindex="1">stop</a></li>
@@ -3433,7 +3483,7 @@ class DocumentManager
             $levelCondition = " AND docs.path NOT LIKE'/%/%'";
         }
 
-        $sql = "SELECT last.visibility, docs.*
+        $sql = "SELECT DISTINCT last.visibility, docs.*
                 FROM $tbl_item_prop AS last INNER JOIN $tbl_doc AS docs
                 ON (docs.id = last.ref AND docs.c_id = last.c_id)
                 WHERE
@@ -5104,7 +5154,8 @@ class DocumentManager
             }
             $folder_sql = implode("','", $escaped_folders);
 
-            $sql = "SELECT * FROM $doc_table
+            $sql = "SELECT path, title 
+                    FROM $doc_table
                     WHERE 
                         filetype = 'folder' AND 
                         c_id = $course_id AND 
@@ -5184,22 +5235,30 @@ class DocumentManager
      * Create a html hyperlink depending on if it's a folder or a file
      *
      * @param array $document_data
+     * @param array $course_info
      * @param int $show_as_icon - if it is true, only a clickable icon will be shown
      * @param int $visibility (1/0)
      * @param int $counter
+     * @param int $size
+     * @param bool $isAllowedToEdit
      *
      * @return string url
      */
     public static function create_document_link(
         $document_data,
+        $course_info,
         $show_as_icon = false,
         $counter = null,
-        $visibility
+        $visibility,
+        $size = 0,
+        $isAllowedToEdit = false
     ) {
         global $dbl_click_id;
-        $course_info = api_get_course_info();
+
+        $current_session_id = api_get_session_id();
+        $courseParams = api_get_cidreq();
         $www = api_get_path(WEB_COURSE_PATH) . $course_info['path'] . '/document';
-        $webOdflist = DocumentManager::get_web_odf_extension_list();
+        $webODFList = DocumentManager::get_web_odf_extension_list();
 
         // Get the title or the basename depending on what we're using
         if ($document_data['title'] != '') {
@@ -5209,9 +5268,7 @@ class DocumentManager
         }
 
         $filetype = $document_data['filetype'];
-        $size = $filetype == 'folder' ? get_total_folder_size($document_data['path'], api_is_allowed_to_edit(null, true)) : $document_data['size'];
         $path = $document_data['path'];
-
         $url_path = urlencode($document_data['path']);
 
         // Add class="invisible" on invisible files
@@ -5222,7 +5279,7 @@ class DocumentManager
 
         if (!$show_as_icon) {
             // Build download link (icon)
-            $forcedownload_link = ($filetype == 'folder') ? api_get_self() . '?' . api_get_cidreq() . '&action=downloadfolder&id=' . $document_data['id'] : api_get_self() . '?' . api_get_cidreq() . '&amp;action=download&amp;id=' . $document_data['id'];
+            $forcedownload_link = ($filetype == 'folder') ? api_get_self() . '?' . $courseParams . '&action=downloadfolder&id=' . $document_data['id'] : api_get_self() . '?' . $courseParams . '&amp;action=download&amp;id=' . $document_data['id'];
             // Folder download or file download?
             $forcedownload_icon = ($filetype == 'folder') ? 'save_pack.png' : 'save.png';
             // Prevent multiple clicks on zipped folder download
@@ -5241,18 +5298,18 @@ class DocumentManager
             $is_browser_viewable_file = self::is_browser_viewable($ext);
 
             if ($is_browser_viewable_file) {
-                if ($ext == 'pdf' || in_array($ext, $webOdflist)) {
-                    $url = api_get_self() . '?' . api_get_cidreq() . '&amp;action=download&amp;id=' . $document_data['id'];
+                if ($ext == 'pdf' || in_array($ext, $webODFList)) {
+                    $url = api_get_self() . '?' . $courseParams . '&amp;action=download&amp;id=' . $document_data['id'];
                 } else {
-                    $url = 'showinframes.php?' . api_get_cidreq() . '&id=' . $document_data['id'];
+                    $url = 'showinframes.php?' . $courseParams . '&id=' . $document_data['id'];
                 }
             } else {
                 // url-encode for problematic characters (we may not call them dangerous characters...)
-                $path = str_replace('%2F', '/', $url_path) . '?' . api_get_cidreq();
+                $path = str_replace('%2F', '/', $url_path) . '?' . $courseParams;
                 $url = $www . $path;
             }
         } else {
-            $url = api_get_self() . '?' . api_get_cidreq() . '&id=' . $document_data['id'];
+            $url = api_get_self() . '?' . $courseParams . '&id=' . $document_data['id'];
         }
 
         // The little download icon
@@ -5282,30 +5339,28 @@ class DocumentManager
             $tooltip_title_alt = get_lang('DefaultCourseImages');
         }
 
-        $current_session_id = api_get_session_id();
         $copy_to_myfiles = $open_in_new_window_link = null;
-
         $curdirpath = isset($_GET['curdirpath']) ? Security::remove_XSS($_GET['curdirpath']) : null;
         $send_to = null;
         $checkExtension = $path;
 
         if (!$show_as_icon) {
             if ($filetype == 'folder') {
-                if (api_is_allowed_to_edit() ||
+                if ($isAllowedToEdit ||
                     api_is_platform_admin() ||
                     api_get_setting('students_download_folders') == 'true'
                 ) {
-                    //filter when I am into shared folder, I can show for donwload only my shared folder
+                    //filter: when I am into a shared folder, I can only show "my shared folder" for donwload
                     if (DocumentManager::is_shared_folder($curdirpath, $current_session_id)) {
                         if (preg_match('/shared_folder\/sf_user_' . api_get_user_id() . '$/', urldecode($forcedownload_link)) ||
                             preg_match('/shared_folder_session_' . $current_session_id . '\/sf_user_' . api_get_user_id() . '$/', urldecode($forcedownload_link)) ||
-                            api_is_allowed_to_edit() || api_is_platform_admin()
+                            $isAllowedToEdit || api_is_platform_admin()
                         ) {
                             $force_download_html = ($size == 0) ? '' : '<a href="' . $forcedownload_link . '" style="float:right"' . $prevent_multiple_click . '>' .
                                 Display::return_icon($forcedownload_icon, get_lang('Download'), array(), ICON_SIZE_SMALL) . '</a>';
                         }
                     } elseif (!preg_match('/shared_folder/', urldecode($forcedownload_link)) ||
-                        api_is_allowed_to_edit() ||
+                        $isAllowedToEdit ||
                         api_is_platform_admin()
                     ) {
                         $force_download_html = ($size == 0) ? '' : '<a href="' . $forcedownload_link . '" style="float:right"' . $prevent_multiple_click . '>' .
@@ -5313,19 +5368,16 @@ class DocumentManager
                     }
                 }
             } else {
-                $force_download_html = ($size == 0) ? '' : '<a href="' . $forcedownload_link . '" style="float:right"' . $prevent_multiple_click . '>' .
+                $force_download_html = ($size == 0) ? '' : '<a href="' . $forcedownload_link . '" style="float:right"' . $prevent_multiple_click . ' download="' . $document_data['basename'] . '">' .
                     Display::return_icon($forcedownload_icon, get_lang('Download'), array(), ICON_SIZE_SMALL) . '</a>';
             }
 
-            // Copy files to users myfiles
-            if (api_get_setting('allow_social_tool') === 'true' &&
-                api_get_setting('users_copy_files') === 'true' &&
-                !api_is_anonymous()
+            // Copy files to user's myfiles
+            if (api_get_setting('allow_my_files') === 'true' &&
+                api_get_setting('users_copy_files') === 'true'
             ) {
-                $copy_myfiles_link = ($filetype == 'file') ? api_get_self() . '?' . api_get_cidreq() . '&action=copytomyfiles&id=' . $document_data['id'] : api_get_self() . '?' . api_get_cidreq();
-
+                $copy_myfiles_link = ($filetype == 'file') ? api_get_self() . '?' . $courseParams . '&action=copytomyfiles&id=' . $document_data['id'] : api_get_self() . '?' . $courseParams;
                 if ($filetype == 'file') {
-
                     $copy_to_myfiles = '<a href="' . $copy_myfiles_link . '" style="float:right"' . $prevent_multiple_click . '>' .
                         Display::return_icon('briefcase.png', get_lang('CopyToMyFiles'), array(), ICON_SIZE_SMALL) . '&nbsp;&nbsp;</a>';
 
@@ -5335,23 +5387,23 @@ class DocumentManager
                 }
 
                 if ($filetype == 'file') {
-                    $send_to = Portfolio::share('document', $document_data['id'], array('style' => 'float:right;'));
+                    //$send_to = Portfolio::share('document', $document_data['id'], array('style' => 'float:right;'));
                 }
             }
 
             $pdf_icon = '';
             $extension = pathinfo($path, PATHINFO_EXTENSION);
-            if (!api_is_allowed_to_edit() &&
+            if (!$isAllowedToEdit &&
                 api_get_setting('students_export2pdf') == 'true' &&
                 $filetype == 'file' &&
                 in_array($extension, array('html', 'htm'))
             ) {
-                $pdf_icon = ' <a style="float:right".' . $prevent_multiple_click . ' href="' . api_get_self() . '?' . api_get_cidreq() . '&action=export_to_pdf&id=' . $document_data['id'] . '">' .
+                $pdf_icon = ' <a style="float:right".' . $prevent_multiple_click . ' href="' . api_get_self() . '?' . $courseParams . '&action=export_to_pdf&id=' . $document_data['id'] . '&curdirpath='.$curdirpath.'">' .
                     Display::return_icon('pdf.png', get_lang('Export2PDF'), array(), ICON_SIZE_SMALL) . '</a> ';
             }
 
             if ($is_browser_viewable_file) {
-                $open_in_new_window_link = '<a href="' . $www . str_replace('%2F', '/', $url_path) . '?' . api_get_cidreq() . '" style="float:right"' . $prevent_multiple_click . ' target="_blank">' .
+                $open_in_new_window_link = '<a href="' . $www . str_replace('%2F', '/', $url_path) . '?' . $courseParams . '" style="float:right"' . $prevent_multiple_click . ' target="_blank">' .
                     Display::return_icon('open_in_new_window.png', get_lang('OpenInANewWindow'), array(), ICON_SIZE_SMALL) . '&nbsp;&nbsp;</a>';
             }
 
@@ -5376,7 +5428,7 @@ class DocumentManager
                     preg_match('/svg$/i', urldecode($checkExtension))
                 ) {
                     // Simpler version of showinframesmin.php with no headers
-                    $url = 'show_content.php?' . api_get_cidreq() . '&id=' . $document_data['id'];
+                    $url = 'show_content.php?' . $courseParams . '&id=' . $document_data['id'];
                     $class = 'ajax';
                     if ($visibility == false) {
                         $class = "ajax text-muted";
@@ -5388,20 +5440,20 @@ class DocumentManager
                             'class' => $class,
                             'title' => $tooltip_title_alt,
                             'data-title' => $title,
-                            'style' => 'float: left;'
+                            'style' => 'float:left;'
                         ]
                     )
                     . $force_download_html . $send_to . $copy_to_myfiles
                     . $open_in_new_window_link . $pdf_icon;
                 } else {
-                    // For PDF Download the file.
+                    // For a "PDF Download" of the file.
                     $pdfPreview = null;
-                    if ($ext != 'pdf' && !in_array($ext, $webOdflist)) {
-                        $url = 'showinframes.php?' . api_get_cidreq() . '&id=' . $document_data['id'];
+                    if ($ext != 'pdf' && !in_array($ext, $webODFList)) {
+                        $url = 'showinframes.php?' . $courseParams . '&id=' . $document_data['id'];
                     } else {
                         $pdfPreview = Display::url(
                             Display::return_icon('preview.gif', get_lang('Preview')),
-                            api_get_path(WEB_CODE_PATH).'document/showinframes.php?' . api_get_cidreq() . '&id=' . $document_data['id'],
+                            api_get_path(WEB_CODE_PATH).'document/showinframes.php?' . $courseParams . '&id=' . $document_data['id'],
                             array('style' => 'float:right')
                         );
                     }
@@ -5438,18 +5490,18 @@ class DocumentManager
                         preg_match('/bmp$/i', urldecode($checkExtension)) ||
                         preg_match('/svg$/i', urldecode($checkExtension))
                     ) {
-                        $url = 'showinframes.php?' . api_get_cidreq() . '&id=' . $document_data['id'];
+                        $url = 'showinframes.php?' . $courseParams . '&id=' . $document_data['id'];
                         return '<a href="' . $url . '" title="' . $tooltip_title_alt . '" ' . $visibility_class . ' style="float:left">' .
-                        DocumentManager::build_document_icon_tag($filetype, $path) .
+                        DocumentManager::build_document_icon_tag($filetype, $path, $isAllowedToEdit) .
                         Display::return_icon('shared.png', get_lang('ResourceShared'), array()) . '</a>';
                     } else {
                         return '<a href="' . $url . '" title="' . $tooltip_title_alt . '" ' . $visibility_class . ' style="float:left">' .
-                        DocumentManager::build_document_icon_tag($filetype, $path) .
+                        DocumentManager::build_document_icon_tag($filetype, $path, $isAllowedToEdit) .
                         Display::return_icon('shared.png', get_lang('ResourceShared'), array()) . '</a>';
                     }
                 } else {
                     return '<a href="' . $url . '" title="' . $tooltip_title_alt . '" target="' . $target . '"' . $visibility_class . ' style="float:left">' .
-                    DocumentManager::build_document_icon_tag($filetype, $path) .
+                    DocumentManager::build_document_icon_tag($filetype, $path, $isAllowedToEdit) .
                     Display::return_icon('shared.png', get_lang('ResourceShared'), array()) . '</a>';
                 }
             } else {
@@ -5473,16 +5525,16 @@ class DocumentManager
                         preg_match('/bmp$/i', urldecode($checkExtension)) ||
                         preg_match('/svg$/i', urldecode($checkExtension))
                     ) {
-                        $url = 'showinframes.php?' . api_get_cidreq() . '&id=' . $document_data['id']; //without preview
+                        $url = 'showinframes.php?' . $courseParams . '&id=' . $document_data['id']; //without preview
                         return '<a href="' . $url . '" title="' . $tooltip_title_alt . '" ' . $visibility_class . ' style="float:left">' .
-                        DocumentManager::build_document_icon_tag($filetype, $path) . '</a>';
+                        DocumentManager::build_document_icon_tag($filetype, $path, $isAllowedToEdit) . '</a>';
                     } else {
                         return '<a href="' . $url . '" title="' . $tooltip_title_alt . '" ' . $visibility_class . ' style="float:left">' .
-                        DocumentManager::build_document_icon_tag($filetype, $path) . '</a>';
+                        DocumentManager::build_document_icon_tag($filetype, $path, $isAllowedToEdit) . '</a>';
                     }
                 } else {
                     return '<a href="' . $url . '" title="' . $tooltip_title_alt . '" target="' . $target . '"' . $visibility_class . ' style="float:left">' .
-                    DocumentManager::build_document_icon_tag($filetype, $path) . '</a>';
+                    DocumentManager::build_document_icon_tag($filetype, $path, $isAllowedToEdit) . '</a>';
                 }
             }
         }
@@ -5493,37 +5545,39 @@ class DocumentManager
      *
      * @param string $type (file/folder)
      * @param string $path
+     * @param bool $isAllowedToEdit
      * @return string img html tag
      */
-    public static function build_document_icon_tag($type, $path)
+    public static function build_document_icon_tag($type, $path, $isAllowedToEdit = null)
     {
         $basename = basename($path);
         $current_session_id = api_get_session_id();
-        $is_allowed_to_edit = api_is_allowed_to_edit(null, true);
+        if (is_null($isAllowedToEdit)) {
+            $isAllowedToEdit = api_is_allowed_to_edit(null, true);
+        }
         $user_image = false;
         if ($type == 'file') {
             $icon = choose_image($basename);
-
             $basename = substr(strrchr($basename, '.'), 1);
         } else {
             if ($path == '/shared_folder') {
                 $icon = 'folder_users.png';
-                if ($is_allowed_to_edit) {
+                if ($isAllowedToEdit) {
                     $basename = get_lang('HelpUsersFolder');
                 } else {
                     $basename = get_lang('UserFolders');
                 }
             } elseif (strstr($basename, 'sf_user_')) {
-                $userinfo = api_get_user_info(substr($basename, 8));
-                $icon = $userinfo['avatar_small'];
-
-                $basename = get_lang('UserFolder') . ' ' . $userinfo['complete_name'];
+                $userInfo = api_get_user_info(substr($basename, 8));
+                $icon = $userInfo['avatar_small'];
+                $basename = get_lang('UserFolder') . ' ' . $userInfo['complete_name'];
                 $user_image = true;
             } elseif (strstr($path, 'shared_folder_session_')) {
-                if ($is_allowed_to_edit) {
-                    $basename = '***(' . api_get_session_name($current_session_id) . ')*** ' . get_lang('HelpUsersFolder');
+                $sessionName = api_get_session_name($current_session_id);
+                if ($isAllowedToEdit) {
+                    $basename = '***(' . $sessionName . ')*** ' . get_lang('HelpUsersFolder');
                 } else {
-                    $basename = get_lang('UserFolders') . ' (' . api_get_session_name($current_session_id) . ')';
+                    $basename = get_lang('UserFolders') . ' (' . $sessionName . ')';
                 }
                 $icon = 'folder_users.png';
             } else {
@@ -5531,49 +5585,49 @@ class DocumentManager
 
                 if ($path == '/audio') {
                     $icon = 'folder_audio.gif';
-                    if (api_is_allowed_to_edit()) {
+                    if ($isAllowedToEdit) {
                         $basename = get_lang('HelpDefaultDirDocuments');
                     } else {
                         $basename = get_lang('Audio');
                     }
                 } elseif ($path == '/flash') {
                     $icon = 'folder_flash.gif';
-                    if (api_is_allowed_to_edit()) {
+                    if ($isAllowedToEdit) {
                         $basename = get_lang('HelpDefaultDirDocuments');
                     } else {
                         $basename = get_lang('Flash');
                     }
                 } elseif ($path == '/images') {
                     $icon = 'folder_images.gif';
-                    if (api_is_allowed_to_edit()) {
+                    if ($isAllowedToEdit) {
                         $basename = get_lang('HelpDefaultDirDocuments');
                     } else {
                         $basename = get_lang('Images');
                     }
                 } elseif ($path == '/video') {
                     $icon = 'folder_video.gif';
-                    if (api_is_allowed_to_edit()) {
+                    if ($isAllowedToEdit) {
                         $basename = get_lang('HelpDefaultDirDocuments');
                     } else {
                         $basename = get_lang('Video');
                     }
                 } elseif ($path == '/images/gallery') {
                     $icon = 'folder_gallery.gif';
-                    if (api_is_allowed_to_edit()) {
+                    if ($isAllowedToEdit) {
                         $basename = get_lang('HelpDefaultDirDocuments');
                     } else {
                         $basename = get_lang('Gallery');
                     }
                 } elseif ($path == '/chat_files') {
                     $icon = 'folder_chat.png';
-                    if (api_is_allowed_to_edit()) {
+                    if ($isAllowedToEdit) {
                         $basename = get_lang('HelpFolderChat');
                     } else {
                         $basename = get_lang('ChatFiles');
                     }
                 } elseif ($path == '/learning_path') {
                     $icon = 'folder_learningpath.gif';
-                    if (api_is_allowed_to_edit()) {
+                    if ($isAllowedToEdit) {
                         $basename = get_lang('HelpFolderLearningPaths');
                     } else {
                         $basename = get_lang('LearningPaths');
@@ -5581,9 +5635,11 @@ class DocumentManager
                 }
             }
         }
+
         if ($user_image) {
             return Display::img($icon, $basename, array(), false);
         }
+
         return Display::return_icon($icon, $basename, array(), ICON_SIZE_MEDIUM);
     }
 
@@ -5600,6 +5656,7 @@ class DocumentManager
     public static function build_edit_icons($document_data, $id, $is_template, $is_read_only = 0, $visibility)
     {
         $sessionId = api_get_session_id();
+        $courseParams = api_get_cidreq();
         $web_odf_extension_list = DocumentManager::get_web_odf_extension_list();
         $document_id = $document_data['id'];
         $type = $document_data['filetype'];
@@ -5654,16 +5711,16 @@ class DocumentManager
         if ($is_read_only /* or ($session_id!=api_get_session_id()) */) {
             if (api_is_course_admin() || api_is_platform_admin()) {
                 if ($extension == 'svg' && api_browser_support('svg') && api_get_setting('enabled_support_svg') == 'true') {
-                    $modify_icons = '<a href="edit_draw.php?' . api_get_cidreq() . '&id=' . $document_id . '">' .
+                    $modify_icons = '<a href="edit_draw.php?' . $courseParams . '&id=' . $document_id . '">' .
                         Display::return_icon('edit.png', get_lang('Modify'), '', ICON_SIZE_SMALL) . '</a>';
                 } elseif (in_array($extension, $web_odf_extension_list)  && api_get_setting('enabled_support_odf') === true) {
-                    $modify_icons = '<a href="edit_odf.php?' . api_get_cidreq() . '&id=' . $document_id . '">' .
+                    $modify_icons = '<a href="edit_odf.php?' . $courseParams . '&id=' . $document_id . '">' .
                         Display::return_icon('edit.png', get_lang('Modify'), '', ICON_SIZE_SMALL) . '</a>';
                 } elseif ($extension == 'png' || $extension == 'jpg' || $extension == 'jpeg' || $extension == 'bmp' || $extension == 'gif' || $extension == 'pxd' && api_get_setting('enabled_support_pixlr') == 'true') {
-                    $modify_icons = '<a href="edit_paint.php?' . api_get_cidreq() . '&id=' . $document_id . '">' .
+                    $modify_icons = '<a href="edit_paint.php?' . $courseParams . '&id=' . $document_id . '">' .
                         Display::return_icon('edit.png', get_lang('Modify'), '', ICON_SIZE_SMALL) . '</a>';
                 } else {
-                    $modify_icons = '<a href="edit_document.php?' . api_get_cidreq() . '&id=' . $document_id. '">' .
+                    $modify_icons = '<a href="edit_document.php?' . $courseParams . '&id=' . $document_id. '">' .
                         Display::return_icon('edit.png', get_lang('Modify'), '', ICON_SIZE_SMALL) . '</a>';
                 }
             } else {
@@ -5680,21 +5737,21 @@ class DocumentManager
                 $modify_icons = Display::return_icon('edit_na.png', get_lang('Modify'), '', ICON_SIZE_SMALL);
             } elseif ($is_certificate_mode ) {
                 // gradebook category doesn't seem to be taken into account
-                $modify_icons = '<a href="edit_document.php?' . api_get_cidreq() . '&amp;id=' . $document_id . '&curdirpath=/certificates">' . Display::return_icon('edit.png', get_lang('Modify'), '', ICON_SIZE_SMALL) . '</a>';
+                $modify_icons = '<a href="edit_document.php?' . $courseParams . '&amp;id=' . $document_id . '&curdirpath=/certificates">' . Display::return_icon('edit.png', get_lang('Modify'), '', ICON_SIZE_SMALL) . '</a>';
             } else {
-                if (api_get_session_id()) {
-                    if ($document_data['session_id'] == api_get_session_id()) {
+                if ($sessionId) {
+                    if ($document_data['session_id'] == $sessionId) {
                         if ($extension == 'svg' && api_browser_support('svg') && api_get_setting('enabled_support_svg') == 'true') {
-                            $modify_icons = '<a href="edit_draw.php?' . api_get_cidreq() . '&amp;id=' . $document_id  . '">' .
+                            $modify_icons = '<a href="edit_draw.php?' . $courseParams . '&amp;id=' . $document_id  . '">' .
                                 Display::return_icon('edit.png', get_lang('Modify'), '', ICON_SIZE_SMALL) . '</a>';
                         } elseif (in_array($extension, $web_odf_extension_list)  && api_get_setting('enabled_support_odf') === true) {
-                            $modify_icons = '<a href="edit_odf.php?' . api_get_cidreq() . '&id=' . $document_id  . '">' .
+                            $modify_icons = '<a href="edit_odf.php?' . $courseParams . '&id=' . $document_id  . '">' .
                                 Display::return_icon('edit.png', get_lang('Modify'), '', ICON_SIZE_SMALL) . '</a>';
                         } elseif ($extension == 'png' || $extension == 'jpg' || $extension == 'jpeg' || $extension == 'bmp' || $extension == 'gif' || $extension == 'pxd' && api_get_setting('enabled_support_pixlr') == 'true') {
-                            $modify_icons = '<a href="edit_paint.php?' . api_get_cidreq() . '&id=' . $document_id  . '">' .
+                            $modify_icons = '<a href="edit_paint.php?' . $courseParams . '&id=' . $document_id  . '">' .
                                 Display::return_icon('edit.png', get_lang('Modify'), '', ICON_SIZE_SMALL) . '</a>';
                         } else {
-                            $modify_icons = '<a href="edit_document.php?' . api_get_cidreq() . '&amp;id=' . $document_id  . '">' .
+                            $modify_icons = '<a href="edit_document.php?' . $courseParams . '&amp;id=' . $document_id  . '">' .
                                 Display::return_icon('edit.png', get_lang('Modify'), '', ICON_SIZE_SMALL) . '</a>';
                         }
                     } else {
@@ -5702,16 +5759,16 @@ class DocumentManager
                     }
                 } else {
                     if ($extension == 'svg' && api_browser_support('svg') && api_get_setting('enabled_support_svg') == 'true') {
-                        $modify_icons = '<a href="edit_draw.php?' . api_get_cidreq() . '&amp;id=' . $document_id  . '">' .
+                        $modify_icons = '<a href="edit_draw.php?' . $courseParams . '&amp;id=' . $document_id  . '">' .
                             Display::return_icon('edit.png', get_lang('Modify'), '', ICON_SIZE_SMALL) . '</a>';
                     } elseif (in_array($extension, $web_odf_extension_list)  && api_get_setting('enabled_support_odf') === true) {
-                        $modify_icons = '<a href="edit_odf.php?' . api_get_cidreq() . '&id=' . $document_id  . '">' .
+                        $modify_icons = '<a href="edit_odf.php?' . $courseParams . '&id=' . $document_id  . '">' .
                             Display::return_icon('edit.png', get_lang('Modify'), '', ICON_SIZE_SMALL) . '</a>';
                     } elseif ($extension == 'png' || $extension == 'jpg' || $extension == 'jpeg' || $extension == 'bmp' || $extension == 'gif' || $extension == 'pxd' && api_get_setting('enabled_support_pixlr') == 'true') {
-                        $modify_icons = '<a href="edit_paint.php?' . api_get_cidreq() . '&amp;id=' . $document_id . '">' .
+                        $modify_icons = '<a href="edit_paint.php?' . $courseParams . '&amp;id=' . $document_id . '">' .
                             Display::return_icon('edit.png', get_lang('Modify'), '', ICON_SIZE_SMALL) . '</a>';
                     } else {
-                        $modify_icons = '<a href="edit_document.php?' . api_get_cidreq() . '&amp;id=' . $document_id  . '">' .
+                        $modify_icons = '<a href="edit_document.php?' . $courseParams . '&amp;id=' . $document_id  . '">' .
                             Display::return_icon('edit.png', get_lang('Modify'), '', ICON_SIZE_SMALL) . '</a>';
                     }
                 }
@@ -5721,15 +5778,15 @@ class DocumentManager
             if ($is_certificate_mode || in_array($path, DocumentManager::get_system_folders())) {
                 $modify_icons .= '&nbsp;' . Display::return_icon('move_na.png', get_lang('Move'), array(), ICON_SIZE_SMALL) . '</a>';
             } else {
-                if (api_get_session_id()) {
-                    if ($document_data['session_id'] == api_get_session_id()) {
-                        $modify_icons .= '&nbsp;<a href="' . api_get_self() . '?' . api_get_cidreq() . '&amp;id=' . $parent_id . '&amp;move=' . $document_id .  '">' .
+                if ($sessionId) {
+                    if ($document_data['session_id'] == $sessionId) {
+                        $modify_icons .= '&nbsp;<a href="' . api_get_self() . '?' . $courseParams . '&amp;id=' . $parent_id . '&amp;move=' . $document_id .  '">' .
                             Display::return_icon('move.png', get_lang('Move'), array(), ICON_SIZE_SMALL) . '</a>';
                     } else {
                         $modify_icons .= '&nbsp;' . Display::return_icon('move_na.png', get_lang('Move'), array(), ICON_SIZE_SMALL) . '</a>';
                     }
                 } else {
-                    $modify_icons .= '&nbsp;<a href="' . api_get_self() . '?' . api_get_cidreq() . '&amp;id=' . $parent_id . '&amp;move=' . $document_id .  '">' .
+                    $modify_icons .= '&nbsp;<a href="' . api_get_self() . '?' . $courseParams . '&amp;id=' . $parent_id . '&amp;move=' . $document_id .  '">' .
                         Display::return_icon('move.png', get_lang('Move'), array(), ICON_SIZE_SMALL) . '</a>';
                 }
             }
@@ -5744,7 +5801,7 @@ class DocumentManager
                     } else {
                         $tip_visibility = get_lang('Hide');
                     }
-                    $modify_icons .= '&nbsp;<a href="' . api_get_self() . '?' . api_get_cidreq() . '&amp;id=' . $parent_id . '&amp;' . $visibility_command . '=' . $id . '&amp;' . $sort_params . '">' .
+                    $modify_icons .= '&nbsp;<a href="' . api_get_self() . '?' . $courseParams . '&amp;id=' . $parent_id . '&amp;' . $visibility_command . '=' . $id . '&amp;' . $sort_params . '">' .
                         Display::return_icon($visibility_icon . '.png', $tip_visibility, '', ICON_SIZE_SMALL) . '</a>';
                 }
             }
@@ -5759,22 +5816,22 @@ class DocumentManager
                     $_GET['curdirpath'] == '/certificates' &&
                     DocumentManager::get_default_certificate_id(api_get_course_id()) == $id
                 ) {
-                    $modify_icons .= '&nbsp;<a href="' . api_get_self() . '?' . api_get_cidreq() . '&amp;curdirpath=' . $curdirpath . '&action=delete_item&id='.$parent_id.'&deleteid='.$document_id.'&amp;' . $sort_params . 'delete_certificate_id=' . $id . '" onclick="return confirmation(\'' . $titleToShow . '\');">' .
+                    $modify_icons .= '&nbsp;<a href="' . api_get_self() . '?' . $courseParams . '&amp;curdirpath=' . $curdirpath . '&action=delete_item&id='.$parent_id.'&deleteid='.$document_id.'&amp;' . $sort_params . 'delete_certificate_id=' . $id . '" onclick="return confirmation(\'' . $titleToShow . '\');">' .
                         Display::return_icon('delete.png', get_lang('Delete'), array(), ICON_SIZE_SMALL) . '</a>';
                 } else {
                     if ($is_certificate_mode) {
-                        $modify_icons .= '&nbsp;<a href="' . api_get_self() . '?' . api_get_cidreq() . '&amp;curdirpath=' . $curdirpath . '&action=delete_item&id='.$parent_id.'&deleteid=' . $document_id  . '&amp;' . $sort_params . '" onclick="return confirmation(\'' . $titleToShow . '\');">' .
+                        $modify_icons .= '&nbsp;<a href="' . api_get_self() . '?' . $courseParams . '&amp;curdirpath=' . $curdirpath . '&action=delete_item&id='.$parent_id.'&deleteid=' . $document_id  . '&amp;' . $sort_params . '" onclick="return confirmation(\'' . $titleToShow . '\');">' .
                             Display::return_icon('delete.png', get_lang('Delete'), array(), ICON_SIZE_SMALL) . '</a>';
                     } else {
-                        if (api_get_session_id()) {
-                            if ($document_data['session_id'] == api_get_session_id()) {
-                                $modify_icons .= '&nbsp;<a href="' . api_get_self() . '?' . api_get_cidreq() . '&amp;curdirpath=' . $curdirpath . '&action=delete_item&id='.$parent_id.'&deleteid='.$document_id  . '&amp;' . $sort_params . '" onclick="return confirmation(\'' . $titleToShow . '\');">'.
+                        if ($sessionId) {
+                            if ($document_data['session_id'] == $sessionId) {
+                                $modify_icons .= '&nbsp;<a href="' . api_get_self() . '?' . $courseParams . '&amp;curdirpath=' . $curdirpath . '&action=delete_item&id='.$parent_id.'&deleteid='.$document_id  . '&amp;' . $sort_params . '" onclick="return confirmation(\'' . $titleToShow . '\');">'.
                                     Display::return_icon('delete.png', get_lang('Delete'), array(), ICON_SIZE_SMALL) . '</a>';
                             } else {
                                 $modify_icons .= '&nbsp;' . Display::return_icon('delete_na.png', get_lang('ThisFolderCannotBeDeleted'), array(), ICON_SIZE_SMALL);
                             }
                         } else {
-                            $modify_icons .= '&nbsp;<a href="' . api_get_self() . '?' . api_get_cidreq() . '&amp;curdirpath=' . $curdirpath . '&action=delete_item&id='.$parent_id.'&deleteid='.$document_id . '&amp;' . $sort_params . '" onclick="return confirmation(\'' . $titleToShow. '\');">' .
+                            $modify_icons .= '&nbsp;<a href="' . api_get_self() . '?' . $courseParams . '&amp;curdirpath=' . $curdirpath . '&action=delete_item&id='.$parent_id.'&deleteid='.$document_id . '&amp;' . $sort_params . '" onclick="return confirmation(\'' . $titleToShow. '\');">' .
                                 Display::return_icon('delete.png', get_lang('Delete'), array(), ICON_SIZE_SMALL) . '</a>';
                         }
                     }
@@ -5803,7 +5860,7 @@ class DocumentManager
         if ($type == 'file' && ($extension == 'html' || $extension == 'htm')) {
             if ($is_template == 0) {
                 if ((isset($_GET['curdirpath']) && $_GET['curdirpath'] != '/certificates') || !isset($_GET['curdirpath'])) {
-                    $modify_icons .= '&nbsp;<a href="' . api_get_self() . '?' . api_get_cidreq() . '&amp;curdirpath=' . $curdirpath . '&amp;add_as_template=' . $id .  '&amp;' . $sort_params . '">' .
+                    $modify_icons .= '&nbsp;<a href="' . api_get_self() . '?' . $courseParams . '&amp;curdirpath=' . $curdirpath . '&amp;add_as_template=' . $id .  '&amp;' . $sort_params . '">' .
                         Display::return_icon('wizard.png', get_lang('AddAsTemplate'), array(), ICON_SIZE_SMALL) . '</a>';
                 }
                 if (isset($_GET['curdirpath']) && $_GET['curdirpath'] == '/certificates') {//allow attach certificate to course
@@ -5818,20 +5875,20 @@ class DocumentManager
                         $certificate = get_lang('NoDefaultCertificate');
                     }
                     if (isset($_GET['selectcat'])) {
-                        $modify_icons .= '&nbsp;<a href="' . api_get_self() . '?' . api_get_cidreq() . '&amp;curdirpath=' . $curdirpath . '&amp;selectcat=' . intval($_GET['selectcat']) . '&amp;set_certificate=' . $id . '&amp;' . $sort_params . '">';
+                        $modify_icons .= '&nbsp;<a href="' . api_get_self() . '?' . $courseParams . '&amp;curdirpath=' . $curdirpath . '&amp;selectcat=' . intval($_GET['selectcat']) . '&amp;set_certificate=' . $id . '&amp;' . $sort_params . '">';
                         $modify_icons .= Display::return_icon($visibility_icon_certificate.'.png', $certificate);
                         $modify_icons .= '</a>';
                         if ($is_preview) {
-                            $modify_icons .= '&nbsp;<a target="_blank"  href="' . api_get_self() . '?' . api_get_cidreq() . '&amp;curdirpath=' . $curdirpath . '&amp;set_preview=' . $id . '&amp;' . $sort_params . '" >' .
+                            $modify_icons .= '&nbsp;<a target="_blank"  href="' . api_get_self() . '?' . $courseParams . '&amp;curdirpath=' . $curdirpath . '&amp;set_preview=' . $id . '&amp;' . $sort_params . '" >' .
                                 Display::return_icon('preview_view.png', $preview, '', ICON_SIZE_SMALL) . '</a>';
                         }
                     }
                 }
             } else {
-                $modify_icons .= '&nbsp;<a href="' . api_get_self() . '?' . api_get_cidreq() . '&curdirpath=' . $curdirpath . '&amp;remove_as_template=' . $id. '&amp;' . $sort_params . '">' .
+                $modify_icons .= '&nbsp;<a href="' . api_get_self() . '?' . $courseParams . '&curdirpath=' . $curdirpath . '&amp;remove_as_template=' . $id. '&amp;' . $sort_params . '">' .
                     Display::return_icon('wizard_na.png', get_lang('RemoveAsTemplate'), '', ICON_SIZE_SMALL) . '</a>';
             }
-            $modify_icons .= '&nbsp;<a href="' . api_get_self() . '?' . api_get_cidreq() . '&action=export_to_pdf&id=' . $id . '">' .
+            $modify_icons .= '&nbsp;<a href="' . api_get_self() . '?' . $courseParams . '&action=export_to_pdf&id=' . $id . '&curdirpath='.$curdirpath.'">' .
                 Display::return_icon('pdf.png', get_lang('Export2PDF'), array(), ICON_SIZE_SMALL) . '</a>';
         }
 
@@ -6090,8 +6147,8 @@ class DocumentManager
         if (!($result = in_array($file_extension, $allowed_extensions))) { // Assignment + a logical check.
             return false;
         }
-        //check native support (Explorer, Opera, Firefox, Chrome, Safari)
 
+        //check native support (Explorer, Opera, Firefox, Chrome, Safari)
         if ($file_extension == "pdf") {
             return api_browser_support('pdf');
         } elseif ($file_extension == "mp3") {

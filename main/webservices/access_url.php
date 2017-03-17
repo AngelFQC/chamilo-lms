@@ -7,7 +7,7 @@ use Chamilo\UserBundle\Entity\User;
 /**
  * @package chamilo.webservices
  */
-require_once '../inc/global.inc.php';
+require_once __DIR__.'/../inc/global.inc.php';
 $libpath = api_get_path(LIBRARY_PATH);
 
 $debug = true;
@@ -17,6 +17,9 @@ define('WS_ERROR_NOT_FOUND_RESULT', 2);
 define('WS_ERROR_INVALID_INPUT', 3);
 define('WS_ERROR_SETTING', 4);
 
+/**
+ * @param integer $code
+ */
 function return_error($code) {
     $fault = null;
     switch ($code) {

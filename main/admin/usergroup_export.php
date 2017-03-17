@@ -6,15 +6,15 @@
  */
 $cidReset = true;
 
-require_once '../inc/global.inc.php';
+require_once __DIR__.'/../inc/global.inc.php';
 $this_section = SECTION_PLATFORM_ADMIN;
 
 api_protect_admin_script();
 
 $tool_name = get_lang('Export');
 
-$interbreadcrumb[] = array ("url" => 'index.php', "name" => get_lang('PlatformAdmin'));
-$interbreadcrumb[] = array ('url' => 'usergroups.php', 'name' => get_lang('Classes'));
+$interbreadcrumb[] = array("url" => 'index.php', "name" => get_lang('PlatformAdmin'));
+$interbreadcrumb[] = array('url' => 'usergroups.php', 'name' => get_lang('Classes'));
 
 set_time_limit(0);
 

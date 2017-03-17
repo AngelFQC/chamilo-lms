@@ -6,7 +6,7 @@
  */
 $cidReset = true;
 
-require_once '../inc/global.inc.php';
+require_once __DIR__.'/../inc/global.inc.php';
 
 $this_section = SECTION_SOCIAL;
 
@@ -57,13 +57,14 @@ $tpl->assign('dialogForm', $dialogForm->returnForm());
 $url = api_get_path(WEB_AJAX_PATH)."skill.ajax.php?a=get_skills_tree_json&load_user=$userId";
 $tpl->assign('wheel_url', $url);
 
-$url  = api_get_path(WEB_AJAX_PATH).'skill.ajax.php?1=1';
+$url = api_get_path(WEB_AJAX_PATH).'skill.ajax.php?1=1';
 $tpl->assign('url', $url);
 
 $tpl->assign('user_info', $userInfo);
 $tpl->assign('ranking', $ranking);
 $tpl->assign('skills', $skills);
 
-$content = $tpl->fetch('default/skill/skill_wheel_student.tpl');
+$template = $tpl->get_template('skill/skill_tree_student.tpl');
+$content = $tpl->fetch($template);
 $tpl->assign('content', $content);
 $tpl->display_no_layout_template();

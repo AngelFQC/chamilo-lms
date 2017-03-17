@@ -47,7 +47,7 @@ use ChamiloSession as Session;
  * Modified by Hubert Borderiou 21-10-2011 Question by category
  */
 
-require_once '../inc/global.inc.php';
+require_once __DIR__.'/../inc/global.inc.php';
 $current_course_tool  = TOOL_QUIZ;
 $this_section = SECTION_COURSES;
 
@@ -260,7 +260,7 @@ if (!empty($clone_question) && !empty($objExercise->id)) {
     // This should be moved to the duplicate function
     $new_answer_obj = new Answer($clone_question);
     $new_answer_obj->read();
-    $new_answer_obj->duplicate($new_id);
+    $new_answer_obj->duplicate($new_question_obj);
 
     //Reloading tne $objExercise obj
     $objExercise->read($objExercise->id);
@@ -293,14 +293,14 @@ if (!empty($gradebook) && $gradebook=='view') {
 }
 
 $interbreadcrumb[] = array("url" => "exercise.php","name" => get_lang('Exercises'));
-if (isset($_GET['newQuestion']) || isset($_GET['editQuestion']) ) {
+if (isset($_GET['newQuestion']) || isset($_GET['editQuestion'])) {
     $interbreadcrumb[] = array("url" => "admin.php?exerciseId=".$objExercise->id, "name" => $objExercise->name);
 } else {
     $interbreadcrumb[] = array("url" => "#", "name" => $objExercise->name);
 }
 
 // shows a link to go back to the question pool
-if (!$exerciseId && $nameTools != get_lang('ExerciseManagement')){
+if (!$exerciseId && $nameTools != get_lang('ExerciseManagement')) {
     $interbreadcrumb[]=array(
         "url" => api_get_path(WEB_CODE_PATH)."exercise/question_pool.php?fromExercise=$fromExercise&".api_get_cidreq(),
         "name" => get_lang('QuestionPool')
@@ -309,7 +309,7 @@ if (!$exerciseId && $nameTools != get_lang('ExerciseManagement')){
 
 // if the question is duplicated, disable the link of tool name
 if ($modifyIn == 'thisExercise') {
-    if($buttonBack)	{
+    if ($buttonBack)	{
         $modifyIn='allExercises';
     } else {
         $noPHP_SELF=true;
@@ -392,7 +392,19 @@ if ($inATest) {
     }
 
     echo '</div>';
-    echo '<div class="alert alert-info">'.sprintf(get_lang('XQuestionsWithTotalScoreY'), $objExercise->selectNbrQuestions(), $maxScoreAllQuestions).'</div>';
+
+    if ($objExercise->added_in_lp()) {
+        echo Display::return_message(get_lang('AddedToLPCannotBeAccessed'), 'warning');
+    }
+
+    echo '<div class="alert alert-info">'.
+        sprintf(get_lang('XQuestionsWithTotalScoreY'), $objExercise->selectNbrQuestions(), $maxScoreAllQuestions);
+    if ($objExercise->random > 0) {
+        echo '<br />' .
+            sprintf(get_lang('OnlyXQuestionsPickedRandomly'), $objExercise->random);
+    }
+    echo '</div>';
+
 } else if (isset($_GET['newQuestion'])) {
     // we are in create a new question from question pool not in a test
     echo '<div class="actions">';

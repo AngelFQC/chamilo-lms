@@ -209,6 +209,89 @@ $saleTable->addForeignKeyConstraint(
     ['onDelete' => 'CASCADE']
 );
 
+$servicesTable = $pluginSchema->createTable(BuyCoursesPlugin::TABLE_SERVICES);
+$servicesTable->addColumn(
+    'id',
+    \Doctrine\DBAL\Types\Type::INTEGER,
+    ['autoincrement' => true, 'unsigned' => true]
+);
+$servicesTable->addColumn('name', \Doctrine\DBAL\Types\Type::STRING);
+$servicesTable->addColumn('description', \Doctrine\DBAL\Types\Type::TEXT);
+$servicesTable->addColumn(
+    'price',
+    \Doctrine\DBAL\Types\Type::DECIMAL,
+    ['scale' => 2]
+);
+$servicesTable->addColumn('duration_days', \Doctrine\DBAL\Types\Type::INTEGER);
+$servicesTable->addColumn('applies_to', \Doctrine\DBAL\Types\Type::INTEGER);
+$servicesTable->addColumn('owner_id', \Doctrine\DBAL\Types\Type::INTEGER);
+$servicesTable->addColumn('visibility', \Doctrine\DBAL\Types\Type::INTEGER);
+$servicesTable->addColumn('video_url', \Doctrine\DBAL\Types\Type::STRING);
+$servicesTable->addColumn('image', \Doctrine\DBAL\Types\Type::STRING);
+$servicesTable->addColumn('service_information', \Doctrine\DBAL\Types\Type::TEXT);
+$servicesTable->setPrimaryKey(['id']);
+
+$servicesNodeTable = $pluginSchema->createTable(BuyCoursesPlugin::TABLE_SERVICES_SALE);
+$servicesNodeTable->addColumn(
+    'id',
+    \Doctrine\DBAL\Types\Type::INTEGER,
+    ['autoincrement' => true, 'unsigned' => true]
+);
+$servicesNodeTable->addColumn(
+    'service_id',
+    \Doctrine\DBAL\Types\Type::INTEGER,
+    ['unsigned' => true]
+);
+$servicesNodeTable->addColumn('reference', \Doctrine\DBAL\Types\Type::STRING);
+$servicesNodeTable->addColumn('currency_id', \Doctrine\DBAL\Types\Type::INTEGER);
+$servicesNodeTable->addColumn(
+    'price',
+    \Doctrine\DBAL\Types\Type::DECIMAL,
+    ['scale' => 2]
+);
+$servicesNodeTable->addColumn('node_type', \Doctrine\DBAL\Types\Type::INTEGER);
+$servicesNodeTable->addColumn('node_id', \Doctrine\DBAL\Types\Type::INTEGER);
+$servicesNodeTable->addColumn('buyer_id', \Doctrine\DBAL\Types\Type::INTEGER);
+$servicesNodeTable->addColumn('buy_date', \Doctrine\DBAL\Types\Type::DATETIME);
+$servicesNodeTable->addColumn(
+    'date_start',
+    \Doctrine\DBAL\Types\Type::DATETIME,
+    ['notnull' => false]
+);
+$servicesNodeTable->addColumn(
+    'date_end',
+    \Doctrine\DBAL\Types\Type::DATETIME
+);
+$servicesNodeTable->addColumn('status', \Doctrine\DBAL\Types\Type::INTEGER);
+$servicesNodeTable->addColumn('payment_type', \Doctrine\DBAL\Types\Type::INTEGER);
+$servicesNodeTable->setPrimaryKey(['id']);
+$servicesNodeTable->addForeignKeyConstraint(
+    $servicesTable,
+    ['service_id'],
+    ['id'],
+    ['onDelete' => 'CASCADE']
+);
+
+$culqiTable = $pluginSchema->createTable(BuyCoursesPlugin::TABLE_CULQI);
+$culqiTable->addColumn(
+    'id',
+    \Doctrine\DBAL\Types\Type::INTEGER,
+    ['autoincrement' => true, 'unsigned' => true]
+);
+$culqiTable->addColumn('commerce_code', \Doctrine\DBAL\Types\Type::STRING);
+$culqiTable->addColumn('api_key', \Doctrine\DBAL\Types\Type::STRING);
+$culqiTable->addColumn('integration', \Doctrine\DBAL\Types\Type::INTEGER);
+$culqiTable->setPrimaryKey(['id']);
+
+$globalTable = $pluginSchema->createTable(BuyCoursesPlugin::TABLE_GLOBAL_CONFIG);
+$globalTable->addColumn(
+    'id',
+    \Doctrine\DBAL\Types\Type::INTEGER,
+    ['autoincrement' => true, 'unsigned' => true]
+);
+$globalTable->addColumn('terms_and_conditions', \Doctrine\DBAL\Types\Type::TEXT);
+$globalTable->setPrimaryKey(['id']);
+
 $queries = $pluginSchema->toSql($platform);
 
 foreach ($queries as $query) {
@@ -222,6 +305,8 @@ $itemTable = Database::get_main_table(BuyCoursesPlugin::TABLE_ITEM);
 $saleTable = Database::get_main_table(BuyCoursesPlugin::TABLE_SALE);
 $commissionTable = Database::get_main_table(BuyCoursesPlugin::TABLE_COMMISSION);
 $extraFieldTable = Database::get_main_table(TABLE_EXTRA_FIELD);
+$culqiTable = Database::get_main_table(BuyCoursesPlugin::TABLE_CULQI);
+$globalTable = Database::get_main_table(BuyCoursesPlugin::TABLE_GLOBAL_CONFIG);
 
 $paypalExtraField = Database::select(
     "*",
@@ -257,6 +342,22 @@ Database::insert(
         'password' => '',
         'signature' => '',
         'sandbox' => true
+    ]
+);
+
+Database::insert(
+    $culqiTable,
+    [
+        'commerce_code' => '',
+        'api_key' => '',
+        'integration' => 1
+    ]
+);
+
+Database::insert(
+    $globalTable,
+    [
+        'terms_and_conditions' => ''
     ]
 );
 

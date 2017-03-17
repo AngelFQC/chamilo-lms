@@ -26,6 +26,7 @@ class CourseSelectForm
 	public static function display_form($course, $hidden_fields = null, $avoid_serialize = false)
     {
         global $charset;
+        $resource_titles[RESOURCE_ASSET] = get_lang('Assets');
         $resource_titles[RESOURCE_GRADEBOOK] = get_lang('Gradebook');
         $resource_titles[RESOURCE_EVENT] = get_lang('Events');
         $resource_titles[RESOURCE_ANNOUNCEMENT] = get_lang('Announcements');
@@ -51,9 +52,11 @@ class CourseSelectForm
 				el = document.getElementById('div_'+item);
                 if (el.style.display == 'none') {
                     el.style.display = '';
+                    if (document.getElementById('img_'+item).length)
 					document.getElementById('img_'+item).className = 'fa fa-minus-square-o fa-lg';
 				} else {
 					el.style.display='none';
+					if (document.getElementById('img_'+item).length)
 					document.getElementById('img_'+item).className ='fa fa-plus-square-o fa-lg';
 				}
 			}
@@ -147,10 +150,8 @@ class CourseSelectForm
 			echo '</h3>';
 		}
         echo '<script src="'.api_get_path(WEB_CODE_PATH).'inc/lib/javascript/upload.js" type="text/javascript"></script>';
-		echo '<script type="text/javascript">var myUpload = new upload(1000);</script>';
-        $icon = Display::returnIconPath('myprogress_bar.gif');
         echo '<div class="tool-backups-options">';
-		echo '<form method="post" id="upload_form" name="course_select_form" onsubmit="javascript: myUpload.start(\'dynamic_div\',\''.$icon.',\''.get_lang('PleaseStandBy', '').'\',\'upload_form\')">';
+		echo '<form method="post" id="upload_form" name="course_select_form">';
 		echo '<input type="hidden" name="action" value="course_select_form"/>';
 
 		if (!empty($hidden_fields['destination_course']) &&
@@ -220,7 +221,6 @@ class CourseSelectForm
 						}
 
 						echo '<div class="well">';
-
                         echo '<div class="btn-group">';
 						echo "<a class=\"btn btn-default\" href=\"javascript: void(0);\" onclick=\"javascript: setCheckbox('$type',true);\" >".get_lang('All')."</a>";
                         echo "<a class=\"btn btn-default\" href=\"javascript: void(0);\" onclick=\"javascript:setCheckbox('$type',false);\" >".get_lang('None')."</a>";
@@ -542,12 +542,18 @@ class CourseSelectForm
                                     is_array($documents)
                                 ) {
 									foreach ($documents as $id_to_check => $post_value) {
-										$obj_to_check = $resources[$id_to_check];
-										$shared_path_part = substr($obj_to_check->path,0,strlen($obj->path));
-										if ($id_to_check != $id && $obj->path == $shared_path_part) {
-											$_POST['resource'][RESOURCE_DOCUMENT][$id] = 1;
-											break;
-										}
+									    if (isset($resources[$id_to_check])) {
+                                            $obj_to_check = $resources[$id_to_check];
+                                            $shared_path_part = substr(
+                                                $obj_to_check->path,
+                                                0,
+                                                strlen($obj->path)
+                                            );
+                                            if ($id_to_check != $id && $obj->path == $shared_path_part) {
+                                                $_POST['resource'][RESOURCE_DOCUMENT][$id] = 1;
+                                                break;
+                                            }
+                                        }
 									}
 								}
 							}
@@ -590,10 +596,12 @@ class CourseSelectForm
 				el = document.getElementById('div_'+item);
                 if (el.style.display == 'none') {
                     el.style.display = '';
+                    if (document.getElementById('img_'+item).length)
 					document.getElementById('img_'+item).className('fa fa-minus-square-o fa-lg');
 				}
 				else{
                     el.style.display = 'none';
+                    if (document.getElementById('img_'+item).length)
 					document.getElementById('img_'+item).className('fa fa-plus-square-o fa-lg');
 				}
 			}
@@ -640,10 +648,9 @@ class CourseSelectForm
 		}
 
 		echo '<script src="'.api_get_path(WEB_CODE_PATH).'inc/lib/javascript/upload.js" type="text/javascript"></script>';
-		echo '<script type="text/javascript">var myUpload = new upload(1000);</script>';
         $icon = Display::returnIconPath('progress_bar.gif');
         echo '<div class="tool-backups-options">';
-		echo '<form method="post" id="upload_form" name="course_select_form" onsubmit="myUpload.start(\'dynamic_div\',\''.$icon.'\',\''.get_lang('PleaseStandBy').'\',\'upload_form\')">';
+		echo '<form method="post" id="upload_form" name="course_select_form">';
 		echo '<input type="hidden" name="action" value="course_select_form"/>';
 		foreach ($list_course as $course) {
 			foreach ($course->resources as $type => $resources) {

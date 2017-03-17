@@ -126,7 +126,6 @@ class Template
         $this->twig->addFilter('get_path', new Twig_Filter_Function('api_get_path'));
         $this->twig->addFilter('get_setting', new Twig_Filter_Function('api_get_setting'));
         $this->twig->addFilter('var_dump', new Twig_Filter_Function('var_dump'));
-        $this->twig->addFilter('return_logo', new Twig_Filter_Function('return_logo'));
         $this->twig->addFilter('return_message', new Twig_Filter_Function('Display::return_message_and_translate'));
         $this->twig->addFilter('display_page_header', new Twig_Filter_Function('Display::page_header_and_translate'));
         $this->twig->addFilter(
@@ -137,6 +136,10 @@ class Template
         $this->twig->addFilter('img', new Twig_Filter_Function('Template::get_image'));
         $this->twig->addFilter('format_date', new Twig_Filter_Function('Template::format_date'));
         $this->twig->addFilter('api_get_local_time', new Twig_Filter_Function('api_get_local_time'));
+        // a combination of the two previous functions
+        $this->twig->addFilter('local_format_date', new Twig_Filter_Function('api_convert_and_format_date'));
+        $this->twig->addFilter('user_info', new Twig_Filter_Function('api_get_user_info'));
+        $this->twig->addFilter('get_configuration_value', new Twig_Filter_Function('api_get_configuration_value'));
 
         /*
           $lexer = new Twig_Lexer($this->twig, array(
@@ -175,8 +178,6 @@ class Template
 
         $this->assign('template', $this->templateFolder);
         $this->assign('locale', api_get_language_isocode());
-
-        $this->assign('css_styles', $this->theme);
         $this->assign('login_class', null);
 
         $this->setLoginForm();
@@ -184,7 +185,6 @@ class Template
         // Chamilo plugins
         if ($this->show_header) {
             if ($this->load_plugins) {
-
                 $this->plugin = new AppPlugin();
 
                 //1. Showing installed plugins in regions
@@ -473,7 +473,7 @@ class Template
                 $user_info['is_admin'] = 1;
             }
 
-            $user_info['messages_count'] = MessageManager::get_new_messages();
+            $user_info['messages_count'] = MessageManager::getCountNewMessages();
             $this->user_is_logged_in = true;
         }
         // Setting the $_u array that could be use in any template
@@ -538,7 +538,6 @@ class Template
 
         // Default CSS Bootstrap
         $bowerCSSFiles = [
-            'bootstrap-daterangepicker/daterangepicker-bs3.css',
             'fontawesome/css/font-awesome.min.css',
             'jquery-ui/themes/smoothness/theme.css',
             'jquery-ui/themes/smoothness/jquery-ui.min.css',
@@ -546,12 +545,14 @@ class Template
             'jqueryui-timepicker-addon/dist/jquery-ui-timepicker-addon.min.css',
             'bootstrap/dist/css/bootstrap.min.css',
             'jquery.scrollbar/jquery.scrollbar.css',
+            'bootstrap-daterangepicker/daterangepicker.css',
+            'bootstrap-select/dist/css/bootstrap-select.min.css'
         ];
 
         foreach ($bowerCSSFiles as $file) {
             $css[] = api_get_path(WEB_PATH).'web/assets/'.$file;
         }
-        $css[] = api_get_path(WEB_LIBRARY_PATH) . 'javascript/bootstrap-select/css/bootstrap-select.min.css';
+
         $css[] = api_get_path(WEB_LIBRARY_PATH) . 'javascript/chosen/chosen.css';
         $css[] = api_get_path(WEB_LIBRARY_PATH) . 'javascript/tag/style.css';
 
@@ -648,9 +649,8 @@ class Template
         }
 
         // Logo
-        $logo = return_logo($this->theme);
+        $logo = return_logo();
         $this->assign('logo', $logo);
-
         $this->assign('show_media_element', 1);
     }
 
@@ -661,19 +661,15 @@ class Template
     public function set_js_files()
     {
         global $disable_js_and_css_files, $htmlHeadXtra;
-
         $isoCode = api_get_language_isocode();
-
-        $selectLink = 'bootstrap-select/js/i18n/defaults-' . $isoCode . '_' . strtoupper($isoCode) . '.min.js';
+        $selectLink = 'bootstrap-select/dist/js/i18n/defaults-' . $isoCode . '_' . strtoupper($isoCode) . '.min.js';
 
         if ($isoCode == 'en') {
-            $selectLink = 'bootstrap-select/js/i18n/defaults-' . $isoCode . '_US.min.js';
+            $selectLink = 'bootstrap-select/dist/js/i18n/defaults-' . $isoCode . '_US.min.js';
         }
         // JS files
         $js_files = array(
-            'chosen/chosen.jquery.min.js',
-            'bootstrap-select/js/bootstrap-select.min.js',
-            $selectLink
+            'chosen/chosen.jquery.min.js'
         );
 
         $viewBySession = api_get_setting('my_courses_view_by_session') === 'true';
@@ -709,7 +705,9 @@ class Template
             'jqueryui-timepicker-addon/dist/jquery-ui-timepicker-addon.min.js',
             'image-map-resizer/js/imageMapResizer.min.js',
             'jquery.scrollbar/jquery.scrollbar.min.js',
-            'readmore-js/readmore.min.js'
+            'readmore-js/readmore.min.js',
+            'bootstrap-select/dist/js/bootstrap-select.min.js',
+            $selectLink
         ];
         if (CHAMILO_LOAD_WYSIWYG == true) {
             $bowerJsFiles[] = 'ckeditor/ckeditor.js';
@@ -734,7 +732,8 @@ class Template
 
         // Loading email_editor js
         if (!api_is_anonymous() && api_get_setting('allow_email_editor') == 'true') {
-            $js_file_to_string .= $this->fetch('default/mail_editor/email_link.js.tpl');
+            $template = $this->get_template('mail_editor/email_link.js.tpl');
+            $js_file_to_string .= $this->fetch($template);
         }
 
         if (!$disable_js_and_css_files) {
@@ -762,7 +761,7 @@ class Template
      */
     public function set_js_files_post()
     {
-        global $disable_js_and_css_files, $htmlHeadXtra;
+        global $disable_js_and_css_files;
         $js_files = array();
         if (api_is_global_chat_enabled()) {
             //Do not include the global chat in LP
@@ -801,8 +800,14 @@ class Template
             }
         }
 
-        $this->assign('online_button', Display::return_icon('statusonline.png', null, null, ICON_SIZE_ATOM));
-        $this->assign('offline_button',Display::return_icon('statusoffline.png', null, null, ICON_SIZE_ATOM));
+        $this->assign(
+        'online_button',
+            Display::return_icon('statusonline.png', null, [], ICON_SIZE_ATOM)
+        );
+        $this->assign(
+            'offline_button',
+            Display::return_icon('statusoffline.png', null, [], ICON_SIZE_ATOM)
+        );
 
         // Get language iso-code for this page - ignore errors
         $this->assign('document_language', api_get_language_isocode());
@@ -894,7 +899,7 @@ class Template
 
         //@todo move this in the template
         $rightFloatMenu = '';
-        $iconBug = Display::return_icon('bug.png', get_lang('ReportABug'), null, ICON_SIZE_LARGE);
+        $iconBug = Display::return_icon('bug.png', get_lang('ReportABug'), [], ICON_SIZE_LARGE);
         if (api_get_setting('show_link_bug_notification') == 'true' && $this->user_is_logged_in) {
             $rightFloatMenu = '<div class="report">
 		<a href="https://github.com/chamilo/chamilo-lms/wiki/How-to-report-issues" target="_blank">
@@ -905,7 +910,7 @@ class Template
 
         if (api_get_setting('show_link_ticket_notification') == 'true' && $this->user_is_logged_in) {
             // by default is project_id = 1
-            $iconTicket = Display::return_icon('bug.png', get_lang('Ticket'), null, ICON_SIZE_LARGE);
+            $iconTicket = Display::return_icon('bug.png', get_lang('Ticket'), [], ICON_SIZE_LARGE);
             $courseInfo = api_get_course_info();
             $courseParams = '';
             if (!empty($courseInfo)) {
@@ -920,9 +925,6 @@ class Template
         }
 
         $this->assign('bug_notification', $rightFloatMenu);
-
-        $notification = returnNotificationMenu();
-        $this->assign('notification_menu', $notification);
 
         $resize = '';
         if (api_get_setting('accessibility_font_resize') == 'true') {
@@ -989,36 +991,6 @@ class Template
         $menu = menuArray();
         $this->assign('menu', $menu);
 
-        // Setting notifications
-        $count_unread_message = 0;
-        if (api_get_setting('allow_message_tool') == 'true') {
-            // get count unread message and total invitations
-            $count_unread_message = MessageManager::get_number_of_messages(true);
-        }
-
-        $total_invitations = 0;
-        if (api_get_setting('allow_social_tool') == 'true') {
-            $number_of_new_messages_of_friend = SocialManager::get_message_number_invitation_by_user_id(
-                api_get_user_id()
-            );
-            $usergroup = new UserGroup();
-            $group_pending_invitations = $usergroup->get_groups_by_user(
-                api_get_user_id(),
-                GROUP_USER_PERMISSION_PENDING_INVITATION,
-                false
-            );
-            if (!empty($group_pending_invitations)) {
-                $group_pending_invitations = count($group_pending_invitations);
-            } else {
-                $group_pending_invitations = 0;
-            }
-            $total_invitations = intval($number_of_new_messages_of_friend) + $group_pending_invitations + intval($count_unread_message);
-        }
-        $total_invitations = (!empty($total_invitations) ? Display::badge($total_invitations) : null);
-
-        $this->assign('user_notifications', $total_invitations);
-
-
         // Block Breadcrumb
         $breadcrumb = return_breadcrumb($interbreadcrumb, $language_file, $nameTools);
         $this->assign('breadcrumb', $breadcrumb);
@@ -1084,13 +1056,29 @@ class Template
      */
     private function set_footer_parameters()
     {
-        if (api_get_setting('show_administrator_data') == 'true') {
+        if (api_get_setting('show_administrator_data') === 'true') {
+            $firstName = api_get_setting('administratorName');
+            $lastName = api_get_setting('administratorSurname');
+
+            if (!empty($firstName) && !empty($lastName)) {
+                $name = api_get_person_name($firstName, $lastName);
+            } else {
+                $name = $lastName;
+                if (empty($lastName)) {
+                    $name = $firstName;
+                }
+            }
+
+            $adminName = '';
             // Administrator name
-            $administrator_data = get_lang('Manager').' : '.Display::encrypted_mailto_link(
-                    api_get_setting('emailAdministrator'),
-                    api_get_person_name(api_get_setting('administratorName'), api_get_setting('administratorSurname'))
-                );
-            $this->assign('administrator_name', $administrator_data);
+            if (!empty($name)) {
+                $adminName = get_lang('Manager').' : '.
+                    Display::encrypted_mailto_link(
+                        api_get_setting('emailAdministrator'),
+                        $name
+                    );
+            }
+            $this->assign('administrator_name', $adminName);
         }
 
         // Loading footer extra content

@@ -2,13 +2,13 @@
 /* For licensing terms, see /license.txt */
 
 /**
- *	Interface for assigning sessions to Human Resources Manager
- *	@package chamilo.admin
+ *  Interface for assigning sessions to Human Resources Manager
+ *  @package chamilo.admin
  */
 // resetting the course id
 $cidReset = true;
 
-require_once '../inc/global.inc.php';
+require_once __DIR__.'/../inc/global.inc.php';
 
 // create an ajax object
 $xajax = new xajax();
@@ -88,7 +88,11 @@ function search_sessions($needle, $type)
             $return .= '<option value="'.$session['id'].'" title="'.htmlspecialchars($session['name'],ENT_QUOTES).'">'.$session['name'].'</option>';
         }
         $return .= '</select>';
-        $xajax_response->addAssign('ajax_list_sessions_multiple','innerHTML',api_utf8_encode($return));
+        $xajax_response->addAssign(
+            'ajax_list_sessions_multiple',
+            'innerHTML',
+            api_utf8_encode($return)
+        );
     }
 
     return $xajax_response;

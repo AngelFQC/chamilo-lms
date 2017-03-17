@@ -7,7 +7,7 @@
  */
 
 $cidReset = true;
-require_once '../inc/global.inc.php';
+require_once __DIR__.'/../inc/global.inc.php';
 
 // setting the section (for the tabs)
 $this_section = SECTION_PLATFORM_ADMIN;
@@ -60,7 +60,7 @@ $interbreadcrumb[] = array('url' => "session_list.php","name" => get_lang('Sessi
 $interbreadcrumb[] = array('url' => "resume_session.php?id_session=".$id,"name" => get_lang('SessionOverview'));
 
 if (isset($_POST['formSent']) && $_POST['formSent']) {
-	$formSent = 1;
+    $formSent = 1;
 }
 
 $order_clause = 'ORDER BY ';
@@ -115,7 +115,7 @@ $formAction .= http_build_query(array(
 
 $form = new FormValidator('edit_session', 'post', $formAction);
 $form->addElement('header', $tool_name);
-$result = SessionManager::setForm($form, $id);
+$result = SessionManager::setForm($form, $sessionInfo);
 
 $htmlHeadXtra[] = '
 <script>

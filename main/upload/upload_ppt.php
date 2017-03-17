@@ -9,7 +9,7 @@ use Chamilo\CoreBundle\Component\Utils\ChamiloApi;
  * @author Yannick Warnier <ywarnier@beeznest.org>
  */
 
-require_once '../inc/global.inc.php';
+require_once __DIR__.'/../inc/global.inc.php';
 
 $htmlHeadXtra[] = '<script language="javascript" src="../inc/lib/javascript/upload.js" type="text/javascript"></script>';
 $htmlHeadXtra[] = '<script type="text/javascript">
@@ -85,7 +85,7 @@ if (api_get_setting('search_enabled') === 'true') {
     require_once(api_get_path(LIBRARY_PATH) . 'specific_fields_manager.lib.php');
     $specific_fields = get_specific_field_list();
     $form->addElement('checkbox', 'index_document', '', get_lang('SearchFeatureDoIndexDocument'));
-    $form->addElement('select_language', 'language', get_lang('SearchFeatureDocumentLanguage'));
+    $form->addSelectLanguage('language', get_lang('SearchFeatureDocumentLanguage'));
     foreach ($specific_fields as $specific_field) {
         $form->addElement('text', $specific_field['code'], $specific_field['name'].' : ');
     }

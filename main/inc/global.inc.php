@@ -192,9 +192,15 @@ if (!empty($_configuration['multiple_access_urls'])) {
     $_configuration['access_url'] = 1;
 }
 
+// Check if APCu is available. If so, store the value in $_configuration
+if (extension_loaded('apcu')) {
+    $_configuration['apc'] = true;
+    $_configuration['apc_prefix'] = $_configuration['main_database'].'_'.$_configuration['access_url'].'_';
+}
+
 $charset = 'UTF-8';
 
-// Enables the portablity layer and configures PHP for UTF-8
+// Enables the portability layer and configures PHP for UTF-8
 \Patchwork\Utf8\Bootup::initAll();
 
 // Start session after the internationalization library has been initialized.
@@ -273,7 +279,7 @@ $result = & api_get_settings('Plugins', 'list', $_configuration['access_url']);
 $_plugins = array();
 foreach ($result as & $row) {
     $key = & $row['variable'];
-    if (is_string($_setting[$key])) {
+    if (isset($_setting[$key]) && is_string($_setting[$key])) {
         $_setting[$key] = array();
     }
     $_setting[$key][] = $row['selected_value'];
@@ -285,6 +291,10 @@ if (api_get_setting('server_type') == 'test') {
     ini_set('display_errors', '1');
     ini_set('log_errors', '1');
     error_reporting(-1);
+
+    if (function_exists('opcache_reset')) {
+        opcache_reset();
+    }
 } else {
     error_reporting(E_COMPILE_ERROR | E_ERROR | E_CORE_ERROR);
 }
@@ -589,7 +599,5 @@ if (empty($default_quota)) {
     $default_quota = 100000000;
 }
 define('DEFAULT_DOCUMENT_QUOTA', $default_quota);
-
-// Sets the ascii_math plugin see #7134
-$_SESSION['ascii_math_loaded'] = false;
-
+// Forcing PclZip library to use a custom temporary folder.
+define('PCLZIP_TEMPORARY_DIR', api_get_path(SYS_ARCHIVE_PATH));

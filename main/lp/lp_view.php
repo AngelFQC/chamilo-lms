@@ -25,7 +25,7 @@ if ($lp_controller_touched != 1) {
     exit;
 }
 
-require_once '../inc/global.inc.php';
+require_once __DIR__.'/../inc/global.inc.php';
 //To prevent the template class
 $show_learnpath = true;
 
@@ -533,7 +533,7 @@ $template->assign(
 
 $template->assign('lp_author', $_SESSION['oLP']->get_author());
 $template->assign('lp_mode', $_SESSION['oLP']->mode);
-$template->assign('lp_title_scorm',$_SESSION['oLP']->name);
+$template->assign('lp_title_scorm', $_SESSION['oLP']->name);
 $template->assign(
     'lp_html_toc',
     $_SESSION['oLP']->get_html_toc($get_toc_list)

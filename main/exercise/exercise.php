@@ -14,7 +14,7 @@ use ChamiloSession as Session;
  */
 
 // including the global library
-require_once '../inc/global.inc.php';
+require_once __DIR__.'/../inc/global.inc.php';
 $current_course_tool = TOOL_QUIZ;
 
 // Setting the tabs
@@ -69,6 +69,7 @@ Session::erase('objQuestion');
 Session::erase('objAnswer');
 Session::erase('questionList');
 Session::erase('exerciseResult');
+Session::erase('firstTime');
 
 //General POST/GET/SESSION/COOKIES parameters recovery
 $origin = isset($_REQUEST['origin']) ? Security::remove_XSS($_REQUEST['origin']) : null;
@@ -563,7 +564,6 @@ if (isset($list_ordered) && !empty($list_ordered)) {
 }
 
 $tableRows = [];
-
 /*  Listing exercises  */
 if (!empty($exerciseList)) {
     if ($origin != 'learnpath') {
@@ -711,7 +711,7 @@ if (!empty($exerciseList)) {
                 }
                 //$class_tip = 'exercise_link';
                 $url = $move.'<a '.$alt_title.' class="'.$class_tip.'" id="tooltip_'.$row['id'].'" href="overview.php?'.api_get_cidreq().$myorigin.$mylpid.$mylpitemid.'&exerciseId='.$row['id'].'">
-                             '.Display::return_icon('quiz.gif', $row['title']).'
+                             '.Display::return_icon('quiz.png', $row['title']).'
                  '.$title.' </a>';
 
                 $item = Display::tag('td', $url.' '.$session_img.$lp_blocked);
@@ -741,7 +741,7 @@ if (!empty($exerciseList)) {
 
                     // Export
                     $actions .= Display::url(
-                        Display::return_icon('cd.gif', get_lang('CopyExercise')),
+                        Display::return_icon('cd.png', get_lang('CopyExercise')),
                         '',
                         array(
                             'onclick' => "javascript:if(!confirm('".addslashes(api_htmlentities(get_lang('AreYouSureToCopy'), ENT_QUOTES, $charset))." ".addslashes($row['title'])."?"."')) return false;",
@@ -1022,22 +1022,24 @@ $hotpotatoes_exist = false;
 
 if ($is_allowedToEdit) {
     $sql = "SELECT d.path as path, d.comment as comment, ip.visibility as visibility
-            FROM $TBL_DOCUMENT d, $TBL_ITEM_PROPERTY ip
+            FROM $TBL_DOCUMENT d 
+            INNER JOIN $TBL_ITEM_PROPERTY ip
+            ON (d.id = ip.ref AND d.c_id = ip.c_id)
             WHERE
                 d.c_id = $courseId AND
-                ip.c_id = $courseId AND
-                d.id = ip.ref AND
+                ip.c_id = $courseId AND                
                 ip.tool = '".TOOL_DOCUMENT."' AND
                 (d.path LIKE '%htm%') AND
                 d.path  LIKE '".Database :: escape_string($uploadPath.'/%/%')."'
             LIMIT ".$from.",".$limit; // only .htm or .html files listed
 } else {
     $sql = "SELECT d.path as path, d.comment as comment, ip.visibility as visibility
-            FROM $TBL_DOCUMENT d, $TBL_ITEM_PROPERTY ip
+            FROM $TBL_DOCUMENT d 
+            INNER JOIN $TBL_ITEM_PROPERTY ip
+            ON (d.id = ip.ref AND d.c_id = ip.c_id)
             WHERE
                 d.c_id = $courseId AND
-                ip.c_id = $courseId AND
-                d.id = ip.ref AND
+                ip.c_id = $courseId AND                
                 ip.tool = '".TOOL_DOCUMENT."' AND
                 (d.path LIKE '%htm%') AND
                 d.path  LIKE '".Database :: escape_string($uploadPath.'/%/%')."' AND

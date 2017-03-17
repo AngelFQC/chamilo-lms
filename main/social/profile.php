@@ -10,7 +10,7 @@
  */
 
 $cidReset = true;
-require_once '../inc/global.inc.php';
+require_once __DIR__.'/../inc/global.inc.php';
 
 if (api_get_setting('allow_social_tool') != 'true') {
     $url = api_get_path(WEB_PATH).'whoisonline.php?id='.intval($_GET['u']);
@@ -269,7 +269,7 @@ $social_post_wall_block = empty($posts) ? '<p>'.get_lang("NoPosts").'</p>' : $po
 
 $socialAutoExtendLink = Display::url(
     get_lang('SeeMore'),
-    $socialAjaxUrl . '?u='. $my_user_id . '&a=listWallMessage&start=10&length=5',
+    $socialAjaxUrl . '?u='. $my_user_id . '&a=list_wall_message&start=10&length=5',
     array(
         'class' => 'nextPage next',
     )
@@ -296,7 +296,7 @@ $(document).ready(function() {
                 '");
             },
             type: "POST",
-            url: "'. api_get_path(WEB_AJAX_PATH) .'social.ajax.php?a=readUrlWithOpenGraph",
+            url: "'. api_get_path(WEB_AJAX_PATH) .'social.ajax.php?a=read_url_with_open_graph",
             data: "social_wall_new_msg_main=" + e.originalEvent.clipboardData.getData("text"),
             success: function(response) {
                 $("[name=\'wall_post_button\']").prop( "disabled", false );
@@ -678,7 +678,13 @@ if ($show_full_profile) {
 
 $tpl = new Template(get_lang('Social'));
 // Block Avatar Social
-SocialManager::setSocialUserBlock($tpl, $user_id, 'shared_profile', 0, $show_full_profile);
+SocialManager::setSocialUserBlock(
+    $tpl,
+    $friendId,
+    'shared_profile',
+    0,
+    $show_full_profile
+);
 
 $tpl->assign('social_friend_block', $friend_html);
 $tpl->assign('social_menu_block', $social_menu_block);
@@ -696,7 +702,8 @@ $tpl->assign('social_auto_extend_link', $socialAutoExtendLink);
 
 $formModalTpl =  new Template();
 $formModalTpl->assign('invitation_form', MessageManager::generate_invitation_form('send_invitation'));
-$formModals = $formModalTpl->fetch('default/social/form_modals.tpl');
+$template = $formModalTpl->get_template('social/form_modals.tpl');
+$formModals = $formModalTpl->fetch($template);
 
 $tpl->assign('form_modals', $formModals);
 $social_layout = $tpl->get_template('social/profile.tpl');

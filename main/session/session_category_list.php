@@ -4,12 +4,10 @@
  * List sessions categories
  * @package chamilo.admin
  */
-/**
- * Code
- */
+
 $cidReset = true;
 
-require_once '../inc/global.inc.php';
+require_once __DIR__.'/../inc/global.inc.php';
 
 api_protect_admin_script(true);
 api_protect_limit_for_session_admin();
@@ -33,6 +31,7 @@ $action = isset($_REQUEST['action']) ? Security::remove_XSS($_REQUEST['action'])
 $sort = isset($_GET['sort']) && in_array($_GET['sort'], array('name', 'nbr_session', 'date_start', 'date_end')) ? Security::remove_XSS($_GET['sort']) : 'name';
 $idChecked = isset($_REQUEST['idChecked']) ? Security::remove_XSS($_REQUEST['idChecked']) : null;
 $order = isset($_REQUEST['order']) ? Security::remove_XSS($_REQUEST['order']) : 'ASC';
+$keyword = isset($_GET['keyword']) ? Security::remove_XSS($_GET['keyword']) : null;
 
 if ($action == 'delete_on_session' || $action == 'delete_off_session') {
     $delete_session = ($action == 'delete_on_session') ? true : false;
@@ -42,7 +41,6 @@ if ($action == 'delete_on_session' || $action == 'delete_off_session') {
     exit();
 }
 
-//$interbreadcrumb[] = array("url" => "index.php", "name" => get_lang('PlatformAdmin'));
 $interbreadcrumb[] = array('url' => 'session_list.php','name' => get_lang('SessionList'));
 
 if (isset($_GET['search']) && $_GET['search'] == 'advanced') {
@@ -66,9 +64,9 @@ if (isset($_GET['search']) && $_GET['search'] == 'advanced') {
     //if user is crfp admin only list its sessions
     $where = null;
     if (!api_is_platform_admin()) {
-        $where .= (empty($_REQUEST['keyword']) ? "" : " WHERE name LIKE '%".Database::escape_string(trim($_REQUEST['keyword']))."%'");
+        $where .= (empty($keyword) ? "" : " WHERE name LIKE '%".Database::escape_string(trim($_REQUEST['keyword']))."%'");
     } else {
-        $where .= (empty($_REQUEST['keyword']) ? "" : " WHERE name LIKE '%".Database::escape_string(trim($_REQUEST['keyword']))."%'");
+        $where .= (empty($keyword) ? "" : " WHERE name LIKE '%".Database::escape_string(trim($_REQUEST['keyword']))."%'");
     }
     if (empty($where)) {
         $where = " WHERE access_url_id = ".api_get_current_access_url_id()." ";
@@ -91,7 +89,6 @@ if (isset($_GET['search']) && $_GET['search'] == 'advanced') {
 	 			LIMIT $from,".($limit + 1);
 
     $query_rows = "SELECT count(*) as total_rows FROM $tbl_session_category sc $where ";
-
     $order = ($order == 'ASC') ? 'DESC' : 'ASC';
     $result_rows = Database::query($query_rows);
     $recorset = Database::fetch_array($result_rows);
@@ -102,7 +99,7 @@ if (isset($_GET['search']) && $_GET['search'] == 'advanced') {
     $nbr_results = sizeof($Sessions);
     $tool_name = get_lang('ListSessionCategory');
     Display::display_header($tool_name);
-    $keyword = isset($_GET['keyword']) ? Security::remove_XSS($_GET['keyword']) : null;
+
     ?>
 
     <div class="actions">
@@ -111,7 +108,7 @@ if (isset($_GET['search']) && $_GET['search'] == 'advanced') {
               <?php
                 echo '<a href="'.api_get_path(WEB_CODE_PATH).'session/session_category_add.php">'.Display::return_icon('new_folder.png', get_lang('AddSessionCategory'), '', ICON_SIZE_MEDIUM).'</a>
                       <a href="'.api_get_path(WEB_CODE_PATH).'session/session_list.php">'.Display::return_icon('session.png', get_lang('ListSession'), '', ICON_SIZE_MEDIUM).'</a>';
-            ?>  
+            ?>
             </div>
             <div class="col-md-6">
                 <div class="pull-right">
@@ -122,7 +119,7 @@ if (isset($_GET['search']) && $_GET['search'] == 'advanced') {
                     <!-- <a href="session_list.php?search=advanced"><?php echo get_lang('AdvancedSearch'); ?></a> -->
                     </div>
                 </form>
-                </div>    
+                </div>
             </div>
         </div>
     <form method="post" action="<?php echo api_get_self(); ?>?action=delete&sort=<?php echo $sort; ?>" onsubmit="javascript:if(!confirm('<?php echo get_lang('ConfirmYourChoice'); ?>')) return false;">
@@ -136,7 +133,7 @@ if (isset($_GET['search']) && $_GET['search'] == 'advanced') {
             if ($num > $limit) {
                 if ($page) {
                     ?>
-                    <a href="<?php echo api_get_self(); ?>?page=<?php echo $page - 1; ?>&sort=<?php echo $sort; ?>&order=<?php echo Security::remove_XSS($_REQUEST['order']); ?>&keyword=<?php echo $_REQUEST['keyword']; ?><?php echo @$cond_url; ?>"><?php echo get_lang('Previous'); ?></a>
+                    <a href="<?php echo api_get_self(); ?>?page=<?php echo $page - 1; ?>&sort=<?php echo $sort; ?>&order=<?php echo Security::remove_XSS($order); ?>&keyword=<?php echo $keyword; ?><?php echo @$cond_url; ?>"><?php echo get_lang('Previous'); ?></a>
                     <?php
                 } else {
                     echo get_lang('Previous');
@@ -146,7 +143,7 @@ if (isset($_GET['search']) && $_GET['search'] == 'advanced') {
                 <?php
                 if ($nbr_results > $limit) {
                     ?>
-                    <a href="<?php echo api_get_self(); ?>?page=<?php echo $page + 1; ?>&sort=<?php echo $sort; ?>&order=<?php echo Security::remove_XSS($_REQUEST['order']); ?>&keyword=<?php echo $_REQUEST['keyword']; ?><?php echo @$cond_url; ?>"><?php echo get_lang('Next'); ?></a>
+                    <a href="<?php echo api_get_self(); ?>?page=<?php echo $page + 1; ?>&sort=<?php echo $sort; ?>&order=<?php echo Security::remove_XSS($order); ?>&keyword=<?php echo $keyword; ?><?php echo @$cond_url; ?>"><?php echo get_lang('Next'); ?></a>
                     <?php
                 } else {
                     echo get_lang('Next');
@@ -154,7 +151,7 @@ if (isset($_GET['search']) && $_GET['search'] == 'advanced') {
             }
             ?>
         </div>
-        
+
         <table class="data_table" width="100%">
             <tr>
                 <th>&nbsp;</th>
@@ -173,8 +170,12 @@ if (isset($_GET['search']) && $_GET['search'] == 'advanced') {
                     break;
                 }
                 $sql = 'SELECT COUNT(session_category_id)
-                FROM '.$tbl_session.' s INNER JOIN '.$table_access_url_rel_session.'  us ON (s.id = us.session_id)
-                WHERE s.session_category_id = '.intval($enreg['id']).' AND us.access_url_id = '.api_get_current_access_url_id();
+                        FROM '.$tbl_session.' s 
+                        INNER JOIN '.$table_access_url_rel_session.'  us 
+                        ON (s.id = us.session_id)
+                        WHERE 
+                            s.session_category_id = '.intval($enreg['id']).' AND 
+                            us.access_url_id = '.api_get_current_access_url_id();
 
                 $rs = Database::query($sql);
                 list($nb_courses) = Database::fetch_array($rs);
@@ -184,7 +185,15 @@ if (isset($_GET['search']) && $_GET['search'] == 'advanced') {
                     <td><?php echo api_htmlentities($enreg['name'], ENT_QUOTES, $charset); ?></td>
                     <td><?php echo "<a href=\"session_list.php?id_category=".$enreg['id']."\">".$nb_courses." Session(s) </a>"; ?></td>
                     <td><?php echo api_format_date($enreg['date_start'], DATE_FORMAT_SHORT); ?></td>
-                    <td><?php echo api_format_date($enreg['date_end'], DATE_FORMAT_SHORT); ?></td>
+                    <td>
+                        <?php
+                        if (!empty($enreg['date_end']) && $enreg['date_end'] != '0000-00-00') {
+                            echo api_format_date($enreg['date_end'], DATE_FORMAT_SHORT);
+                        } else {
+                            echo '-';
+                        }
+                        ?>
+                    </td>
                     <td>
                         <a href="session_category_edit.php?&id=<?php echo $enreg['id']; ?>">
                             <?php Display::display_icon('edit.png', get_lang('Edit'), array(), ICON_SIZE_SMALL); ?>

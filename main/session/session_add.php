@@ -7,7 +7,7 @@
 
 $cidReset = true;
 
-require_once '../inc/global.inc.php';
+require_once __DIR__.'/../inc/global.inc.php';
 
 $xajax = new xajax();
 $xajax->registerFunction('search_coachs');
@@ -127,7 +127,8 @@ $tool_name = get_lang('AddSession');
 
 $urlAction = api_get_self();
 
-function check_session_name($name) {
+function check_session_name($name)
+{
     $session = SessionManager::get_session_by_name($name);
 
     return empty($session) ? true : false;

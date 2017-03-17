@@ -25,10 +25,6 @@ class SequenceRepository extends EntityRepository
      */
     public function findRequirementForResource($resourceId, $type)
     {
-  /*      $criteria = Criteria::create()
-            ->where(Criteria::expr()->eq("resourceId", $resourceId))
-            ->andWhere(Criteria::expr()->eq("type", $type));
-*/
         return $this->findOneBy(['resourceId' => $resourceId, 'type' => $type]);
     }
 
@@ -68,22 +64,20 @@ class SequenceRepository extends EntityRepository
         return $result;
     }
 
-
     /**
      * Deletes a node and check in all the dependencies if the node exists in
      * order to deleted.
      *
      * @param int $resourceId
      * @param int $type
+     * @return boolean
      */
     public function deleteResource($resourceId, $type)
     {
         $sequence = $this->findRequirementForResource($resourceId, $type);
-
         if ($sequence && $sequence->hasGraph()) {
             $em = $this->getEntityManager();
-            $graph = $sequence->getUnSerializeGraph();
-
+            $graph = $sequence->getSequence()->getUnSerializeGraph();
             $mainVertex = $graph->getVertex($resourceId);
             $vertices = $graph->getVertices();
 
@@ -92,15 +86,15 @@ class SequenceRepository extends EntityRepository
                 $subResourceId = $vertex->getId();
                 $subSequence = $this->findRequirementForResource($subResourceId, $type);
                 if ($sequence && $subSequence->hasGraph()) {
-                    $graph = $subSequence->getUnSerializeGraph();
+                    $graph = $subSequence->getSequence()->getUnSerializeGraph();
                     $subMainVertex = $graph->getVertex($resourceId);
                     $subMainVertex->destroy();
-                    $subSequence->setGraphAndSerialize($graph);
+                    $subSequence->getSequence()->setGraphAndSerialize($graph);
                     $em->persist($subSequence);
                 }
             }
-            $mainVertex->destroy();
 
+            $mainVertex->destroy();
             $em->remove($sequence);
             $em->flush();
         }
@@ -220,7 +214,6 @@ class SequenceRepository extends EntityRepository
     private function findSessionFromVerticesEdges(Vertices $verticesEdges)
     {
         $sessionVertices = [];
-
         foreach ($verticesEdges as $supVertex) {
             $vertexId = $supVertex->getId();
             $session = $this->getEntityManager()->getReference(
@@ -237,5 +230,4 @@ class SequenceRepository extends EntityRepository
 
         return $sessionVertices;
     }
-
 }

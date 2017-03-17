@@ -1,11 +1,11 @@
 <?php
 /* For licensing terms, see /license.txt */
 /**
- * 	@package chamilo.admin
+ * @package chamilo.admin
  */
 $cidReset = true;
 
-require_once '../inc/global.inc.php';
+require_once __DIR__.'/../inc/global.inc.php';
 $this_section = SECTION_PLATFORM_ADMIN;
 
 api_protect_admin_script();
@@ -59,7 +59,7 @@ if (api_is_multiple_url_enabled()) {
             ON (u.user_id=url_rel_user.user_id)
             WHERE
                 url_rel_user.access_url_id=" . api_get_current_access_url_id() . " AND
-                status=1" . $order_clause;
+                status = 1" . $order_clause;
 } else {
     $sql = "SELECT user_id, lastname, firstname
             FROM $table_user WHERE status='1'" . $order_clause;
@@ -197,8 +197,7 @@ $form->addText('department_url', get_lang('CourseDepartmentURL'), false, array('
 $form->applyFilter('department_url', 'html_filter');
 $form->applyFilter('department_url', 'trim');
 
-$form->addElement('select_language', 'course_language', get_lang('CourseLanguage'));
-$form->applyFilter('select_language', 'html_filter');
+$form->addSelectLanguage('course_language', get_lang('CourseLanguage'));
 
 $group = array();
 $group[]= $form->createElement('radio', 'visibility', get_lang("CourseAccess"), get_lang('OpenToTheWorld'), COURSE_VISIBILITY_OPEN_WORLD);
@@ -350,7 +349,7 @@ if ($form->validate()) {
         CourseManager::updateTeachers($courseInfo, $teachers, true, false);
 
         // Updating session coaches
-        $sessionCoaches = $course['session_coaches'];
+        $sessionCoaches = isset($course['session_coaches']) ? $course['session_coaches'] : [];
         if (!empty($sessionCoaches)) {
             foreach ($sessionCoaches as $sessionId => $coachesToSubscribe) {
                 if (!empty($coachesToSubscribe)) {

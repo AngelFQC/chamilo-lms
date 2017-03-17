@@ -4,7 +4,7 @@
 use Chamilo\CourseBundle\Entity\CItemProperty;
 use Chamilo\UserBundle\Entity\User;
 
-require_once '../inc/global.inc.php';
+require_once __DIR__.'/../inc/global.inc.php';
 
 api_protect_course_script();
 
@@ -168,7 +168,7 @@ if ($form->validate()) {
     exit;
 } else {
     $headers = [get_lang('SubscribeUsersToLp'), get_lang('SubscribeGroupsToLp')];
-    $tabs = Display::tabs($headers, [$formUsers->toHtml(),$form->toHtml()]);
+    $tabs = Display::tabs($headers, [$formUsers->toHtml(), $form->toHtml()]);
     $tpl->assign('tabs', $tabs);
 }
 

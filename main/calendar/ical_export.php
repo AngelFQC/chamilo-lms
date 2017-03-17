@@ -8,7 +8,7 @@
 // we are not inside a course, so we reset the course id
 $cidReset = true;
 // setting the global file that gets the general configuration, the databases, the languages, ...
-require_once '../inc/global.inc.php';
+require_once __DIR__.'/../inc/global.inc.php';
 $this_section = SECTION_MYAGENDA;
 api_block_anonymous_users();
 
@@ -31,8 +31,7 @@ $id = explode('_', $_GET['id']);
 $type = $id[0];
 $id = $id[1];
 
-$agenda = new Agenda();
-$agenda->type = $type; //course,admin or personal
+$agenda = new Agenda($type);
 if (isset($_GET['course_id'])) {
     $course_info = api_get_course_info_by_id($_GET['course_id']);
     if (!empty($course_info)) {
@@ -46,9 +45,9 @@ if (!empty($event)) {
 	define('ICAL_LANG', api_get_language_isocode());
 
     $ical = new vcalendar();
-    $ical->setConfig('unique_id',api_get_path(WEB_PATH));
-    $ical->setProperty( 'method', 'PUBLISH' );
-    $ical->setConfig('url',api_get_path(WEB_PATH));
+    $ical->setConfig('unique_id', api_get_path(WEB_PATH));
+    $ical->setProperty('method', 'PUBLISH');
+    $ical->setConfig('url', api_get_path(WEB_PATH));
     $vevent = new vevent();
 
     switch ($_GET['class']) {

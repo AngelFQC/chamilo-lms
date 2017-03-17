@@ -409,7 +409,14 @@ class UserManager
                     null,
                     PERSON_NAME_EMAIL_ADDRESS
                 );
-                $tplSubject = new Template(null, false, false, false, false, false);
+                $tplSubject = new Template(
+                    null,
+                    false,
+                    false,
+                    false,
+                    false,
+                    false
+                );
                 $layoutSubject = $tplSubject->get_template(
                     'mail/subject_registration_platform.tpl'
                 );
@@ -422,14 +429,17 @@ class UserManager
                 );
                 $email_admin = api_get_setting('emailAdministrator');
 
+                $url = api_get_path(WEB_PATH);
                 if (api_is_multiple_url_enabled()) {
                     $access_url_id = api_get_current_access_url_id();
                     if ($access_url_id != -1) {
-                        $url = api_get_access_url($access_url_id);
+                        $urlInfo = api_get_access_url($access_url_id);
+                        if ($urlInfo) {
+                            $url = $urlInfo['url'];
+                        }
                     }
-                } else {
-                    $url = api_get_path(WEB_PATH);
                 }
+
                 $tplContent = new Template(null, false, false, false, false, false);
                 // variables for the default template
                 $tplContent->assign('complete_name', stripslashes(api_get_person_name($firstName, $lastName)));
@@ -555,7 +565,6 @@ class UserManager
                     WHERE status=1 AND c_id = " . intval($course->c_id);
             $res2 = Database::query($sql);
             if (Database::num_rows($res2) == 1) {
-
                 return false;
             }
         }
@@ -599,11 +608,14 @@ class UserManager
         $table_work = Database :: get_course_table(TABLE_STUDENT_PUBLICATION);
 
         // Unsubscribe the user from all groups in all his courses
-        $sql = "SELECT c.id FROM $table_course c, $table_course_user cu
+        $sql = "SELECT c.id 
+                FROM $table_course c 
+                INNER JOIN $table_course_user cu
+                ON (c.id = cu.c_id)
                 WHERE
                     cu.user_id = '".$user_id."' AND
-                    relation_type<>".COURSE_RELATION_TYPE_RRHH." AND
-                    c.id = cu.c_id";
+                    relation_type<>".COURSE_RELATION_TYPE_RRHH."
+                ";
 
         $res = Database::query($sql);
         while ($course = Database::fetch_object($res)) {
@@ -708,6 +720,25 @@ class UserManager
                 WHERE lastedit_user_id = '".$user_id."'";
         Database::query($sql);
 
+        // Skills
+        $table = Database::get_main_table(TABLE_MAIN_SKILL_REL_USER);
+        $sql = "DELETE FROM $table WHERE user_id = $user_id";
+        Database::query($sql);
+
+        $connection = Database::getManager()->getConnection();
+        $tableExists = $connection->getSchemaManager()->tablesExist(['plugin_bbb_room']);
+        if ($tableExists) {
+             // Delete user from database
+            $sql = "DELETE FROM plugin_bbb_room WHERE participant_id = $user_id";
+            Database::query($sql);
+        }
+
+        // Delete user/ticket relationships :(
+        $tableExists = $connection->getSchemaManager()->tablesExist(['ticket_ticket']);
+        if ($tableExists) {
+            TicketManager::deleteUserFromTicketSystem($user_id);
+        }
+
         // Delete user from database
         $sql = "DELETE FROM $table_user WHERE id = '".$user_id."'";
         Database::query($sql);
@@ -730,6 +761,13 @@ class UserManager
             api_get_utc_datetime(),
             $user_id_manager
         );
+        $cacheAvailable = api_get_configuration_value('apc');
+        if ($cacheAvailable === true) {
+            $apcVar = api_get_configuration_value('apc_prefix') . 'userinfo_' . $user_id;
+            if (apcu_exists($apcVar)) {
+                apcu_delete($apcVar);
+            }
+        }
 
         return true;
     }
@@ -778,7 +816,6 @@ class UserManager
     public static function deactivate_users($ids = array())
     {
         if (empty($ids)) {
-
             return false;
         }
 
@@ -809,7 +846,6 @@ class UserManager
     public static function activate_users($ids = array())
     {
         if (empty($ids)) {
-
             return false;
         }
 
@@ -1052,6 +1088,14 @@ class UserManager
             $hook->notifyUpdateUser(HOOK_EVENT_TYPE_POST);
         }
 
+        $cacheAvailable = api_get_configuration_value('apc');
+        if ($cacheAvailable === true) {
+            $apcVar = api_get_configuration_value('apc_prefix') . 'userinfo_' . $user_id;
+            if (apcu_exists($apcVar)) {
+                apcu_delete($apcVar);
+            }
+        }
+
         return $user->getId();
     }
 
@@ -1184,7 +1228,6 @@ class UserManager
     public static function create_username($firstname, $lastname)
     {
         if (empty($firstname) && empty($lastname)) {
-
             return false;
         }
 
@@ -1426,7 +1469,7 @@ class UserManager
         $user_table = Database :: get_main_table(TABLE_MAIN_USER);
         $tblAccessUrlRelUser = Database::get_main_table(TABLE_MAIN_ACCESS_URL_REL_USER);
         $return_array = array();
-        $sql_query = "SELECT * FROM $user_table ";
+        $sql_query = "SELECT user.id FROM $user_table user ";
 
         if (api_is_multiple_url_enabled()) {
             $sql_query .= " INNER JOIN $tblAccessUrlRelUser auru ON auru.user_id = user.id ";
@@ -1459,14 +1502,11 @@ class UserManager
         if (count($order_by) > 0) {
             $sql_query .= ' ORDER BY '.Database::escape_string(implode(',', $order_by), null, false);
         }
+
         $sql_result = Database::query($sql_query);
         while ($result = Database::fetch_array($sql_result)) {
-
-            $result['complete_name'] = api_get_person_name(
-                $result['firstname'],
-                $result['lastname']
-            );
-            $return_array[] = $result;
+            $userInfo = api_get_user_info($result['id']);
+            $return_array[] = $userInfo;
         }
 
         return $return_array;
@@ -1551,7 +1591,7 @@ class UserManager
      *
      * @return    array     Array of 2 elements: 'dir' and 'file' which contain
      * the dir and file as the name implies if image does not exist it will
-     * return the unknow image if anonymous parameter is true if not it returns an empty array
+     * return the unknown image if anonymous parameter is true if not it returns an empty array
      */
     public static function getUserPicturePathById($id, $type = 'web', $userInfo = [])
     {
@@ -1677,6 +1717,7 @@ class UserManager
                 $userInfo = api_get_user_info($user_id);
             }
         }
+
         $imageWebPath = self::get_user_picture_path_by_id($user_id, 'web', $userInfo);
         $pictureWebFile = $imageWebPath['file'];
         $pictureWebDir = $imageWebPath['dir'];
@@ -1711,7 +1752,6 @@ class UserManager
         $gravatarEnabled = api_get_setting('gravatar_enabled');
         $anonymousPath = Display::returnIconPath('unknown.png', $pictureAnonymousSize);
         if ($pictureWebFile == 'unknown.jpg' || empty($pictureWebFile)) {
-
             if ($gravatarEnabled === 'true') {
                 $file = self::getGravatar(
                     $imageWebPath['email'],
@@ -1781,6 +1821,7 @@ class UserManager
         $path_info = self::getUserPicturePathById($user_id, 'system');
 
         $path = $path_info['dir'];
+
         // If this directory does not exist - we create it.
         if (!file_exists($path)) {
             mkdir($path, api_get_permissions_for_new_directories(), true);
@@ -2482,7 +2523,8 @@ class UserManager
         return $extraField->getFieldInfoByFieldId($fieldId);
     }
 
-    /** Get extra user data by value
+    /**
+     * Get extra user data by value
      * @param string $variable the internal variable name of the field
      * @param string $value the internal value of the field
      * @param bool $all_visibility
@@ -2540,12 +2582,12 @@ class UserManager
 
     /**
      * Get extra user data by field variable
-     * @param string    field variable
+     * @param string    $variable field variable
      * @return array    data
      */
-    public static function get_extra_user_data_by_field_variable($field_variable)
+    public static function get_extra_user_data_by_field_variable($variable)
     {
-        $extra_information_by_variable = self::get_extra_field_information_by_name($field_variable);
+        $extra_information_by_variable = self::get_extra_field_information_by_name($variable);
         $field_id = intval($extra_information_by_variable['id']);
 
         $extraField = new ExtraFieldValue('user');
@@ -2564,21 +2606,21 @@ class UserManager
     /**
      * Get extra user data tags by field variable
      *
-     * @param string    field variable
-     * @return array    data
+     * @param string $variable field variable
+     * @return array
      */
-    public static function get_extra_user_data_for_tags($field_variable)
+    public static function get_extra_user_data_for_tags($variable)
     {
-        $extra_information_by_variable = self::get_extra_field_tags_information_by_name($field_variable);
+        $data = self::get_extra_field_tags_information_by_name($variable);
 
-        return $extra_information_by_variable;
+        return $data;
     }
 
     /**
      * Gives a list of [session_category][session_id] for the current user.
      * @param integer $user_id
-     * @param boolean whether to fill the first element or not (to give space for courses out of categories)
-     * @param boolean  optional true if limit time from session is over, false otherwise
+     * @param boolean $is_time_over whether to fill the first element or not (to give space for courses out of categories)
+     * @param boolean $ignore_visibility_for_admins optional true if limit time from session is over, false otherwise
      * @param boolean $ignoreTimeLimit ignore time start/end
      * @return array  list of statuses [session_category][session_id]
      *
@@ -2609,37 +2651,51 @@ class UserManager
                     s.coachAccessStartDate AS coach_access_start_date,
                     s.coachAccessEndDate AS coach_access_end_date
                 FROM ChamiloCoreBundle:Session AS s
+                INNER JOIN ChamiloCoreBundle:SessionRelCourseRelUser AS scu WITH scu.session = s
+                INNER JOIN ChamiloCoreBundle:AccessUrlRelSession AS url WITH url.sessionId = s.id
                 LEFT JOIN ChamiloCoreBundle:SessionCategory AS sc WITH s.category = sc
-                LEFT JOIN ChamiloCoreBundle:SessionRelCourseRelUser AS scu WITH scu.session = s
-                WHERE scu.user = :user OR s.generalCoach = :user
+                WHERE (scu.user = :user OR s.generalCoach = :user) AND url.accessUrlId = :url
                 ORDER BY sc.name, s.name";
 
         $dql = Database::getManager()
             ->createQuery($dql)
-            ->setParameters(['user' => $user_id])
+            ->setParameters(
+                ['user' => $user_id, 'url' => api_get_current_access_url_id()]
+            )
         ;
 
         $sessionData = $dql->getResult();
         $categories = [];
 
         foreach ($sessionData as $row) {
+            $session_id = $row['id'];
+            $coachList = SessionManager::getCoachesBySession($session_id);
+
+            $categoryStart = $row['session_category_date_start'] ? $row['session_category_date_start']->format('Y-m-d') : '';
+            $categoryEnd = $row['session_category_date_end'] ? $row['session_category_date_end']->format('Y-m-d') : '';
+
+            $courseList = UserManager::get_courses_list_by_session(
+                $user_id,
+                $session_id
+            );
+
             // User portal filters:
             if ($ignoreTimeLimit === false) {
                 if ($is_time_over) {
                     // History
                     if (empty($row['access_end_date'])) {
                         continue;
-                    }
-
-                    if (!empty($row['access_end_date'])) {
+                    } else {
                         if ($row['access_end_date'] > $now) {
                             continue;
                         }
-
                     }
                 } else {
                     // Current user portal
-                    if (api_is_allowed_to_create_course()) {
+                    $isGeneralCoach = SessionManager::user_is_general_coach($user_id, $row['id']);
+                    $isCoachOfCourse = in_array($user_id, $coachList);
+
+                    if (api_is_platform_admin() || $isGeneralCoach || $isCoachOfCourse) {
                         // Teachers can access the session depending in the access_coach date
                     } else {
                         if (isset($row['access_end_date']) &&
@@ -2656,14 +2712,8 @@ class UserManager
             $categories[$row['session_category_id']]['session_category'] = array(
                 'id' => $row['session_category_id'],
                 'name' => $row['session_category_name'],
-                'date_start' => $row['session_category_date_start'] ? $row['session_category_date_start']->format('Y-m-d H:i:s') : null,
-                'date_end' => $row['session_category_date_end'] ? $row['session_category_date_end']->format('Y-m-d H:i:s') : null
-            );
-
-            $session_id = $row['id'];
-            $courseList = UserManager::get_courses_list_by_session(
-                $user_id,
-                $session_id
+                'date_start' => $categoryStart,
+                'date_end' => $categoryEnd
             );
 
             $visibility = api_get_session_visibility(
@@ -2701,7 +2751,7 @@ class UserManager
                 if ($blockedCourseCount === count($courseList)) {
                     $visibility = SESSION_INVISIBLE;
                 } else {
-                    $visibility = SESSION_VISIBLE;
+                    $visibility = $sessionCourseVisibility;
                 }
             }
 
@@ -2981,7 +3031,6 @@ class UserManager
         /* This query is very similar to the query below, but it will check the
         session_rel_course_user table if there are courses registered
         to our user or not */
-
         $sql = "SELECT DISTINCT
                     c.visibility,
                     c.id as real_id,                    
@@ -2996,7 +3045,7 @@ class UserManager
                     scu.user_id = $user_id AND
                     scu.session_id = $session_id
                     $where_access_url
-                ORDER BY sc.position ASC";
+                ORDER BY sc.position ASC, c.id";
 
         $personal_course_list = array();
         $courses = array();
@@ -3028,7 +3077,7 @@ class UserManager
                     WHERE
                       s.id = $session_id AND
                       (
-                        (scu.user_id = $user_id AND scu.status=2) OR
+                        (scu.user_id = $user_id AND scu.status = 2) OR
                         s.id_coach = $user_id
                       )
                     $where_access_url
@@ -3047,12 +3096,12 @@ class UserManager
         }
 
         if (api_is_drh()) {
-            $session_list = SessionManager::get_sessions_followed_by_drh($user_id);
-            $session_list = array_keys($session_list);
-            if (in_array($session_id, $session_list)) {
-                $course_list = SessionManager::get_course_list_by_session_id($session_id);
-                if (!empty($course_list)) {
-                    foreach ($course_list as $course) {
+            $sessionList = SessionManager::get_sessions_followed_by_drh($user_id);
+            $sessionList = array_keys($sessionList);
+            if (in_array($session_id, $sessionList)) {
+                $courseList = SessionManager::get_course_list_by_session_id($session_id);
+                if (!empty($courseList)) {
+                    foreach ($courseList as $course) {
                         if (!in_array($course['id'], $courses)) {
                             $personal_course_list[] = $course;
                         }
@@ -3063,9 +3112,9 @@ class UserManager
             //check if user is general coach for this session
             $sessionInfo = api_get_session_info($session_id);
             if ($sessionInfo['id_coach'] == $user_id) {
-                $course_list = SessionManager::get_course_list_by_session_id($session_id);
-                if (!empty($course_list)) {
-                    foreach ($course_list as $course) {
+                $courseList = SessionManager::get_course_list_by_session_id($session_id);
+                if (!empty($courseList)) {
+                    foreach ($courseList as $course) {
                         if (!in_array($course['id'], $courses)) {
                             $personal_course_list[] = $course;
                         }
@@ -3307,7 +3356,7 @@ class UserManager
      */
     public static function is_admin($user_id)
     {
-        if (empty($user_id) or $user_id != strval(intval($user_id))) {
+        if (empty($user_id) || $user_id != strval(intval($user_id))) {
             return false;
         }
         $admin_table = Database::get_main_table(TABLE_MAIN_ADMIN);

@@ -257,6 +257,17 @@ class Display
         }
     }
 
+    /**
+     * Returns an HTML table with sortable column (through complete page refresh)
+     * @param array $header
+     * @param array $content Array of row arrays
+     * @param array $sorting_options
+     * @param array $paging_options
+     * @param array $query_vars
+     * @param array $form_actions
+     * @param string $style
+     * @return string HTML string for array
+     */
     public static function return_sortable_table(
         $header,
         $content,
@@ -794,7 +805,6 @@ class Display
 
         if ($return_only_path) {
             return $icon;
-
         }
 
         $img = self::img($icon, $alt_text, $additional_attributes);
@@ -816,7 +826,7 @@ class Display
      * @param boolean $filterPath Optional. Whether filter the image path. Default is true
      * @author Julio Montoya 2010
      */
-    public static function img($image_path, $alt_text = '', $additional_attributes = array(), $filterPath = true)
+    public static function img($image_path, $alt_text = '', $additional_attributes = null, $filterPath = true)
     {
         if (empty($image_path)) {
             // For some reason, the call to img() happened without a proper
@@ -835,6 +845,10 @@ class Display
         // alt text = the image name if there is none provided (for XHTML compliance)
         if ($alt_text == '') {
             $alt_text = basename($image_path);
+        }
+
+        if (empty($additional_attributes)) {
+            $additional_attributes = [];
         }
 
         $additional_attributes['src'] = $image_path;
@@ -1036,7 +1050,16 @@ class Display
             if ($i == 1) {
                 $active = ' active';
             }
-            $item = self::tag('a', $item, array('href'=>'#'.$id.'-'.$i, 'role'=> 'tab', 'data-toggle' => 'tab', 'id' => $id . $i));
+            $item = self::tag(
+                'a',
+                $item,
+                array(
+                    'href' => '#'.$id.'-'.$i,
+                    'role' => 'tab',
+                    'data-toggle' => 'tab',
+                    'id' => $id.$i,
+                )
+            );
             $ul_attributes['role'] = 'presentation';
             $ul_attributes['class'] = $active;
             $lis .= self::tag('li', $item, $ul_attributes);
@@ -1063,7 +1086,11 @@ class Display
         $attributes['role'] = 'tabpanel';
         $attributes['class'] = 'tab-wrapper';
 
-        $main_div = self::tag('div', $ul.self::tag('div', $divs, ['class' => 'tab-content']), $attributes);
+        $main_div = self::tag(
+            'div',
+            $ul.self::tag('div', $divs, ['class' => 'tab-content']),
+            $attributes
+        );
 
         return $main_div ;
     }
@@ -1336,10 +1363,11 @@ class Display
      * if the user never entered the course before, he will not see notification
      * icons. This function takes session ID into account (if any) and only shows
      * the corresponding notifications.
-     * @param array     Course information array, containing at least elements 'db' and 'k'
+     * @param array $course_info Course information array, containing at least elements 'db' and 'k'
+     * @param bool $loadAjax
      * @return string   The HTML link to be shown next to the course
      */
-    public static function show_notification($course_info)
+    public static function show_notification($course_info, $loadAjax = true)
     {
         if (empty($course_info)) {
             return '';
@@ -1351,8 +1379,20 @@ class Display
         $course_code = Database::escape_string($course_info['code']);
 
         $user_id = api_get_user_id();
-        $course_id = intval($course_info['real_id']);
-        $sessionId = intval($course_info['id_session']);
+        $course_id = (int) $course_info['real_id'];
+        $sessionId = (int) $course_info['id_session'];
+        $status = (int) $course_info['status'];
+
+        $loadNotificationsByAjax = api_get_configuration_value('user_portal_load_notification_by_ajax');
+
+        if ($loadNotificationsByAjax) {
+            if ($loadAjax) {
+                $id = 'notification_'.$course_id.'_'.$sessionId.'_'.$status;
+                Session::write($id, true);
+
+                return '<span id ="'.$id.'" class="course_notification"></span>';
+            }
+        }
 
         // Get the user's last access dates to all tools of this course
         $sql = "SELECT *
@@ -1381,109 +1421,106 @@ class Display
             $sessionId,
             true,
             false,
-            'tet.session_id'
+            'session_id'
         );
 
-        // Get the last edits of all tools of this course.
-        $sql = "SELECT
-                    tet.*,
-                    tet.lastedit_date last_date,
-                    tet.tool tool,
-                    tet.ref ref,
-                    tet.lastedit_type type,
-                    tet.to_group_id group_id,
-                    ctt.image image,
-                    ctt.link link
-                FROM $tool_edit_table tet
-                INNER JOIN $course_tool_table ctt
-                ON tet.c_id = ctt.c_id
-                WHERE
-                    tet.c_id = $course_id AND
-                    tet.lastedit_date > '$oldestTrackDate' ".
-                    // Special hack for work tool, which is called student_publication in c_tool and work in c_item_property :-/ BT#7104
-                    " AND (ctt.name = tet.tool OR (ctt.name = 'student_publication' AND tet.tool = 'work'))
-                    AND ctt.visibility = '1'
-                    AND tet.lastedit_user_id != $user_id $sessionCondition
-                 ORDER BY tet.lastedit_date";
+        $hideTools = [TOOL_NOTEBOOK, TOOL_CHAT];
+        // Get current tools in course
+        $sql = "SELECT name, link, image 
+                FROM $course_tool_table 
+                WHERE 
+                    c_id = $course_id AND 
+                    visibility = '1' AND
+                    name NOT IN ('".implode("','", $hideTools)."')
+                ";
+        $result = Database::query($sql);
+        $tools = Database::store_result($result);
 
-        $res = Database::query($sql);
-        // Get the group_id's with user membership.
-        $group_ids = GroupManager :: get_group_ids($course_info['real_id'], $user_id);
+        $group_ids = GroupManager::get_group_ids($course_info['real_id'], $user_id);
         $group_ids[] = 0; //add group 'everyone'
         $notifications = array();
-        // Filter all last edits of all tools of the course
-        while ($res && ($item_property = Database::fetch_array($res, 'ASSOC'))) {
-
-            // First thing to check is if the user never entered the tool
-            // or if his last visit was earlier than the last modification.
-            if ((!isset($lastTrackInCourseDate[$item_property['tool']])
-                 || $lastTrackInCourseDate[$item_property['tool']] < $item_property['lastedit_date'])
-                // Drop the tool elements that are part of a group that the
-                // user is not part of.
-                && ((in_array($item_property['to_group_id'], $group_ids)
-                // Drop the dropbox, notebook and chat tools (we don't care)
-                && (
-                        //$item_property['tool'] != TOOL_DROPBOX &&
-                        $item_property['tool'] != TOOL_NOTEBOOK &&
-                        $item_property['tool'] != TOOL_CHAT)
-                   )
-                )
-                // Take only what's visible or "invisible but where the user is a teacher" or where the visibility is unset.
-                && ($item_property['visibility'] == '1'
-                    || ($course_info['status'] == '1' && $item_property['visibility'] == '0')
-                    || !isset($item_property['visibility']))
-            ) {
-                // Also drop announcements and events that are not for the user or his group.
-                if ((
-                        $item_property['tool'] == TOOL_ANNOUNCEMENT ||
-                        $item_property['tool'] == TOOL_CALENDAR_EVENT
-                    ) &&
-                    (
-                        ($item_property['to_user_id'] != $user_id) &&
-                        (!isset($item_property['to_group_id']) || !in_array($item_property['to_group_id'], $group_ids)))
-                ) {
-                   continue;
+        if ($tools) {
+            foreach ($tools as $tool) {
+                $toolName = $tool['name'];
+                // Fix to get student publications
+                if ($toolName == 'student_publication') {
+                    $toolName = 'work';
                 }
+                $toolName = addslashes(Database::escape_string($toolName));
 
-                // If it's a survey, make sure the user's invited. Otherwise drop it.
-                if ($item_property['tool'] == TOOL_SURVEY) {
-                    $survey_info = SurveyManager::get_survey($item_property['ref'], 0, $course_code);
-                    if (!empty($survey_info)) {
-                        $invited_users = SurveyUtil::get_invited_users(
-                            $survey_info['code'],
-                            $course_code
-                        );
-                        if (!in_array($user_id, $invited_users['course_users'])) {
-                            continue;
-                        }
-                    }
+                $sql = "SELECT * FROM $tool_edit_table 
+                        WHERE
+                            c_id = $course_id AND
+                            tool = '$toolName' AND
+                            lastedit_type NOT LIKE '%Deleted%' AND
+                            lastedit_type NOT LIKE '%deleted%' AND
+                            lastedit_type NOT LIKE '%DocumentInvisible%' AND
+                            lastedit_date > '$oldestTrackDate' AND
+                            lastedit_user_id != $user_id $sessionCondition AND
+                            visibility != 2 AND
+                            (to_user_id IN ('$user_id', '0') OR to_user_id IS NULL) AND
+                            (to_group_id IN ('".implode("','",$group_ids)."') OR to_group_id IS NULL)
+                        ORDER BY lastedit_date DESC
+                        LIMIT 1";
+                $result = Database::query($sql);
+                $latestChange = Database::fetch_array($result);
+                if ($latestChange) {
+                    $latestChange['link'] = $tool['link'];
+                    $latestChange['image'] = $tool['image'];
+                    $latestChange['tool'] = $tool['name'];
+                    $notifications[$toolName] = $latestChange;
                 }
-
-                // If it's a learning path, ensure it is currently visible to the user
-                if ($item_property['tool'] == TOOL_LEARNPATH) {
-                    if (!learnpath::is_lp_visible_for_student($item_property['ref'], $user_id, $course_code)) {
-                        continue;
-                    }
-                }
-
-                if ($item_property['tool'] == TOOL_DROPBOX) {
-                    $item_property['link'] = 'dropbox/dropbox_download.php?id='.$item_property['ref'];
-                }
-
-                if ($item_property['tool'] == 'work' &&
-                    $item_property['type'] == 'DirectoryCreated'
-                ) {
-                    $item_property['lastedit_type'] = 'WorkAdded';
-                }
-                $notifications[$item_property['tool']] = $item_property;
             }
         }
 
         // Show all tool icons where there is something new.
         $return = '&nbsp;';
-        foreach($notifications as $notification) {
-            $lastDate = date('d/m/Y H:i', convert_sql_date($notification['lastedit_date']));
+        foreach ($notifications as $notification) {
+            $toolName = $notification['tool'];
+            if (!
+                (
+                    $notification['visibility'] == '1'  ||
+                    ($status == '1' && $notification['visibility'] == '0') ||
+                    !isset($notification['visibility'])
+                )
+            ) {
+                continue;
+            }
+
+            if ($toolName == TOOL_SURVEY) {
+                $survey_info = SurveyManager::get_survey($notification['ref'], 0, $course_code);
+                if (!empty($survey_info)) {
+                    $invited_users = SurveyUtil::get_invited_users(
+                        $survey_info['code'],
+                        $course_code
+                    );
+                    if (!in_array($user_id, $invited_users['course_users'])) {
+                        continue;
+                    }
+                }
+            }
+
+            if ($notification['tool'] == TOOL_LEARNPATH) {
+                if (!learnpath::is_lp_visible_for_student($notification['ref'], $user_id, $course_code)) {
+                    continue;
+                }
+            }
+
+            if ($notification['tool'] == TOOL_DROPBOX) {
+                $notification['link'] = 'dropbox/dropbox_download.php?id='.$notification['ref'];
+            }
+
+            if ($notification['tool'] == 'work' &&
+                $notification['lastedit_type'] == 'DirectoryCreated'
+            ) {
+                $notification['lastedit_type'] = 'WorkAdded';
+            }
+
+            $lastDate = api_get_local_time($notification['lastedit_date']);
             $type = $notification['lastedit_type'];
+            if ($type == 'CalendareventVisible') {
+                $type = 'Visible';
+            }
             $label = get_lang('TitleNotification').": ".get_lang($type)." ($lastDate)";
 
             if (strpos($notification['link'], '?') === false) {
@@ -1491,9 +1528,11 @@ class Display
             } else {
                 $notification['link'] = $notification['link'].'&notification=1';
             }
-            $imagen = substr($notification['image'], 0, -4).'.png';
+
+            $image = substr($notification['image'], 0, -4).'.png';
+
             $return .= Display::url(
-                Display::return_icon($imagen, $label),
+                Display::return_icon($image, $label),
                 api_get_path(WEB_CODE_PATH).
                 $notification['link'].'&cidReq='.$course_code.
                 '&ref='.$notification['ref'].
@@ -1977,15 +2016,34 @@ class Display
     }
 
     /**
-     * @todo use twig
+     * @param array $buttons
+     * @return string
      */
-    public static function group_button($title, $elements)
+    public static function groupButton($buttons)
+    {
+        $html = '<div class="btn-group" role="group">';
+        foreach ($buttons as $button) {
+            $html .= $button;
+        }
+        $html .= '</div>';
+
+        return $html;
+    }
+
+    /**
+     * @todo use twig
+     * @param string $title
+     * @param array $elements
+     * @param bool $alignToRight
+     * @return string
+     */
+    public static function groupButtonWithDropDown($title, $elements, $alignToRight = false)
     {
         $html = '<div class="btn-group">
                 <button class="btn btn-default dropdown-toggle" data-toggle="dropdown">
                 '.$title.'
                 <span class="caret"></span></button>
-                <ul class="dropdown-menu">';
+                <ul class="dropdown-menu ' . ($alignToRight ? 'dropdown-menu-right' : '') . '">';
         foreach ($elements as $item) {
             $html .= Display::tag('li', Display::url($item['title'], $item['href']));
         }
@@ -2045,6 +2103,7 @@ class Display
      * @param string $link
      * @param bool $isMedia
      * @param bool $addHeaders
+     * @param array $linkAttributes
      * @return string
      */
     public static function progressPaginationBar(
@@ -2052,11 +2111,11 @@ class Display
         $list,
         $current,
         $fixedValue = null,
-        $conditions = array(),
+        $conditions = [],
         $link = null,
         $isMedia = false,
         $addHeaders = true,
-        $linkAttributes = array()
+        $linkAttributes = []
     ) {
         if ($addHeaders) {
             $pagination_size = 'pagination-mini';
@@ -2094,6 +2153,7 @@ class Display
         if ($addHeaders) {
             $html .= '</ul></div>';
         }
+
         return $html;
     }
     /**
@@ -2106,6 +2166,8 @@ class Display
      * @param bool $isMedia
      * @param int $localCounter
      * @param int $fixedValue
+     * @param array $linkAttributes
+     *
      * @return string
      */
     public static function parsePaginationItem(
@@ -2117,8 +2179,8 @@ class Display
         $isMedia = false,
         $localCounter = null,
         $fixedValue = null,
-        $linkAttributes = array())
-    {
+        $linkAttributes = []
+    ) {
         $defaultClass = "before";
         $class = $defaultClass;
         foreach ($conditions as $condition) {
@@ -2164,6 +2226,7 @@ class Display
             $link_to_show = $link.$fixedValue.'#questionanchor'.$itemId;
         }
         $link = Display::url($label.' ', $link_to_show, $linkAttributes);
+
         return  '<li class = "'.$class.'">'.$link.'</li>';
     }
 
@@ -2238,14 +2301,12 @@ class Display
     public static function getProfileEditionLink($userId, $asAdmin = false)
     {
         $editProfileUrl = api_get_path(WEB_CODE_PATH).'auth/profile.php';
-
         if ($asAdmin) {
             $editProfileUrl = api_get_path(WEB_CODE_PATH)."admin/user_edit.php?user_id=".intval($userId);
         }
 
         if (api_get_setting('sso_authentication') === 'true') {
             $subSSOClass = api_get_setting('sso_authentication_subclass');
-
             $objSSO = null;
 
             if (!empty($subSSOClass)) {
@@ -2325,6 +2386,8 @@ class Display
      * @param string $icon The Awesome Font class for icon
      * @param string $type Optional. The button Bootstrap class. Default 'default' class
      * @param array $attributes The additional attributes
+     * @param bool $includeText
+     *
      * @return string The button HTML
      */
     public static function toolbarButton(
@@ -2492,19 +2555,65 @@ HTML;
 
     /**
      * Returns the string "1 day ago" with a link showing the exact date time.
-     * @param string $dateTime in UTC
+     * @param string $dateTime in UTC or a DateTime in UTC
      *
      * @return string
      */
     public static function dateToStringAgoAndLongDate($dateTime)
     {
-        if (empty($dateTime) || $dateTime === '0000-00-00 00:00:00') {
+       if (empty($dateTime) || $dateTime === '0000-00-00 00:00:00') {
             return '';
+        }
+
+        if ($dateTime instanceof \DateTime) {
+            $dateTime = $dateTime->format('Y-m-d H:i:s');
         }
 
         return self::tip(
             date_to_str_ago($dateTime),
             api_get_local_time($dateTime)
         );
+    }
+
+    /**
+     * @param array $userInfo
+     * @param string $status
+     * @param string $toolbar
+     *
+     * @return string
+     */
+    public static function getUserCard($userInfo, $status= '', $toolbar = '')
+    {
+        if (empty($userInfo)) {
+            return '';
+        }
+
+        if (!empty($status)) {
+            $status = '<div class="items-user-status">'.$status.'</div>';
+        }
+
+        if (!empty($toolbar)) {
+            $toolbar = '<div class="btn-group pull-right">'.$toolbar.'</div>';
+        }
+
+        return '<div id="user_card_'.$userInfo['id'].'" class="col-md-12">                    
+                    <div class="row">
+                        <div class="col-md-2">                            
+                            <img src="'.$userInfo['avatar'].'" class="img-responsive img-circle">
+                        </div>
+                        <div class="col-md-10">
+                           <p>'.$userInfo['complete_name'].'</p>
+                           <div class="row">
+                           <div class="col-md-2">
+                           '.$status.'
+                           </div>
+                           <div class="col-md-10">                           
+                           '.$toolbar.'
+                           </div>
+                           </div>
+                        </div>
+                    </div>
+                    <hr />
+              </div>';
     }
 }

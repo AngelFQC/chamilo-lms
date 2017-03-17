@@ -7,7 +7,7 @@
 
 $_dont_save_user_course_access  = true;
 
-require_once '../global.inc.php';
+require_once __DIR__.'/../global.inc.php';
 
 $action = isset($_REQUEST['action']) ? $_REQUEST['action'] : null;
 
@@ -37,7 +37,7 @@ if (!isset($_SESSION['openChatBoxes'])) {
 }
 
 $chat = new Chat();
-if (chat::disableChat()){
+if (chat::disableChat()) {
     exit;
 }
 if ($chat->is_chat_blocked_by_exercises()) {

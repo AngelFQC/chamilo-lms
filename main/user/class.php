@@ -4,7 +4,7 @@
 *	@package chamilo.user
 */
 
-require_once '../inc/global.inc.php';
+require_once __DIR__.'/../inc/global.inc.php';
 $this_section = SECTION_COURSES;
 
 api_protect_course_script(true);
@@ -146,7 +146,7 @@ Display :: display_header($tool_name, "User");
 $(function() {
 <?php
     // grid definition see the $usergroup>display() function
-    echo Display::grid_js('usergroups',  $url, $columns, $columnModel, $extraParams, array(), '', true);
+    echo Display::grid_js('usergroups', $url, $columns, $columnModel, $extraParams, array(), '', true);
 ?>
 });
 </script>

@@ -1,7 +1,7 @@
 <?php
 /* For licensing terms, see /license.txt */
 
-require_once '../inc/global.inc.php';
+require_once __DIR__.'/../inc/global.inc.php';
 
 if (!api_is_allowed_to_edit(false, true)) {
     api_not_allowed(true);
@@ -38,7 +38,7 @@ $link = SurveyManager::generate_survey_link(
 );
 echo '<div class="row">';
     echo '<div class="col-md-12">';
-    echo Display::url(get_lang('GenerateSurveyAccessLink'), $link, array('class' => 'btn btn-primary btn-large'));
+    echo Display::url(get_lang('GoToSurvey'), $link, array('class' => 'btn btn-primary btn-large'));
     echo '</div>';
     echo '<div class="col-md-12">';
     echo get_lang('GenerateSurveyAccessLinkExplanation');

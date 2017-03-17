@@ -108,7 +108,7 @@
                         {% if row.description != '' %}
                             <div class="description">
                                 {{ row.description }}
-                            </div>                 
+                            </div>
                         {% endif %}
                     </div>
                 </div>

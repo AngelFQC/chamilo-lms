@@ -124,7 +124,7 @@ $ajax_url = api_get_path(WEB_AJAX_PATH)."exercise.ajax.php?".api_get_cidreq()."&
 
                     $pnlQuestion.html('<span class="fa fa-spinner fa-spin fa-3x fa-fw" aria-hidden="true"></span>');
 
-                    $.get('<?php echo api_get_path(WEB_AJAX_PATH) ?>exercise.ajax.php', {
+                    $.get('<?php echo api_get_path(WEB_AJAX_PATH) ?>exercise.ajax.php?<?php echo api_get_cidreq() ?>', {
                         a: 'show_question',
                         exercise: exerciseId,
                         question: questionId
@@ -194,7 +194,7 @@ if (!$inATest) {
         // Show all questions no matter the category settings.
         $tempCategoryOrder = isset($objExercise->specialCategoryOrders) ? $objExercise->specialCategoryOrders : false;
         $objExercise->specialCategoryOrders = false;
-        $questionList = $objExercise->selectQuestionList(true);
+        $questionList = $objExercise->selectQuestionList(true, true);
         $objExercise->specialCategoryOrders = $tempCategoryOrder;
 
         // Style for columns
@@ -204,7 +204,10 @@ if (!$inATest) {
         $styleLevel = "level";
         $styleScore = "score";
 
-        $category_list = TestCategory::getListOfCategoriesNameForTest($objExercise->id, false);
+        $category_list = TestCategory::getListOfCategoriesNameForTest(
+            $objExercise->id,
+            false
+        );
 
         if (is_array($questionList)) {
             foreach ($questionList as $id) {
@@ -214,7 +217,6 @@ if (!$inATest) {
                 }
                 /** @var Question $objQuestionTmp */
                 $objQuestionTmp = Question::read($id);
-                $question_class = get_class($objQuestionTmp);
 
                 $clone_link = '<a href="'.api_get_self().'?'.api_get_cidreq().'&clone_question='.$id.'">'.
                     Display::return_icon('cd.png',get_lang('Copy'), array(), ICON_SIZE_SMALL).'</a>';
@@ -237,7 +239,7 @@ if (!$inATest) {
                 if ($objExercise->edit_exercise_in_lp == true) {
                     $delete_link = '<a id="delete_'.$id.'" class="opener"  href="'.api_get_self().'?'.api_get_cidreq().'&exerciseId='.$exerciseId.'&deleteQuestion='.$id.'" >'.Display::return_icon('delete.png',get_lang('RemoveFromTest'), array(), ICON_SIZE_SMALL).'</a>';
                 }
-                
+
                 $edit_link = Display::tag('span', $edit_link,   array('class'=>'items'));
                 $clone_link = Display::tag('span', $clone_link,  array('class'=>'items'));
                 $delete_link = Display::tag('span', $delete_link, array('class'=>'items'));
@@ -248,17 +250,14 @@ if (!$inATest) {
                 ), array ('class'=>'btn-actions'));
 
                 $title = Security::remove_XSS($objQuestionTmp->selectTitle());
-                /* $move = Display::return_icon(
-                    'all_directions.png',
-                    get_lang('Move'),
-                    array('class'=>'moved', 'style'=>'margin-bottom:-0.3em;')
-                ); */
                 $move = Display::returnFontAwesomeIcon("arrows moved", 'lg');
 
                 // Question name
                 $questionName = Display::tag(
                     'td',
-                    '<a href="#" title = "'.Security::remove_XSS($title).'">'.$move.' '.cut($title, 42).'</a>',
+                    '<a href="#" title = "'.Security::remove_XSS($title).'">
+                        '.$move.' '.cut($title, 42).'
+                    </a>',
                     array('class' => $styleQuestion)
                 );
 

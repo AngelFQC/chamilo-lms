@@ -17,7 +17,7 @@
 $use_anonymous = true;
 
 // setting the global file that gets the general configuration, the databases, the languages, ...
-require_once '../inc/global.inc.php';
+require_once __DIR__.'/../inc/global.inc.php';
 
 /*	Sessions */
 
@@ -67,6 +67,15 @@ $sessionId = api_get_session_id();
 
 if (!empty($group_id)) {
     $group_properties = GroupManager:: get_group_properties($group_id);
+
+    $interbreadcrumb[] = array(
+        "url" => api_get_path(WEB_CODE_PATH)."group/group.php?".api_get_cidreq(),
+        "name" => get_lang('Groups'),
+    );
+    $interbreadcrumb[] = array(
+        "url" => api_get_path(WEB_CODE_PATH)."group/group_space.php?".api_get_cidreq(),
+        "name" => get_lang('GroupSpace').' '.$group_properties['name']
+    );
 }
 
 api_protect_course_group(GroupManager::GROUP_TOOL_ANNOUNCEMENT);
@@ -86,7 +95,6 @@ $searchFormToString = '';
 switch ($action) {
     case 'move':
         /* Move announcement up/down */
-
         if (!empty($_GET['down'])) {
             $thisAnnouncementId = intval($_GET['down']);
             $sortDirection = "DESC";
@@ -105,15 +113,15 @@ switch ($action) {
             $announcementInfo = AnnouncementManager::get_by_id($course_id, $thisAnnouncementId);
 
             $sql = "SELECT DISTINCT announcement.id, announcement.display_order
-                FROM $tbl_announcement announcement,
-				$tbl_item_property itemproperty
-				WHERE
-				    announcement.c_id =  $course_id AND
-				    itemproperty.c_id =  $course_id AND
-					itemproperty.ref = announcement.id AND
-                    itemproperty.tool = '".TOOL_ANNOUNCEMENT."'  AND
-                    itemproperty.visibility <> 2
-                ORDER BY display_order $sortDirection";
+                    FROM $tbl_announcement announcement,
+                    $tbl_item_property itemproperty
+                    WHERE
+                        announcement.c_id =  $course_id AND
+                        itemproperty.c_id =  $course_id AND
+                        itemproperty.ref = announcement.id AND
+                        itemproperty.tool = '".TOOL_ANNOUNCEMENT."'  AND
+                        itemproperty.visibility <> 2
+                    ORDER BY display_order $sortDirection";
             $result = Database::query($sql);
             $thisAnnouncementOrderFound = false;
             $thisAnnouncementOrder = null;
@@ -143,6 +151,12 @@ switch ($action) {
         }
         break;
     case 'view':
+        $interbreadcrumb[] = array(
+            "url" => api_get_path(WEB_CODE_PATH)."announcements/announcements.php?".api_get_cidreq(),
+            "name" => $nameTools,
+        );
+
+        $nameTools = get_lang('View');
         $content = AnnouncementManager::display_announcement($announcement_id);
         break;
     case 'list':
@@ -356,7 +370,17 @@ switch ($action) {
         } else {
             $form_name = get_lang('ModifyAnnouncement');
         }
+
+        $interbreadcrumb[] = array(
+            "url" => api_get_path(WEB_CODE_PATH)."announcements/announcements.php?".api_get_cidreq(),
+            "name" => $nameTools,
+        );
+
+        $nameTools = $form_name;
         $form->addElement('header', $form_name);
+        $form->addButtonAdvancedSettings('choose_recipients', [get_lang('ChooseRecipients'), get_lang('AnnouncementChooseRecipientsDescription')]);
+        $form->addHtml('<div id="choose_recipients_options" style="display: none;">');
+
         $to = [];
         if (empty($group_id)) {
             if (isset($_GET['remind_inactive'])) {
@@ -411,21 +435,16 @@ switch ($action) {
             }
 
             $element = CourseManager::addUserGroupMultiSelect($form, array());
-            $form->setRequired($element);
-
-            if (!isset($announcement_to_modify)) {
-                $announcement_to_modify = '';
-            }
-
-            $form->addCheckBox('email_ann', '', get_lang('EmailOption'));
         } else {
-            if (!isset($announcement_to_modify)) {
-                $announcement_to_modify = '';
-            }
-
             $element = CourseManager::addGroupMultiSelect($form, $group_properties['iid'], array());
-            $form->setRequired($element);
-            $form->addCheckBox('email_ann', '', get_lang('EmailOption'));
+        }
+
+        $form->addHtml('</div>');
+//        $form->setRequired($element);
+        $form->addCheckBox('email_ann', '', get_lang('EmailOption'));
+
+        if (!isset($announcement_to_modify)) {
+            $announcement_to_modify = '';
         }
 
         $announcementInfo = AnnouncementManager::get_by_id($course_id, $id);
@@ -443,6 +462,25 @@ switch ($action) {
             $defaults = array();
             if (!empty($to)) {
                 $defaults['users'] = $to;
+            }
+        }
+
+        if (isset($defaults['users'])) {
+            foreach ($defaults['users'] as $value) {
+                $parts = explode(':', $value);
+
+                if (!isset($parts[1]) || empty($parts[1])) {
+                    continue;
+                }
+
+                $form->addHtml("
+                    <script>
+                        $(document).on('ready', function () {
+                            $('#choose_recipients').click();
+                        });
+                    </script>
+                ");
+                break;
             }
         }
 
@@ -485,6 +523,7 @@ switch ($action) {
 
         if ($form->validate()) {
             $data = $form->getSubmitValues();
+            $data['users'] = isset($data['users']) ? $data['users'] : ['everyone'];
 
             $sendToUsersInSession = isset($data['send_to_users_in_session']) ? true : false;
 
@@ -506,7 +545,9 @@ switch ($action) {
 
                     /*		MAIL FUNCTION	*/
                     if (isset($_POST['email_ann']) && empty($_POST['onlyThoseMails'])) {
-                        AnnouncementManager::send_email(
+                        AnnouncementManager::sendEmail(
+                            api_get_course_info(),
+                            api_get_session_id(),
                             $id,
                             $sendToUsersInSession,
                             isset($data['send_to_hrm_users'])
@@ -530,6 +571,8 @@ switch ($action) {
 
                     if (empty($group_id)) {
                         $insert_id = AnnouncementManager::add_announcement(
+                            api_get_course_info(),
+                            api_get_session_id(),
                             $data['title'],
                             $data['content'],
                             $data['users'],
@@ -549,6 +592,7 @@ switch ($action) {
                             $sendToUsersInSession
                         );
                     }
+
                     Display::addFlash(
                         Display::return_message(
                             get_lang('AnnouncementAdded'),
@@ -558,14 +602,15 @@ switch ($action) {
 
                     /* MAIL FUNCTION */
                     if (isset($data['email_ann']) && $data['email_ann']) {
-                        AnnouncementManager::send_email(
+                        AnnouncementManager::sendEmail(
+                            api_get_course_info(),
+                            api_get_session_id(),
                             $insert_id,
                             $sendToUsersInSession
                         );
                     }
                     header('Location: '.$homeUrl);
                     exit;
-
                 } // end condition token
             }
         }
@@ -575,16 +620,6 @@ switch ($action) {
 
 if (!empty($_GET['remind_inactive'])) {
     $to[] = 'USER:'.intval($_GET['remind_inactive']);
-}
-if (!empty($group_id)) {
-    $interbreadcrumb[] = array(
-        "url" => api_get_path(WEB_CODE_PATH)."group/group.php?".api_get_cidreq(),
-        "name" => get_lang('Groups'),
-    );
-    $interbreadcrumb[] = array(
-        "url" => api_get_path(WEB_CODE_PATH)."group/group_space.php?".api_get_cidreq(),
-        "name" => get_lang('GroupSpace').' '.$group_properties['name']
-    );
 }
 
 if (empty($_GET['origin']) or $_GET['origin'] !== 'learnpath') {

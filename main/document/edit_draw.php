@@ -12,7 +12,7 @@ use ChamiloSession as Session;
  * @since 25/september/2010
 */
 
-require_once '../inc/global.inc.php';
+require_once __DIR__.'/../inc/global.inc.php';
 
 $_SESSION['whereami'] = 'document/editdraw';
 $this_section = SECTION_COURSES;
@@ -96,13 +96,14 @@ if (!empty($group_id)) {
 
 $is_certificate_mode = DocumentManager::is_certificate_mode($dir);
 
-if (!$is_certificate_mode)
+if (!$is_certificate_mode) {
     $interbreadcrumb[] = array(
         "url" => "./document.php?curdirpath=".urlencode($my_cur_dir_path).'&'.api_get_cidreq(),
         "name" => get_lang('Documents'),
     );
-else
+} else {
     $interbreadcrumb[] = array('url' => '../gradebook/'.$_SESSION['gradebook_dest'], 'name' => get_lang('Gradebook'));
+}
 
 // Interbreadcrumb for the current directory root path
 if (empty($document_data['parents'])) {

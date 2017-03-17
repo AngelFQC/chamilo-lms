@@ -1,7 +1,7 @@
 <?php
 /* For licensing terms, see /license.txt */
 
-require_once '../inc/global.inc.php';
+require_once __DIR__.'/../inc/global.inc.php';
 $current_course_tool  = TOOL_STUDENTPUBLICATION;
 
 require_once 'work.lib.php';
@@ -73,8 +73,8 @@ if ((user_is_author($id) || $isDrhOfCourse || (api_is_allowed_to_edit() || api_i
 
         switch ($action) {
             case 'send_comment':
-                if (isset($_FILES["file"])) {
-                    $_POST['file'] = $_FILES["file"];
+                if (isset($_FILES['attachment'])) {
+                    $_POST['attachment'] = $_FILES['attachment'];
                 }
 
                 addWorkComment(
@@ -85,7 +85,41 @@ if ((user_is_author($id) || $isDrhOfCourse || (api_is_allowed_to_edit() || api_i
                     $_POST
                 );
 
-                Display::addFlash(Display::return_message(get_lang('CommentCreated')));
+                if (api_is_allowed_to_edit()) {
+                    $work_table = Database:: get_course_table(TABLE_STUDENT_PUBLICATION);
+                    $sql = "UPDATE $work_table 
+                            SET	
+                                qualificator_id = '".api_get_user_id()."',
+                                qualification = '".api_float_val($_POST['qualification'])."',
+                                date_of_qualification = '".api_get_utc_datetime()."'
+                            WHERE c_id = ".$courseInfo['real_id']." AND id = $id";
+                    Database::query($sql);
+
+                    Display::addFlash(Display::return_message(get_lang('Updated')));
+
+                    $resultUpload = uploadWork($my_folder_data, $courseInfo, true, $work);
+                    if ($resultUpload) {
+                        $work_table = Database:: get_course_table(
+                            TABLE_STUDENT_PUBLICATION
+                        );
+
+                        if (isset($resultUpload['url']) && !empty($resultUpload['url'])) {
+                            $title = isset($resultUpload['filename']) && !empty($resultUpload['filename']) ? $resultUpload['filename'] : get_lang(
+                                'Untitled'
+                            );
+                            $urlToSave = Database::escape_string($resultUpload['url']);
+                            $title = Database::escape_string($title);
+                            $sql = "UPDATE $work_table SET
+                                            url_correction = '".$urlToSave."',
+                                            title_correction = '".$title."'
+                                        WHERE iid = ".$work['iid'];
+                            Database::query($sql);
+                            Display::addFlash(
+                                Display::return_message(get_lang('FileUploadSucces'))
+                            );
+                        }
+                    }
+                }
 
                 header('Location: '.$url);
                 exit;
@@ -100,10 +134,23 @@ if ((user_is_author($id) || $isDrhOfCourse || (api_is_allowed_to_edit() || api_i
                 header('Location: '.$url);
                 exit;
                 break;
+            case 'delete_correction':
+                if (isset($work['url_correction']) && !empty($work['url_correction'])) {
+                    if (api_is_allowed_to_edit()) {
+                        deleteCorrection($courseInfo, $work);
+                        Display::addFlash(
+                            Display::return_message(get_lang('Deleted'))
+                        );
+                    }
+                }
+
+                header('Location: '.$url);
+                exit;
+                break;
         }
 
         $comments = getWorkComments($work);
-        $commentForm = getWorkCommentForm($work);
+        $commentForm = getWorkCommentForm($work, $my_folder_data);
 
         $tpl = new Template();
 
@@ -123,7 +170,7 @@ if ((user_is_author($id) || $isDrhOfCourse || (api_is_allowed_to_edit() || api_i
                     $work['download_url']
                 );
 
-                if (isset($work['url_correction'])) {
+                if (!empty($work['url_correction'])) {
                     $actions .= Display::url(
                         Display::return_icon(
                             'check-circle.png',
@@ -133,6 +180,17 @@ if ((user_is_author($id) || $isDrhOfCourse || (api_is_allowed_to_edit() || api_i
                         ),
                         $work['download_url'].'&correction=1'
                     );
+                    if (api_is_allowed_to_edit()) {
+                        $actions .= Display::url(
+                            Display::return_icon(
+                                'delete.png',
+                                get_lang('Delete').': '.get_lang('Correction'),
+                                null,
+                                ICON_SIZE_MEDIUM
+                            ),
+                            api_get_self().'?action=delete_correction&id='.$id.'&'.api_get_cidreq()
+                        );
+                    }
                 }
             }
         }

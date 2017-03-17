@@ -1,18 +1,17 @@
 <?php
+/* For license terms, see /license.txt */
 /**
  * User Panel
  * @package chamilo.plugin.buycourses
  */
-/**
- * Initialization
- */
 
 $cidReset = true;
 
-require_once '../../../main/inc/global.inc.php';
+require_once __DIR__.'/../../../main/inc/global.inc.php';
 
 $plugin = BuyCoursesPlugin::create();
 $includeSessions = $plugin->get('include_sessions') === 'true';
+$includeServices = $plugin->get('include_services') === 'true';
 
 $userInfo = api_get_user_info();
 
@@ -35,7 +34,7 @@ foreach ($sales as $sale) {
             'product_name' => $sale['product_name'],
             'product_type' => $productTypes[$sale['product_type']],
             'payment_type' => $paymentTypes[$sale['payment_type']]
-        ]; 
+        ];
     }
 }
 
@@ -51,6 +50,7 @@ $templateName = get_lang('TabsDashboard');
 $tpl = new Template($templateName);
 $tpl->assign('showing_courses', true);
 $tpl->assign('sessions_are_included', $includeSessions);
+$tpl->assign('services_are_included', $includeServices);
 $tpl->assign('sale_list', $saleList);
 
 $content = $tpl->fetch('buycourses/view/course_panel.tpl');

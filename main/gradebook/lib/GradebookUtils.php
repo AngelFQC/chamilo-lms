@@ -79,7 +79,7 @@ class GradebookUtils
         if (!empty($link_id)) {
             $link_id = intval($link_id);
             $sql = 'UPDATE ' . Database :: get_main_table(TABLE_MAIN_GRADEBOOK_LINK) . '
-                    SET weight = ' . "'" . Database::escape_string((float) $weight) . "'" . '
+                    SET weight = ' . "'" . api_float_val($weight) . "'" . '
                     WHERE course_code = "' . $course_code . '" AND id = ' . $link_id;
             Database::query($sql);
         }
@@ -142,7 +142,7 @@ class GradebookUtils
                 break;
             case 'exercise':
             case LINK_EXERCISE:
-                $icon = 'quiz.gif';
+                $icon = 'quiz.png';
                 break;
             case 'learnpath':
             case LINK_LEARNPATH:
@@ -573,19 +573,21 @@ class GradebookUtils
 
     /**
      * register user info about certificate
-     * @param int The category id
-     * @param int The user id
-     * @param float The score obtained for certified
-     * @param Datetime The date when you obtained the certificate
-     * @param integer $cat_id
-     * @param integer $user_id
-     * @param string $date_certificate
+     * @param int $cat_id The category id
+     * @param int $user_id The user id
+     * @param float $score_certificate The score obtained for certified
+     * @param string $date_certificate The date when you obtained the certificate
+     *
      * @return void
      */
-    public static function register_user_info_about_certificate($cat_id, $user_id, $score_certificate, $date_certificate)
-    {
+    public static function registerUserInfoAboutCertificate(
+        $cat_id,
+        $user_id,
+        $score_certificate,
+        $date_certificate
+    ) {
         $table = Database::get_main_table(TABLE_MAIN_GRADEBOOK_CERTIFICATE);
-        $sql = 'SELECT COUNT(*) as count
+        $sql = 'SELECT COUNT(id) as count
                 FROM ' . $table . ' gc
                 WHERE gc.cat_id="' . intval($cat_id) . '" AND user_id="' . intval($user_id) . '" ';
         $rs_exist = Database::query($sql);
@@ -699,7 +701,7 @@ class GradebookUtils
         $new_content_html = str_replace(SYS_CODE_PATH . 'img/', api_get_path(WEB_IMG_PATH), $new_content_html);
 
         $dom = new DOMDocument();
-        $dom->loadHTML($new_content_html);
+        @$dom->loadHTML($new_content_html);
 
         //add print header
         if (!$hide_print_button) {
@@ -1150,7 +1152,7 @@ class GradebookUtils
     public static function updateLinkWeight($linkId, $name, $weight)
     {
         $linkId = intval($linkId);
-        $weight = floatval($weight);
+        $weight = api_float_val($weight);
         $course_id = api_get_course_int_id();
 
         AbstractLink::add_link_log($linkId, $name);
@@ -1172,12 +1174,14 @@ class GradebookUtils
         $rs_attendance  = Database::query($sql);
         if (Database::num_rows($rs_attendance) > 0) {
             $row_attendance = Database::fetch_array($rs_attendance);
-            $sql = 'UPDATE '.$tbl_attendance.' SET attendance_weight ='.$weight.'
+            $sql = 'UPDATE '.$tbl_attendance.' SET 
+                    attendance_weight ='.api_float_val($weight).'
                     WHERE c_id = '.$course_id.' AND  id = '.intval($row_attendance['ref_id']);
             Database::query($sql);
         }
         // Update weight into forum thread
-        $sql = 'UPDATE '.$tbl_forum_thread.' SET thread_weight='.$weight.'
+        $sql = 'UPDATE '.$tbl_forum_thread.' SET 
+                thread_weight = '.api_float_val($weight).'
                 WHERE
                     c_id = '.$course_id.' AND
                     thread_id = (

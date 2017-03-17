@@ -4,7 +4,7 @@
  * Learning paths reporting
  * @package chamilo.reporting
  */
-require_once '../inc/global.inc.php';
+require_once __DIR__.'/../inc/global.inc.php';
 
 // resetting the course id
 $cidReset = true;
@@ -34,8 +34,9 @@ $name = $userInfo['complete_name'];
 
 if (!api_is_platform_admin(true) &&
     !CourseManager :: is_course_teacher(api_get_user_id(), $courseCode) &&
-    !Tracking :: is_allowed_to_coach_student(api_get_user_id(), $user_id) && !api_is_drh() && !api_is_course_tutor()) {
-	api_not_allowed();
+    !Tracking :: is_allowed_to_coach_student(api_get_user_id(), $user_id) && !api_is_drh() && !api_is_course_tutor()
+) {
+    api_not_allowed();
 }
 
 if ($origin == 'user_course') {
@@ -50,9 +51,13 @@ if ($origin == 'user_course') {
  	$nameTools=get_lang("DetailsStudentInCourse");
 }
 
-$interbreadcrumb[] = array("url" => "myStudents.php?student=".$user_id."&course=".$courseCode."&details=true&origin=".$origin , "name" => get_lang("DetailsStudentInCourse"));
+$interbreadcrumb[] = array(
+    "url" => "myStudents.php?student=".$user_id."&course=".$courseCode."&details=true&origin=".$origin,
+    "name" => get_lang("DetailsStudentInCourse"),
+);
 $nameTools = get_lang('LearningPathDetails');
-$sql = 'SELECT name	FROM '.Database::get_course_table(TABLE_LP_MAIN).' WHERE c_id = '.$course_info['real_id'].' AND id='.$lp_id;
+$sql = 'SELECT name	FROM '.Database::get_course_table(TABLE_LP_MAIN).' 
+        WHERE c_id = '.$course_info['real_id'].' AND id='.$lp_id;
 $rs  = Database::query($sql);
 $lp_title = Database::result($rs, 0, 0);
 
@@ -74,6 +79,13 @@ $table_title = ($session_name? Display::return_icon('session.png', get_lang('Ses
     Display::return_icon('course.png', get_lang('Course'), array(), ICON_SIZE_SMALL).' '.$course_info['name'].' '.
     Display::return_icon('user.png', get_lang('User'), array(), ICON_SIZE_SMALL).' '.$name;
 echo Display::page_header($table_title);
-echo Display::page_subheader('<h3>'.Display::return_icon('learnpath.png', get_lang('ToolLearnpath'), array(), ICON_SIZE_SMALL).' '.$lp_title.'</h3>');
+echo Display::page_subheader(
+    '<h3>'.Display::return_icon(
+        'learnpath.png',
+        get_lang('ToolLearnpath'),
+        array(),
+        ICON_SIZE_SMALL
+    ).' '.$lp_title.'</h3>'
+);
 echo $output;
 Display :: display_footer();

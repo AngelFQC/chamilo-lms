@@ -4,7 +4,7 @@
  * Responses to AJAX calls
  */
 
-require_once '../global.inc.php';
+require_once __DIR__.'/../global.inc.php';
 require_once api_get_path(SYS_CODE_PATH).'work/work.lib.php';
 
 $action = isset($_REQUEST['a']) ? $_REQUEST['a'] : null;
@@ -51,7 +51,7 @@ switch ($action) {
                     $groupId,
                     $userId,
                     $file,
-                    false,
+                    api_get_configuration_value('assignment_prevent_duplicate_upload'),
                     false
                 );
 
@@ -138,8 +138,8 @@ switch ($action) {
 
                 $json['type'] = api_htmlentities($file['type']);
                 $json['size'] = format_file_size($file['size']);
-
             }
+
             if (isset($result['url'])) {
                 $json['result'] = Display::return_icon(
                     'accept.png',

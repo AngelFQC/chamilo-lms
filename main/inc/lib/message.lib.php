@@ -15,38 +15,54 @@ use Chamilo\UserBundle\Entity\User;
 class MessageManager
 {
     /**
-     * Get the new messages for the current user from the database.
+     * Get count new messages for the current user from the database.
      * @return int
      */
-    public static function get_new_messages()
+    public static function getCountNewMessages()
     {
-        $table = Database::get_main_table(TABLE_MESSAGE);
-        if (!api_get_user_id()) {
+        $userId = api_get_user_id();
+        if (empty($userId)) {
             return false;
         }
-        $sql = "SELECT * FROM $table
-                WHERE
-                    user_receiver_id=" . api_get_user_id() . " AND
-                    msg_status=" . MESSAGE_STATUS_UNREAD;
-        $result = Database::query($sql);
-        $i = Database::num_rows($result);
 
-        return $i;
-    }
-
-    /**
-     * Get the list of user_ids of users who are online.
-     */
-    public static function users_connected_by_id()
-    {
-        $count = who_is_online_count();
-        $user_connect = who_is_online(0, $count, null, null, 30, true);
-        $user_id_list = array();
-        for ($i = 0; $i < count($user_connect); $i++) {
-            $user_id_list[$i] = $user_connect[$i][0];
+        static $count;
+        if (!isset($count)) {
+            $cacheAvailable = api_get_configuration_value('apc');
+            if ($cacheAvailable === true) {
+                $var = api_get_configuration_value('apc_prefix') . 'social_messages_unread_u_' . $userId;
+                if (apcu_exists($var)) {
+                    $count = apcu_fetch($var);
+                } else {
+                    $count = self::getCountNewMessagesFromDB($userId);
+                    apcu_store($var, $count, 60);
+                }
+            } else {
+                $count = self::getCountNewMessagesFromDB($userId);
+            }
         }
 
-        return $user_id_list;
+        return $count;
+    }
+    /**
+     * Execute the SQL necessary to know the number of messages in the database
+     * @param   int $userId The user for which we need the unread messages count
+     * @return  int The number of unread messages in the database for the given user
+     */
+    private static function getCountNewMessagesFromDB($userId)
+    {
+        if (empty($userId)) {
+            return 0;
+        }
+        $table = Database::get_main_table(TABLE_MESSAGE);
+        $sql = "SELECT COUNT(id) as count 
+                        FROM $table
+                        WHERE
+                            user_receiver_id=" . api_get_user_id() . " AND
+                            msg_status = " . MESSAGE_STATUS_UNREAD;
+        $result = Database::query($sql);
+        $row = Database::fetch_assoc($result);
+
+        return $row['count'];
     }
 
     /**
@@ -68,7 +84,7 @@ class MessageManager
             $keywordCondition = " AND (title like '%$keyword%' OR content LIKE '%$keyword%') ";
         }
 
-        $sql = "SELECT COUNT(*) as number_messages
+        $sql = "SELECT COUNT(id) as number_messages
                 FROM $table_message
                 WHERE $condition_msg_status AND
                     user_receiver_id=" . api_get_user_id() . "
@@ -97,8 +113,9 @@ class MessageManager
             $direction = 'DESC';
         } else {
             $column = intval($column);
-            if (!in_array($direction, array('ASC', 'DESC')))
+            if (!in_array($direction, array('ASC', 'DESC'))) {
                 $direction = 'ASC';
+            }
         }
 
         $keyword = Session::read('message_search_keyword');
@@ -110,7 +127,12 @@ class MessageManager
 
         $table_message = Database::get_main_table(TABLE_MESSAGE);
 
-        $sql = "SELECT id as col0, user_sender_id as col1, title as col2, send_date as col3, msg_status as col4
+        $sql = "SELECT 
+                    id as col0, 
+                    user_sender_id as col1, 
+                    title as col2, 
+                    send_date as col3, 
+                    msg_status as col4
                 FROM $table_message
                 WHERE
                   user_receiver_id=" . api_get_user_id() . " AND
@@ -209,7 +231,14 @@ class MessageManager
         $total_filesize = 0;
         if (is_array($file_attachments)) {
             foreach ($file_attachments as $file_attach) {
-                $total_filesize += isset($file_attach['size']) && is_int($file_attach['size']) ? $file_attach['size'] : 0;
+                $fileSize = isset($file_attach['size']) ? $file_attach['size'] : 0;
+                if (is_array($fileSize)) {
+                    foreach ($fileSize as $size) {
+                        $total_filesize += $size;
+                    }
+                } else {
+                    $total_filesize += $fileSize;
+                }
             }
         }
 
@@ -452,8 +481,8 @@ class MessageManager
                     content='{$row_message['content']}' AND
                     group_id='{$row_message['group_id']}' AND
                     user_receiver_id='$receiver_user_id'";
-        $rs_msg_id = Database::query($sql);
-        $row = Database::fetch_array($rs_msg_id);
+        $result = Database::query($sql);
+        $row = Database::fetch_array($result);
 
         // update parent_id for other user receiver
         $sql = "UPDATE $table_message SET parent_id = " . $row['id'] . "
@@ -464,7 +493,7 @@ class MessageManager
     /**
      * @param int $user_receiver_id
      * @param int $id
-     * @return bool|resource
+     * @return bool
      */
     public static function delete_message_by_user_receiver($user_receiver_id, $id)
     {
@@ -482,11 +511,14 @@ class MessageManager
             // delete attachment file
             self::delete_message_attachment_file($id, $user_receiver_id);
             // delete message
-            $query = "UPDATE $table_message SET msg_status=3
-                      WHERE user_receiver_id=" . $user_receiver_id . " AND id=" . $id;
-            $result = Database::query($query);
+            $query = "UPDATE $table_message 
+                      SET msg_status = 3
+                      WHERE 
+                        user_receiver_id=" . $user_receiver_id . " AND 
+                        id = " . $id;
+            Database::query($query);
 
-            return $result;
+            return true;
         } else {
             return false;
         }
@@ -495,9 +527,9 @@ class MessageManager
     /**
      * Set status deleted
      * @author Isaac FLores Paz <isaac.flores@dokeos.com>
-     * @param  integer
-     * @param  integer
-     * @return array
+     * @param  int
+     * @param  int
+     * @return bool
      */
     public static function delete_message_by_user_sender($user_sender_id, $id)
     {
@@ -517,11 +549,12 @@ class MessageManager
             // delete attachment file
             self::delete_message_attachment_file($id, $user_sender_id);
             // delete message
-            $sql = "UPDATE $table_message SET msg_status=3
+            $sql = "UPDATE $table_message 
+                    SET msg_status=3
                     WHERE user_sender_id='$user_sender_id' AND id='$id'";
-            $result = Database::query($sql);
+            Database::query($sql);
 
-            return $result;
+            return true;
         }
 
         return false;
@@ -860,7 +893,12 @@ class MessageManager
         }
 
         $sql = "SELECT
-                    id as col0, user_sender_id as col1, title as col2, send_date as col3, user_receiver_id as col4, msg_status as col5
+                    id as col0, 
+                    user_sender_id as col1, 
+                    title as col2, 
+                    send_date as col3, 
+                    user_receiver_id as col4, 
+                    msg_status as col5
                 FROM $table_message
                 WHERE
                     user_sender_id=" . api_get_user_id() . " AND
@@ -924,7 +962,8 @@ class MessageManager
             $keywordCondition = " AND (title like '%$keyword%' OR content LIKE '%$keyword%') ";
         }
 
-        $sql = "SELECT COUNT(*) as number_messages FROM $table_message
+        $sql = "SELECT COUNT(id) as number_messages 
+                FROM $table_message
                 WHERE
                   msg_status=" . MESSAGE_STATUS_OUTBOX . " AND
                   user_sender_id=" . api_get_user_id() . "
@@ -1036,6 +1075,7 @@ class MessageManager
                 $message_content .= get_lang('From') . ':&nbsp;' . $name . '</b> ' . api_strtolower(get_lang('To')) . ' <b>' . get_lang('Me') . '</b>';
             }
         }
+
         $message_content .= '
 		        <br />
 		        <hr style="color:#ddd" />
@@ -1104,7 +1144,6 @@ class MessageManager
         $query_vars = array('id' => $group_id, 'topics_page_nr' => 0);
 
         if (is_array($rows) && count($rows) > 0) {
-
             // prepare array for topics with its items
             $topics = array();
             $x = 0;
@@ -1332,7 +1371,6 @@ class MessageManager
         $main_content .= '<div class="message">'. $main_message['content'] . $attachment . '</div></div>';
         $main_content .= '</div>';
         $main_content .= '</div>';
-        //$main_content = Security::remove_XSS($main_content, STUDENT, true);
 
         $html .= Display::div(
             Display::div(
@@ -1406,6 +1444,7 @@ class MessageManager
                 $html_items = Display::div($html_items, array('class' => '', 'style' => 'margin-left:' . $indent . 'px'));
                 $array_html_items[] = array($html_items);
             }
+
             // grids for items with paginations
             $options = array('hide_navigation' => false, 'per_page' => $items_per_page);
             $visibility = array(true, true, true, false);
@@ -1531,7 +1570,9 @@ class MessageManager
         $tbl_message = Database::get_main_table(TABLE_MESSAGE);
         $message_id = intval($message_id);
         $sql = "SELECT * FROM $tbl_message
-                WHERE id = '$message_id' AND msg_status <> '" . MESSAGE_STATUS_DELETED . "' ";
+                WHERE 
+                    id = '$message_id' AND 
+                    msg_status <> '" . MESSAGE_STATUS_DELETED . "' ";
         $res = Database::query($sql);
         $item = array();
         if (Database::num_rows($res) > 0) {
@@ -1541,11 +1582,10 @@ class MessageManager
     }
 
     /**
-     * @param $id
-     * @param array $params
+     *
      * @return string
      */
-    public static function generate_message_form($id, $params = array())
+    public static function generate_message_form()
     {
         $form = new FormValidator('send_message');
         $form->addText('subject', get_lang('Subject'), false, ['id' => 'subject_id']);
@@ -1563,7 +1603,7 @@ class MessageManager
     {
         $form = new FormValidator('send_invitation');
         $form->addTextarea('content', get_lang('AddPersonalMessage'), ['id' => 'content_invitation_id', 'rows' => 5]);
-        return $form->return_form();
+        return $form->returnForm();
     }
 
     //@todo this functions should be in the message class
@@ -1747,7 +1787,7 @@ class MessageManager
      * Get the data of the last received messages for a user
      * @param int $userId The user id
      * @param int $lastId The id of the last received message
-     * @return int The count of new messages
+     * @return array
      */
     public static function getMessagesFromLastReceivedMessage($userId, $lastId = 0)
     {
@@ -1761,8 +1801,6 @@ class MessageManager
         $messagesTable = Database::get_main_table(TABLE_MESSAGE);
         $userTable = Database::get_main_table(TABLE_MAIN_USER);
 
-        $messages = array();
-
         $sql = "SELECT m.*, u.user_id, u.lastname, u.firstname
                 FROM $messagesTable as m
                 INNER JOIN $userTable as u
@@ -1775,6 +1813,7 @@ class MessageManager
 
         $result = Database::query($sql);
 
+        $messages = [];
         if ($result !== false) {
             while ($row = Database::fetch_assoc($result)) {
                 $messages[] = $row;

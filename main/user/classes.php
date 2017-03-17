@@ -6,15 +6,15 @@
  */
 
 $cidReset = true;
-require_once '../inc/global.inc.php';
+require_once __DIR__.'/../inc/global.inc.php';
 
 api_block_anonymous_users();
 
 $this_section = SECTION_COURSES;
 
-$interbreadcrumb[]= array ('url' =>'classes.php','name' => get_lang('Classes'));
+$interbreadcrumb[] = array('url' =>'classes.php', 'name' => get_lang('Classes'));
 if (isset($_GET['id'])) {
-    $interbreadcrumb[]= array ('url' =>'#','name' => get_lang('Groups'));
+    $interbreadcrumb[] = array('url' =>'#', 'name' => get_lang('Groups'));
 }
 
 Display :: display_header($tool_name, 'Classes');

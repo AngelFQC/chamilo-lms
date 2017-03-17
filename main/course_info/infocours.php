@@ -14,7 +14,7 @@
  * @package chamilo.course_info
  */
 
-require_once '../inc/global.inc.php';
+require_once __DIR__.'/../inc/global.inc.php';
 $current_course_tool  = TOOL_COURSE_SETTING;
 $this_section = SECTION_COURSES;
 
@@ -33,9 +33,7 @@ $is_allowedToEdit = $is_courseAdmin || $is_platformAdmin;
 
 $course_code = api_get_course_id();
 $courseId = api_get_course_int_id();
-$course_access_settings = CourseManager::get_access_settings($course_code);
 
-//LOGIC FUNCTIONS
 function is_settings_editable()
 {
     return isset($GLOBALS['course_info_is_editable']) && $GLOBALS['course_info_is_editable'];
@@ -120,17 +118,16 @@ $form->addHtml('
         <div class="panel-body">
 ');
 
-$image_html = '';
-
+$image = '';
 // Display course picture
 $course_path = api_get_path(SYS_COURSE_PATH).$currentCourseRepository;   // course path
-
 if (file_exists($course_path.'/course-pic85x85.png')) {
     $course_web_path = api_get_path(WEB_COURSE_PATH).$currentCourseRepository;   // course web path
     $course_medium_image = $course_web_path.'/course-pic85x85.png?'.rand(1, 1000); // redimensioned image 85x85
-    $image_html =  '<div class="row"><label class="col-md-2 control-label">'.get_lang('Image').'</label> <div class="col-md-8"><img src="'.$course_medium_image.'" /></div></div>';
+    $image =  '<div class="row"><label class="col-md-2 control-label">'.get_lang('Image').'</label> 
+                    <div class="col-md-8"><img src="'.$course_medium_image.'" /></div></div>';
 }
-$form->addElement('html', $image_html);
+$form->addHtml($image);
 
 $form->addText('title', get_lang('Title'), true);
 $form->applyFilter('title', 'html_filter');
@@ -143,7 +140,10 @@ $form->addElement(
     $categories,
     ['style'=>'width:350px', 'id'=>'category_code']
 );
-$form->addElement('select_language', 'course_language', array(get_lang('Ln'), get_lang('TipLang')));
+$form->addSelectLanguage(
+    'course_language',
+    array(get_lang('Ln'), get_lang('TipLang'))
+);
 
 $group = array(
     $form->createElement('radio', 'show_course_in_user_language', null, get_lang('Yes'), 1),
@@ -677,8 +677,8 @@ $values['course_language'] = $_course['language'];
 $values['department_name'] = $_course['extLink']['name'];
 $values['department_url'] = $_course['extLink']['url'];
 $values['visibility'] = $_course['visibility'];
-$values['subscribe'] = $course_access_settings['subscribe'];
-$values['unsubscribe'] = $course_access_settings['unsubscribe'];
+$values['subscribe'] = $_course['subscribe'];
+$values['unsubscribe'] = $_course['unsubscribe'];
 $values['course_registration_password'] = $all_course_information['registration_code'];
 $values['legal'] = $all_course_information['legal'];
 $values['activate_legal'] = $all_course_information['activate_legal'];
@@ -701,7 +701,7 @@ if ($form->validate() && is_settings_editable()) {
     $picture = $_FILES['picture'];
     if (!empty($picture['name'])) {
         $picture_uri = CourseManager::update_course_picture(
-            $course_code,
+            $_course,
             $picture['name'],
             $picture['tmp_name'],
             $updateValues['picture_crop_result']

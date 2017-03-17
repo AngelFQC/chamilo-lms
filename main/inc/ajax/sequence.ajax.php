@@ -9,7 +9,7 @@ use Fhaculty\Graph\Vertex;
 /**
  * Responses to AJAX calls
  */
-require_once '../global.inc.php';
+require_once __DIR__.'/../global.inc.php';
 
 $action = isset($_REQUEST['a']) ? $_REQUEST['a'] : null;
 $id = isset($_REQUEST['id']) ? $_REQUEST['id'] : null;
@@ -127,7 +127,6 @@ switch ($action) {
         if ($sequenceResource->getSequence()->hasGraph()) {
             $graph = $sequenceResource->getSequence()->getUnSerializeGraph();
             if ($graph->hasVertex($vertexId)) {
-
                 $edgeIterator = $graph->getEdges()->getIterator();
                 $edgeToDelete = null;
                 foreach ($edgeIterator as $edge) {
@@ -197,10 +196,7 @@ switch ($action) {
                                 $em->remove($sequenceResource);
                                 $em->remove($sequenceResourceToDelete);
                             }
-
                         }
-
-
                     }
                 }
 

@@ -8,11 +8,23 @@ use Doctrine\ORM\Mapping as ORM;
 /**
  * TrackEHotpotatoes
  *
- * @ORM\Table(name="track_e_hotpotatoes", indexes={@ORM\Index(name="idx_tehp_user_id", columns={"exe_user_id"}), @ORM\Index(name="idx_tehp_c_id", columns={"c_id"})})
+ * @ORM\Table(name="track_e_hotpotatoes", indexes={
+ *     @ORM\Index(name="idx_tehp_user_id", columns={"exe_user_id"}),
+ *     @ORM\Index(name="idx_tehp_c_id", columns={"c_id"})
+ * })
  * @ORM\Entity
  */
 class TrackEHotpotatoes
 {
+    /**
+     * @var integer
+     *
+     * @ORM\Column(name="id", type="integer")
+     * @ORM\Id
+     * @ORM\GeneratedValue
+     */
+    private $id;
+
     /**
      * @var string
      *
@@ -54,17 +66,6 @@ class TrackEHotpotatoes
      * @ORM\Column(name="exe_weighting", type="smallint", nullable=false)
      */
     private $exeWeighting;
-
-    /**
-     * @var integer
-     *
-     * @ORM\Column(name="id", type="integer")
-     * @ORM\Id
-     * @ORM\GeneratedValue(strategy="IDENTITY")
-     */
-    private $id;
-
-
 
     /**
      * Set exeName

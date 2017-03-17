@@ -1,6 +1,8 @@
 <?php
 /* For licensing terms, see /license.txt */
 
+use Chamilo\CourseBundle\Entity\CForumPost;
+
 /**
  * These files are a complete rework of the forum. The database structure is
  * based on phpBB but all the code is rewritten. A lot of new functionalities
@@ -22,8 +24,7 @@
  * @package chamilo.forum
  */
 
-// Including the global initialization file.
-require_once '../inc/global.inc.php';
+require_once __DIR__.'/../inc/global.inc.php';
 
 $htmlHeadXtra[] = '<script>
 $(document).ready(function(){
@@ -43,6 +44,8 @@ api_protect_course_script(true);
 
 // Including additional library scripts.
 $nameTools = get_lang('ToolForum');
+
+$_user = api_get_user_info();
 
 // Including necessary files
 require 'forumconfig.inc.php';
@@ -267,7 +270,7 @@ if ($action_forums != 'add') {
             // SHOULD WE SHOW THIS PARTICULAR FORUM
             // you are teacher => show forum
 
-            if (api_is_allowed_to_edit(false,true)) {
+            if (api_is_allowed_to_edit(false, true)) {
                 //echo 'teacher';
                 $show_forum = true;
             } else {
@@ -389,6 +392,20 @@ if ($action_forums != 'add') {
                         'class' => 'description'
                     )
                 );
+
+                if ($forum['moderated'] == 1 && api_is_allowed_to_edit(false, true)) {
+                    $waitingCount = getCountPostsWithStatus(
+                        CForumPost::STATUS_WAITING_MODERATION,
+                        $forum
+                    );
+                    if (!empty($waitingCount)) {
+                        $html .= Display::label(
+                            get_lang('PostsPendingModeration'). ': '.$waitingCount,
+                            'warning'
+                        );
+                    }
+                }
+
                 $html .= '</div>';
                 $html .= '</div>';
                 $html .= '<div class="col-md-6">';
@@ -486,7 +503,7 @@ if ($action_forums != 'add') {
                 $html .= '</div>';
                 $html .= '</div></div>';
             }
-           echo $html;
+            echo $html;
         }
     }
     if (count($forum_list) == 0) {

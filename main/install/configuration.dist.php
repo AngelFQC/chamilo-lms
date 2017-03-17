@@ -137,7 +137,7 @@ $_configuration['cdn'] = array(
 /**
  * Misc. settings
  */
-// security word for password recovery
+// Security word for password recovery
 $_configuration['security_key'] = '{SECURITY_KEY}';
 // Hash function method
 $_configuration['password_encryption'] = '{ENCRYPT_PASSWORD}';
@@ -146,10 +146,14 @@ $_configuration['session_stored_in_db'] = false;
 // Session lifetime
 $_configuration['session_lifetime'] = SESSION_LIFETIME;
 // Activation for multi-url access
+// When enabling multi-url, settings can be configured by multi-url using a simple
+// sub-element. E.g. $_configuration['session_lifetime'] = true; could be turned into
+// something like $_configuration['session_lifetime'][2] = false; to affect only URL
+// with ID 2. The ID can be found in the access_url table.
 //$_configuration['multiple_access_urls'] = true;
 $_configuration['software_name'] = 'Chamilo';
 $_configuration['software_url'] = 'https://chamilo.org/';
-//Deny the elimination of users
+// Deny the elimination of users
 $_configuration['deny_delete_users'] = false;
 // Version settings
 $_configuration['system_version'] = '{NEW_VERSION}';
@@ -251,7 +255,40 @@ $_configuration['system_stable'] = NEW_VERSION_STABLE;
 //$_configuration['announcements_hide_send_to_hrm_users'] = true;
 // Hide certificate link in index/userportal pages
 //$_configuration['hide_my_certificate_link'] = false;
+// Hide header and footer in certificate pdf
+//$_configuration['hide_header_footer_in_certificate'] = false;
 // Send only quiz answer notifications to course coaches and not general coach
 //$_configuration['block_quiz_mail_notification_general_coach'] = false;
 // Security: block direct access from logged in users to contents in OPEN (but not public) courses. Set to true to block
 //$_configuration['block_registered_users_access_to_open_course_contents'] = false;
+// Allows syncing the database with the current entity schema
+//$_configuration['sync_db_with_schema'] = false;
+// Load course notifications in user_portal.php using ajax
+//$_configuration['user_portal_load_notification_by_ajax'] = false;
+// When exporting a LP, all files and folders in the same path of an html will be exported too.
+//$_configuration['add_all_files_in_lp_export'] = false;
+// Send exercise student score to manager in email notification
+//$_configuration['send_score_in_exam_notification_mail_to_manager'] = false;
+// Show blocked LPs by prerequisite to students
+//$_configuration['show_prerequisite_as_blocked'] = false;
+// Mail header extra HTML attributes
+//$_configuration['mail_header_style'] = '';
+// Mail body extra HTML attributes
+//$_configuration['mail_content_style'] = '';
+// Show all agenda events in personal agenda from all session no matter the visibility.
+//$_configuration['personal_agenda_show_all_session_events'] = false;
+// Allows to redirect to the session after the inscription in session about
+// $_configuration['allow_redirect_to_session_after_inscription_about'] = false;
+// Allows to do a remove_XSS in course introduction with user status COURSEMANAGERLOWSECURITY in order to accept all embed type videos (like vimeo, wistia, etc)
+// $_configuration['allow_course_introduction_low_security'] = false;
+// Prevents the duplicate upload in assignments
+// $_configuration['assignment_prevent_duplicate_upload'] = false;
+// Set ConsideredWorkingTime work extra field variable from main/admin/extra_fields.php?type=work
+// (with internal id 'work_time' as below) and enable the following line to show in MyStudents page works report
+// $_configuration['considered_working_time'] = 'work_time';
+// During CSV special imports update users emails to x@example.com
+// $_configuration['update_users_email_to_dummy_except_admins'] = false;
+// Certification pdf export orientation
+// $_configuration['certificate_pdf_orientation'] = 'landscape'; // It can be 'portrait' or 'landscape'
+// Hide main navigation menu (left column in userportal)
+// $_configuration['hide_main_navigation_menu'] = false;

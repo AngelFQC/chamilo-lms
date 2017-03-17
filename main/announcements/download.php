@@ -11,7 +11,7 @@
 
 session_cache_limiter('nocache');
 
-require_once '../inc/global.inc.php';
+require_once __DIR__.'/../inc/global.inc.php';
 
 // IMPORTANT to avoid caching of documents
 header('Expires: Wed, 01 Jan 1990 00:00:00 GMT');
@@ -43,7 +43,9 @@ if (is_dir($full_file_name)) {
     //remove last slash if present
     //$doc_url = ($doc_url{strlen($doc_url)-1}=='/')?substr($doc_url,0,strlen($doc_url)-1):$doc_url;
     //mod_rewrite can change /some/path/ to /some/path// in some cases, so clean them all off (René)
-    while ($doc_url{$dul = strlen($doc_url)-1}=='/') $doc_url = substr($doc_url,0,$dul);
+    while ($doc_url{$dul = strlen($doc_url)-1}=='/') {
+        $doc_url = substr($doc_url,0,$dul);
+    }
     //create the path
     $document_explorer = api_get_path(WEB_COURSE_PATH).api_get_course_path(); // home course path
     //redirect

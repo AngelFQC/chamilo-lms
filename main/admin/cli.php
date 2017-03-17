@@ -6,18 +6,16 @@
 * @author Arnaud Ligot, CBlue SPRL
 * @package chamilo.admin.cli
 */
-/**
- * Init section 
- */
+
 // we are in the admin area so we do not need a course id
 $cidReset = true;
 // include global script
-require_once '../inc/global.inc.php';
+require_once __DIR__.'/../inc/global.inc.php';
 $this_section = SECTION_PLATFORM_ADMIN;
 // make sure only logged-in admins can execute this
 api_protect_admin_script();
 /**
- * Main code 
+ * Main code
  */
 // setting the name of the tool
 $tool_name = get_lang('CommandLineInterpreter');
@@ -39,6 +37,6 @@ switch ($_GET["cmd"]) {
       break;
 }
 /**
- * Footer 
+ * Footer
  */
 Display :: display_footer();

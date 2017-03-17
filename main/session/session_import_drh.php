@@ -6,7 +6,7 @@
  */
 $cidReset = true;
 
-require_once '../inc/global.inc.php';
+require_once __DIR__.'/../inc/global.inc.php';
 
 $this_section = SECTION_PLATFORM_ADMIN;
 api_protect_admin_script(true);
@@ -16,7 +16,7 @@ $form_sent = 0;
 $tool_name = get_lang('ImportSessionDrhList');
 
 //$interbreadcrumb[] = array('url' => 'index.php', 'name' => get_lang('PlatformAdmin'));
-$interbreadcrumb[]=array('url' => 'session_list.php','name' => get_lang('SessionList'));
+$interbreadcrumb[] = array('url' => 'session_list.php', 'name' => get_lang('SessionList'));
 
 set_time_limit(0);
 
@@ -27,7 +27,7 @@ Display::display_header($tool_name);
 
 echo '<div class="actions">';
 echo '<a href="../session/session_list.php">'.
-    Display::return_icon('back.png', get_lang('BackTo').' '.get_lang('PlatformAdmin'),'',ICON_SIZE_MEDIUM).'</a>';
+    Display::return_icon('back.png', get_lang('BackTo').' '.get_lang('PlatformAdmin'), '', ICON_SIZE_MEDIUM).'</a>';
 echo '</div>';
 
 if (!empty($error_message)) {

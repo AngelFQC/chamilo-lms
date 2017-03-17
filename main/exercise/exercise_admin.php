@@ -11,7 +11,7 @@ use ChamiloSession as Session;
 * @author Olivier Brouckaert, Julio Montoya
 */
 
-require_once '../inc/global.inc.php';
+require_once __DIR__.'/../inc/global.inc.php';
 $this_section = SECTION_COURSES;
 
 if (!api_is_allowed_to_edit(null, true)) {
@@ -86,22 +86,22 @@ $htmlHeadXtra[] = '<script>
     }
 
     function checkQuestionSelection() {
-        var selection = $("#questionSelection option:selected").val()
+        var selection = $("#questionSelection option:selected").val();
         switch (selection) {
-            case "\'.EX_Q_SELECTION_ORDERED.\'":
+            case "'.EX_Q_SELECTION_ORDERED.'":
                 disabledHideRandom();
                 $("#hidden_matrix").hide();
                 break;
-            case "\'.EX_Q_SELECTION_RANDOM.\'":
+            case "'.EX_Q_SELECTION_RANDOM.'":
                 $("#hidden_random").show();
                 $("#hidden_matrix").hide();
                 break;
-            case "\'.EX_Q_SELECTION_CATEGORIES_ORDERED_QUESTIONS_ORDERED.\'":
+            case "'.EX_Q_SELECTION_CATEGORIES_ORDERED_QUESTIONS_ORDERED.'":
                 disabledHideRandom();
                 $("#hidden_matrix").show();
                 break;
             case "per_categories":
-                $("#questionSelection option:eq(\'.EX_Q_SELECTION_CATEGORIES_ORDERED_QUESTIONS_ORDERED.\')").prop("selected", true);
+                $("#questionSelection option:eq('.EX_Q_SELECTION_CATEGORIES_ORDERED_QUESTIONS_ORDERED.')").prop("selected", true);
                 disabledHideRandom();
                 $("#hidden_matrix").show();
                 break;

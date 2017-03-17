@@ -18,7 +18,7 @@ if (!isset($_GET['cidReq'])) {
 }
 
 // Including the global initialization file
-require_once '../inc/global.inc.php';
+require_once __DIR__.'/../inc/global.inc.php';
 
 // Breadcrumbs
 if (!empty($_user)) {
@@ -466,7 +466,7 @@ if ($survey_data['form_fields'] != '' &&
 
     if (isset($list['language']) && $list['language'] == 1) {
         // LANGUAGE
-        $form->addElement('select_language', 'language', get_lang('Language'));
+        $form->addSelectLanguage('language', get_lang('Language'));
         if (api_get_setting('profile', 'language') !== 'true') {
             $form->freeze('language');
         }

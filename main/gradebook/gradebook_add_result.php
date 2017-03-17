@@ -6,7 +6,7 @@
  * @package chamilo.gradebook
  */
 //$cidReset = true;
-require_once '../inc/global.inc.php';
+require_once __DIR__.'/../inc/global.inc.php';
 $current_course_tool  = TOOL_GRADEBOOK;
 
 api_protect_course_script(true);
@@ -41,7 +41,9 @@ if ($add_result_form->validate()) {
         $res->set_evaluation_id($values['evaluation_id']);
         $res->set_user_id(key($scores));
         //if no scores are given, don't set the score
-        if ((!empty ($row)) || ($row == '0')) $res->set_score($row);
+        if ((!empty ($row)) || ($row == '0')) {
+            $res->set_score($row);
+        }
         $res->add();
         next($scores);
     }

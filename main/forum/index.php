@@ -2,6 +2,7 @@
 /* For licensing terms, see /license.txt */
 
 use ChamiloSession as Session;
+use Chamilo\CourseBundle\Entity\CForumPost;
 
 /**
  * These files are a complete rework of the forum. The database structure is
@@ -24,7 +25,7 @@ use ChamiloSession as Session;
  * @package chamilo.forum
  */
 
-require_once '../inc/global.inc.php';
+require_once __DIR__.'/../inc/global.inc.php';
 $current_course_tool = TOOL_FORUM;
 $htmlHeadXtra[] = '<script>
 
@@ -346,6 +347,7 @@ if (is_array($forumCategories)) {
         if (!empty($forumsInCategory)) {
             // We display all the forums in this category.
             foreach ($forum_list as $forum) {
+                $html = '';
                 // Here we clean the whatnew_post_info array a little bit because to display the icon we
                 // test if $whatsnew_post_info[$forum['forum_id']] is empty or not.
                 if (isset($forum['forum_id'])) {
@@ -508,6 +510,20 @@ if (is_array($forumCategories)) {
                                 'class'=>'description'
                             ]
                         );
+
+                        if ($forum['moderated'] == 1 && api_is_allowed_to_edit(false, true)) {
+                            $waitingCount = getCountPostsWithStatus(
+                                CForumPost::STATUS_WAITING_MODERATION,
+                                $forum
+                            );
+                            if (!empty($waitingCount)) {
+                                $html .= Display::label(
+                                    get_lang('PostsPendingModeration'). ': '.$waitingCount,
+                                    'warning'
+                                );
+                            }
+                        }
+
                         $html .= '</div>';
                         $html .= '</div>';
 

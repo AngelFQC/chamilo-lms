@@ -6,7 +6,7 @@
  * @package chamilo.admin
  */
 $cidReset = true;
-require_once '../inc/global.inc.php';
+require_once __DIR__.'/../inc/global.inc.php';
 $this_section = SECTION_PLATFORM_ADMIN;
 
 api_protect_admin_script();
@@ -137,7 +137,7 @@ if (isset($_POST['language'])) {
     $form->addElement('html', $buttons);
 
 } else {
-	$form->addElement('select_language', 'language', get_lang('Language'),null,array());
+    $form->addSelectLanguage('language', get_lang('Language'), null, array());
 	$form->addButtonSearch(get_lang('Load'), 'send');
 
 }

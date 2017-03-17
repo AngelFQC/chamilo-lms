@@ -10,7 +10,7 @@ use Chamilo\CoreBundle\Entity\ExtraField;
 * @package chamilo.user
 */
 
-require_once '../inc/global.inc.php';
+require_once __DIR__.'/../inc/global.inc.php';
 $current_course_tool  = TOOL_USER;
 
 // the section (for the tabs)
@@ -699,7 +699,7 @@ function reg_filter($user_id)
     }
     $user_id = (int) $user_id;
 
-	$result = '<a class="btn btn-small btn-primary" href="'.api_get_self().'?register=yes&type='.$type.'&user_id='.$user_id.'">'.
+	$result = '<a class="btn btn-small btn-primary" href="'.api_get_self().'?'.api_get_cidreq().'&register=yes&type='.$type.'&user_id='.$user_id.'">'.
         get_lang("reg").'</a>';
 
 	return $result;
@@ -710,7 +710,6 @@ function reg_filter($user_id)
  * lock = the user can no longer use this account
  * @author Patrick Cool <patrick.cool@UGent.be>, Ghent University
  * @param int $active the current state of the account
- * @param int $user_id The user id
  * @param string $url_params
  * @return string Some HTML-code with the lock/unlock button
  */

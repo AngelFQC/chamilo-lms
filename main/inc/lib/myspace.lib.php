@@ -1,9 +1,9 @@
 <?php
 /* For licensing terms, see /license.txt */
 
-use CpChart\Classes\pCache as pCache;
-use CpChart\Classes\pData as pData;
-use CpChart\Classes\pImage as pImage;
+use CpChart\Chart\Cache as pCache;
+use CpChart\Chart\Data as pData;
+use CpChart\Chart\Image as pImage;
 
 /**
  * Class MySpace
@@ -87,7 +87,7 @@ class MySpace
     public function export_csv($header, $data, $file_name = 'export.csv')
     {
         $archive_path = api_get_path(SYS_ARCHIVE_PATH);
-        $archive_url = api_get_path(WEB_CODE_PATH).'course_info/download.php?archive=';
+        $archive_url = api_get_path(WEB_CODE_PATH).'course_info/download.php?archive_path=&archive=';
 
         if (!$open = fopen($archive_path.$file_name, 'w+')) {
             $message = get_lang('noOpen');
@@ -883,10 +883,12 @@ class MySpace
      */
     public static function get_total_number_courses()
     {
-        // database table definition
-        $main_course_table = Database :: get_main_table(TABLE_MAIN_COURSE);
+        $table = Database :: get_main_table(TABLE_MAIN_COURSE);
+        $sql = "SELECT COUNT(id) count FROM $table";
+        $result = Database::query($sql);
+        $row = Database::fetch_assoc($result);
 
-        return Database::count_rows($main_course_table);
+        return $row['count'];
     }
 
     /**
@@ -1218,9 +1220,12 @@ class MySpace
      */
     public static function get_total_number_sessions()
     {
-        // database table definition
-        $main_session_table = Database :: get_main_table(TABLE_MAIN_SESSION);
-        return Database::count_rows($main_session_table);
+        $table = Database :: get_main_table(TABLE_MAIN_SESSION);
+        $sql = "SELECT COUNT(id) count FROM $table";
+        $result = Database::query($sql);
+        $row = Database::fetch_assoc($result);
+
+        return $row['count'];
     }
 
     /**
@@ -1869,9 +1874,12 @@ class MySpace
      */
     public static function get_number_of_users_tracking_overview()
     {
-        // database table definition
-        $main_user_table = Database :: get_main_table(TABLE_MAIN_USER);
-        return Database::count_rows($main_user_table);
+        $table = Database :: get_main_table(TABLE_MAIN_USER);
+        $sql = "SELECT COUNT(id) count FROM $table";
+        $result = Database::query($sql);
+        $row = Database::fetch_assoc($result);
+
+        return $row['count'];
     }
 
     /**
@@ -2546,13 +2554,26 @@ class MySpace
         );
     }
 
+    /**
+     * @return int
+     */
     public static function getNumberOfTrackAccessOverview()
     {
-        $table = Database::get_main_table(TABLE_STATISTIC_TRACK_E_COURSE_ACCESS);
+        $table = Database :: get_main_table(TABLE_STATISTIC_TRACK_E_COURSE_ACCESS);
+        $sql = "SELECT COUNT(course_access_id) count FROM $table";
+        $result = Database::query($sql);
+        $row = Database::fetch_assoc($result);
 
-        return Database::count_rows($table);
+        return $row['count'];
     }
 
+    /**
+     * @param $from
+     * @param $numberItems
+     * @param $column
+     * @param $orderDirection
+     * @return array
+     */
     public static function getUserDataAccessTrackingOverview($from, $numberItems, $column, $orderDirection)
     {
         $user = Database::get_main_table(TABLE_MAIN_USER);
@@ -2793,23 +2814,38 @@ function grapher($sql_result, $start_date, $end_date, $type = "")
     if (empty($start_date)) { $start_date =""; }
     if (empty($end_date)) { $end_date =""; }
     if ($type == ""){ $type = 'day'; }
-    $main_year  = $main_month_year = $main_day = array();
-    // get last 8 days/months
-    $last_days      = 5;
-    $last_months    = 3;
-    for ($i = $last_days; $i >= 0; $i--) {
-        $main_day[date ('d-m-Y', time () - $i * 3600 * 24)] = 0;
+    $main_year  = $main_month_year = $main_day = [];
+
+    $period = new DatePeriod(
+        new DateTime($start_date),
+        new DateInterval('P1D'),
+        new DateTime($end_date)
+    );
+
+    foreach ($period as $date) {
+        $main_day[$date->format('d-m-Y')] = 0;
     }
-    for ($i = $last_months; $i >= 0; $i--) {
-        $main_month_year[date ('m-Y', time () - $i * 30 * 3600 * 24)] = 0;
+
+    $period = new DatePeriod(
+        new DateTime($start_date),
+        new DateInterval('P1M'),
+        new DateTime($end_date)
+    );
+
+    foreach ($period as $date) {
+        $main_month_year[$date->format('m-Y')] = 0;
     }
 
     $i = 0;
     if (is_array($sql_result) && count($sql_result) > 0) {
         foreach ($sql_result as $key => $data) {
             //creating the main array
-            $main_month_year[date('m-Y', $data['login'])] += float_format(($data['logout'] - $data['login']) / 60, 0);
-            $main_day[date('d-m-Y', $data['login'])] += float_format(($data['logout'] - $data['login']) / 60, 0);
+            if (isset($main_month_year[date('m-Y', $data['login'])])) {
+                $main_month_year[date('m-Y', $data['login'])] += float_format(($data['logout'] - $data['login']) / 60, 0);
+            }
+            if (isset($main_day[date('d-m-Y', $data['login'])])) {
+                $main_day[date('d-m-Y', $data['login'])] += float_format(($data['logout'] - $data['login']) / 60, 0);
+            }
             if ($i > 500) {
                 break;
             }

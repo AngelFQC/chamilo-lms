@@ -1,7 +1,7 @@
 <?php
 /* For licensing terms, see /license.txt */
 
-require_once '../inc/global.inc.php';
+require_once __DIR__.'/../inc/global.inc.php';
 
 $from_myspace = false;
 $from = isset($_GET['from']) ? $_GET['from'] : null;
@@ -23,9 +23,10 @@ if (!$is_allowedToTrack) {
 
 $course_id = api_get_course_int_id();
 $course_code = api_get_course_id();
+$sessionId = api_get_session_id();
 
 // jqgrid will use this URL to do the selects
-$url = api_get_path(WEB_AJAX_PATH).'model.ajax.php?a=get_group_reporting&course_id='.$course_id;
+$url = api_get_path(WEB_AJAX_PATH).'model.ajax.php?a=get_group_reporting&course_id='.$course_id.'&session_id='.$sessionId;
 
 // The order is important you need to check the the $column variable in the model.ajax.php file
 $columns = array(

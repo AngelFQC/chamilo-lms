@@ -95,19 +95,18 @@ class ChamiloApi
     public static function getPlatformLogo($imageAttributes = [])
     {
         $logoPath = self::getWebPlatformLogoPath();
-        $insitution = api_get_setting('Institution');
-        $insitutionUrl = api_get_setting('InstitutionUrl');
+        $institution = api_get_setting('Institution');
+        $institutionUrl = api_get_setting('InstitutionUrl');
         $siteName = api_get_setting('siteName');
 
         if ($logoPath === null) {
             $headerLogo = \Display::url($siteName, api_get_path(WEB_PATH) . 'index.php');
 
-            if (!empty($insitutionUrl) && !empty($insitution)) {
-                $headerLogo .= ' - ' . \Display::url($insitution, $insitutionUrl);
+            if (!empty($institutionUrl) && !empty($institution)) {
+                $headerLogo .= ' - ' . \Display::url($institution, $institutionUrl);
             }
 
             $courseInfo = api_get_course_info();
-
             if (isset($courseInfo['extLink']) && !empty($courseInfo['extLink']['name'])) {
                 $headerLogo .= '<span class="extLinkSeparator"> - </span>';
 
@@ -125,7 +124,7 @@ class ChamiloApi
             return \Display::tag('h2', $headerLogo, ['class' => 'text-left']);
         }
 
-        $image = \Display::img($logoPath, $insitution, $imageAttributes);
+        $image = \Display::img($logoPath, $institution, $imageAttributes);
 
         return \Display::url($image, api_get_path(WEB_PATH) . 'index.php');
     }
@@ -144,6 +143,29 @@ class ChamiloApi
                 $string = preg_replace('/<' . $tag . '[^>]*>/i', ' ', $string2);
             }
         }
+
         return $string;
+    }
+
+    /**
+     * Adds or Subtract a time in hh:mm:ss to a datetime
+     * @param string $time Time in hh:mm:ss format
+     * @param string $datetime Datetime as accepted by the Datetime class constructor
+     * @param bool $operation True for Add, False to Subtract
+     * @return string
+     */
+    public static function addOrSubTimeToDateTime($time, $datetime = 'now', $operation = true)
+    {
+        $date = new \DateTime($datetime);
+        $hours = $minutes = $seconds = 0;
+        sscanf($time, "%d:%d:%d", $hours, $minutes, $seconds);
+        $timeSeconds = isset($seconds) ? $hours * 3600 + $minutes * 60 + $seconds : $hours * 60 + $minutes;
+        if ($operation) {
+            $date->add(new \DateInterval('PT' . $timeSeconds . 'S'));
+        } else {
+            $date->sub(new \DateInterval('PT' . $timeSeconds . 'S'));
+        }
+
+        return $date->format('Y-m-d H:i:s');
     }
 }

@@ -1,5 +1,8 @@
 <?php
 /* For licensing terms, see /license.txt */
+
+use ChamiloSession as Session;
+
 // @todo refactor this script, create a class that manage the jqgrid requests
 /**
  * Responses to AJAX calls
@@ -8,7 +11,7 @@ $action = $_GET['a'];
 
 switch ($action) {
     case 'set_visibility':
-        require_once '../global.inc.php';
+        require_once __DIR__.'/../global.inc.php';
         $course_id = api_get_course_int_id();
         if (api_is_allowed_to_edit(null, true)) {
             $tool_table = Database::get_course_table(TABLE_TOOL_LIST);
@@ -30,7 +33,7 @@ switch ($action) {
                     null,
                     true
                 );
-                $na_image   = str_replace('.png', '_na.png', $tool_image);
+                $na_image = str_replace('.png', '_na.png', $tool_image);
             }
 
             if (isset($tool_info['custom_icon']) && !empty($tool_info['custom_icon'])) {
@@ -63,8 +66,8 @@ switch ($action) {
             echo json_encode($response_data);
         }
         break;
-    case 'show_course_information' :
-        require_once '../global.inc.php';
+    case 'show_course_information':
+        require_once __DIR__.'/../global.inc.php';
 
         // Get the name of the database course.
         $tbl_course_description = Database::get_course_table(TABLE_COURSE_DESCRIPTION);
@@ -82,7 +85,7 @@ switch ($action) {
                 WHERE c_id = ".$course_info['real_id']." AND session_id = 0
                 ORDER BY id";
         $result = Database::query($sql);
-        if (Database::num_rows($result) > 0 ) {
+        if (Database::num_rows($result) > 0) {
             while ($description = Database::fetch_object($result)) {
                 $descriptions[$description->id] = $description;
             }
@@ -101,8 +104,7 @@ switch ($action) {
          * @todo this functions need to belong to a class or a special
          * wrapper to process the AJAX petitions from the jqgrid
          */
-
-        require_once '../global.inc.php';
+        require_once __DIR__.'/../global.inc.php';
         $now = time();
         $page  = intval($_REQUEST['page']);     //page
         $limit = intval($_REQUEST['rows']);     // quantity of rows
@@ -119,7 +121,7 @@ switch ($action) {
         if (!api_is_platform_admin()) {
             $new_session_list = UserManager::get_personal_session_course_list(api_get_user_id());
             $my_session_list  = array();
-            foreach($new_session_list as $item) {
+            foreach ($new_session_list as $item) {
                 if (!empty($item['id_session']))
                     $my_session_list[] = $item['id_session'];
             }
@@ -205,7 +207,7 @@ switch ($action) {
 
         $i =0;
         $response = new stdClass();
-        foreach($temp as $key=>$row) {
+        foreach ($temp as $key=>$row) {
             $row = $row['cell'];
             if (!empty($row)) {
                 if ($key >= $start  && $key < ($start + $limit)) {
@@ -216,7 +218,7 @@ switch ($action) {
             }
         }
 
-        if($count > 0 && $limit > 0) {
+        if ($count > 0 && $limit > 0) {
             $total_pages = ceil($count/$limit);
         } else {
             $total_pages = 0;
@@ -231,7 +233,7 @@ switch ($action) {
         echo json_encode($response);
         break;
     case 'session_courses_lp_by_week':
-        require_once '../global.inc.php';
+        require_once __DIR__.'/../global.inc.php';
         $now = time();
 
         $page  = intval($_REQUEST['page']);     //page
@@ -251,9 +253,10 @@ switch ($action) {
         if (!api_is_platform_admin()) {
             $new_session_list = UserManager::get_personal_session_course_list(api_get_user_id());
             $my_session_list  = array();
-            foreach($new_session_list as $item) {
-                if (!empty($item['id_session']))
+            foreach ($new_session_list as $item) {
+                if (!empty($item['id_session'])) {
                     $my_session_list[] = $item['id_session'];
+                }
             }
             if (!in_array($session_id, $my_session_list)) {
                 break;
@@ -377,7 +380,7 @@ switch ($action) {
         echo json_encode($response);
         break;
     case 'session_courses_lp_by_course':
-        require_once '../global.inc.php';
+        require_once __DIR__.'/../global.inc.php';
         $now = time();
         $page  = intval($_REQUEST['page']);     //page
         $limit = intval($_REQUEST['rows']);     // quantity of rows
@@ -504,7 +507,30 @@ switch ($action) {
 
         echo json_encode($response);
         break;
+    case 'get_notification':
+        $courseId = isset($_REQUEST['course_id']) ? (int) $_REQUEST['course_id'] : 0;
+        $sessionId = isset($_REQUEST['session_id']) ? (int) $_REQUEST['session_id'] : 0;
+        $status = isset($_REQUEST['status']) ? (int) $_REQUEST['status'] : 0;
+        if (empty($courseId)) {
+            break;
+        }
+        require_once __DIR__.'/../global.inc.php';
+
+        $courseInfo = api_get_course_info_by_id($courseId);
+        $courseInfo['id_session'] = $sessionId;
+        $courseInfo['status'] = $status;
+
+        $id = 'notification_'.$courseId.'_'.$sessionId.'_'.$status;
+
+        $notificationId = Session::read($id);
+        if ($notificationId) {
+            echo Display::show_notification($courseInfo, false);
+            Session::erase($notificationId);
+        }
+
+        break;
     default:
         echo '';
+
 }
 exit;

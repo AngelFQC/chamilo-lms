@@ -1,7 +1,7 @@
 <?php
 /* For licensing terms, see /license.txt */
 
-use \Chamilo\CoreBundle\Entity\SequenceResource;
+use Chamilo\CoreBundle\Entity\SequenceResource;
 
 /**
 * Template (front controller in MVC pattern) used for distpaching
@@ -12,7 +12,7 @@ use \Chamilo\CoreBundle\Entity\SequenceResource;
 // Delete the globals['_cid'], we don't need it here.
 $cidReset = true; // Flag forcing the 'current course' reset
 
-require_once '../inc/global.inc.php';
+require_once __DIR__.'/../inc/global.inc.php';
 
 $ctok = Security::get_existing_token();
 
@@ -151,7 +151,11 @@ if (isset($_REQUEST['search_course'])) {
 // Subscribe user to course
 if (isset($_REQUEST['subscribe_course'])) {
     if ($ctok == $_GET['sec_token']) {
-        $courses_controller->subscribe_user($_GET['subscribe_course'], $_GET['search_term'], $categoryCode);
+        $courses_controller->subscribe_user(
+            $_GET['subscribe_course'],
+            $_GET['search_term'],
+            $categoryCode
+        );
     }
 }
 

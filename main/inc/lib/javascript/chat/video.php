@@ -1,6 +1,7 @@
 <?php
 /* For licensing terms, see /license.txt */
-require_once '../../../global.inc.php';
+
+require_once __DIR__.'/../../../global.inc.php';
 
 if (api_is_anonymous()) {
     api_not_allowed(true);
@@ -43,7 +44,8 @@ $template->assign('chat_user', $chatUser);
 $template->assign('user_local', $userLocal);
 $template->assign('block_friends', $friend_html);
 
-$content = $template->fetch('default/chat/video.tpl');
+$tpl = $template->get_template('chat/video.tpl');
+$content = $template->fetch($tpl);
 
 $templateHeader = Display::returnFontAwesomeIcon('video-camera', 'lg', true)
     . $chatVideo->getRoomName();

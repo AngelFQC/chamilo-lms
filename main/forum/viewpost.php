@@ -5,7 +5,7 @@
  * @package chamilo.forum
  */
 
-require_once '../inc/global.inc.php';
+require_once __DIR__.'/../inc/global.inc.php';
 
 // The section (tabs).
 $this_section = SECTION_COURSES;
@@ -29,7 +29,7 @@ $(document).ready(function(){ $(\'.hide-me\').slideUp() });
 // Are we in a lp ?
 $origin = '';
 if (isset($_GET['origin'])) {
-    $origin =  Security::remove_XSS($_GET['origin']);
+    $origin = Security::remove_XSS($_GET['origin']);
 }
 
 /* MAIN DISPLAY SECTION */
@@ -46,12 +46,12 @@ $whatsnew_post_info = $_SESSION['whatsnew_post_info'];
 
 /* Header and Breadcrumbs */
 
-if (isset($_SESSION['gradebook'])){
+if (isset($_SESSION['gradebook'])) {
     $gradebook = $_SESSION['gradebook'];
 }
 
 if (!empty($gradebook) && $gradebook == 'view') {
-    $interbreadcrumb[] = array (
+    $interbreadcrumb[] = array(
         'url' => '../gradebook/'.$_SESSION['gradebook_dest'],
         'name' => get_lang('ToolGradebook')
     );
@@ -85,10 +85,7 @@ if ($origin == 'learnpath') {
 if (!api_is_allowed_to_edit(false, true) &&
     ($current_forum['visibility'] == 0 || $current_thread['visibility'] == 0)
 ) {
-    $forum_allow = forum_not_allowed_here();
-    if ($forum_allow === false) {
-        exit;
-    }
+    api_not_allowed(false);
 }
 
 /* Actions */
@@ -184,7 +181,7 @@ if ($message != 'PostDeletedSpecial') {
     echo "\t<tr>\n\t\t<th style=\"padding-left:5px;\" align=\"left\" colspan=\"6\">";
     echo '<span class="forum_title">'.prepare4display($current_thread['thread_title']).'</span><br />';
 
-    if ($origin!='learnpath') {
+    if ($origin != 'learnpath') {
         echo '<span class="forum_low_description">'.prepare4display($current_forum_category['cat_title']).' - ';
     }
 

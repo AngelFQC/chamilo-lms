@@ -3,14 +3,14 @@
 
 /**
  *	This script displays an area where teachers can edit the group properties and member list.
-  *
+ *
  *	@author various contributors
  *	@author Roan Embrechts (VUB), partial code cleanup, initial virtual course support
  *	@package chamilo.group
  *	@todo course admin functionality to create groups based on who is in which course (or class).
  */
 
-require_once '../inc/global.inc.php';
+require_once __DIR__.'/../inc/global.inc.php';
 $this_section = SECTION_COURSES;
 $current_course_tool  = TOOL_GROUP;
 

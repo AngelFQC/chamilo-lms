@@ -4,7 +4,7 @@
 use ChamiloSession as Session;
 use Symfony\Component\Finder\Finder;
 
-require_once '../inc/global.inc.php';
+require_once __DIR__.'/../inc/global.inc.php';
 $current_course_tool  = TOOL_STUDENTPUBLICATION;
 
 api_protect_course_script(true);
@@ -48,6 +48,8 @@ $interbreadcrumb[] = array(
 );
 $interbreadcrumb[] = array('url' => '#', 'name'  => get_lang('UploadCorrections'));
 
+$downloadLink = api_get_path(WEB_CODE_PATH).'work/downloadfolder.inc.php?id='.$workId.'&'.api_get_cidreq();
+
 $form = new FormValidator(
     'form',
     'POST',
@@ -55,7 +57,16 @@ $form = new FormValidator(
     '',
     array('enctype' => "multipart/form-data")
 );
+
 $form->addElement('header', get_lang('UploadCorrections'));
+$form->addHtml(Display::return_message(
+    sprintf(
+        get_lang('UploadCorrectionsExplanationWithDownloadLinkX'),
+        $downloadLink
+    ),
+    'normal',
+    false
+));
 $form->addElement('file', 'file', get_lang('UploadADocument'));
 $form->addProgress();
 $form->addRule('file', get_lang('ThisFieldIsRequired'), 'required');
@@ -64,12 +75,10 @@ $form->addButtonUpload(get_lang('Upload'));
 
 $succeed = false;
 if ($form->validate()) {
-
     $values = $form->getSubmitValues();
     $upload = process_uploaded_file($_FILES['file'], false);
 
     if ($upload) {
-
         $zip = new PclZip($_FILES['file']['tmp_name']);
         // Check the zip content (real size and file extension)
         $zipFileList = (array)$zip->listContent();
@@ -118,7 +127,8 @@ if ($form->validate()) {
         $finalResult = [];
         foreach ($result as $item) {
             $title = $item['title_clean'];
-            $title = api_replace_dangerous_char($title);
+            $insert_date = str_replace(array(':', '-', ' '), '_', api_get_local_time($item['sent_date_from_db']));
+            $title =  api_replace_dangerous_char($insert_date.'_'.$item['username'].'_'.$title);
             $finalResult[$title] = $item['id'];
         }
 
@@ -129,13 +139,10 @@ if ($form->validate()) {
         $finder = new Finder();
         $finder->files()->in($destinationDir);
         $table = Database:: get_course_table(TABLE_STUDENT_PUBLICATION);
-
+        //var_dump($finalResult);
         /** @var SplFileInfo $file */
         foreach ($finder as $file) {
             $fileName = $file->getBasename();
-            $fileName = substr($fileName, 20, strlen($fileName));
-            $pos = strpos($fileName, '-') + 1;
-            $fileName = substr($fileName, $pos, strlen($fileName));
 
             if (isset($finalResult[$fileName])) {
                 $workStudentId = $finalResult[$fileName];
@@ -152,7 +159,6 @@ if ($form->validate()) {
                     }
 
                     if (!empty($correctionFilePath)) {
-
                         $result = copy(
                             $file->getRealPath(),
                             $correctionFilePath

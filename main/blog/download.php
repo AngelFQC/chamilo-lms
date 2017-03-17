@@ -11,7 +11,7 @@
 
 session_cache_limiter('public');
 
-require_once '../inc/global.inc.php';
+require_once __DIR__.'/../inc/global.inc.php';
 $this_section=SECTION_COURSES;
 
 // IMPORTANT to avoid caching of documents
@@ -30,18 +30,18 @@ $doc_url = str_replace(' ', '+', $doc_url);
 $doc_url = str_replace('/..', '', $doc_url); //echo $doc_url;
 
 if (! isset($_course)) {
-	api_not_allowed(true);
+    api_not_allowed(true);
 }
 $full_file_name = api_get_path(SYS_COURSE_PATH).api_get_course_path().'/upload/blog/'.$doc_url;
 
 //if the rewrite rule asks for a directory, we redirect to the course view
 if (is_dir($full_file_name)) {
-	//remove last slash if present
-	while ($doc_url{$dul = strlen($doc_url)-1}=='/') $doc_url = substr($doc_url,0,$dul);
-	//create the path
-	$document_explorer = api_get_path(WEB_COURSE_PATH).api_get_course_path(); // home course path
-	//redirect
-	header('Location: '.$document_explorer);
+    //remove last slash if present
+    while ($doc_url{$dul = strlen($doc_url)-1}=='/') $doc_url = substr($doc_url,0,$dul);
+    //create the path
+    $document_explorer = api_get_path(WEB_COURSE_PATH).api_get_course_path(); // home course path
+    //redirect
+    header('Location: '.$document_explorer);
     exit;
 }
 

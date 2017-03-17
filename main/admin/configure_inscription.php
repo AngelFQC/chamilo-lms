@@ -6,7 +6,7 @@
  *	@package	 chamilo.admin
  */
 $cidReset = true;
-require_once '../inc/global.inc.php';
+require_once __DIR__.'/../inc/global.inc.php';
 
 api_protect_admin_script();
 
@@ -46,7 +46,7 @@ $interbreadcrumb[] = array('url' => 'index.php', 'name' => get_lang('PlatformAdm
 $tool_name = get_lang('ConfigureInscription');
 if (!empty($action)) {
     $interbreadcrumb[] = array('url' => 'configure_inscription.php', 'name' => get_lang('ConfigureInscription'));
-    switch($action) {
+    switch ($action) {
         case 'edit_top':
             $tool_name = get_lang('EditTopRegister');
             break;
@@ -230,7 +230,12 @@ if ($display_all_form) {
 
     //	LANGUAGE
     if (api_get_setting('registration', 'language') == 'true') {
-        $form->addElement('select_language', 'language', get_lang('Language'), '', array('disabled' => 'disabled'));
+        $form->addSelectLanguage(
+            'language',
+            get_lang('Language'),
+            '',
+            array('disabled' => 'disabled')
+        );
     }
 
     //	STUDENT/TEACHER
@@ -312,7 +317,7 @@ if (api_get_setting('allow_terms_conditions') == 'true') {
             null,
             get_lang('IHaveReadAndAgree').'&nbsp;<a href="inscription.php?legal" target="_blank">'.get_lang('TermsAndConditions').'</a>'
         );
-        $form->addRule('extra_legal_accept', get_lang('ThisFieldIsRequired'), 'required');
+        $form->addRule('legal_accept', get_lang('ThisFieldIsRequired'), 'required');
     } else {
         if (!empty($term_preview['content'])) {
             $preview = LegalManager::show_last_condition($term_preview);

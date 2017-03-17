@@ -7,7 +7,7 @@ use ChamiloSession as Session;
  * Responses to AJAX calls
  */
 
-require_once '../global.inc.php';
+require_once __DIR__.'/../global.inc.php';
 $debug = false;
 api_protect_course_script(true);
 
@@ -140,7 +140,10 @@ switch ($action) {
                             GROUP by question_id
                         ) as count_table";
                 $result_count = Database::query($sql);
-                $count_questions = Database::fetch_array($result_count,'ASSOC');
+                $count_questions = Database::fetch_array(
+                    $result_count,
+                    'ASSOC'
+                );
                 $count_questions = $count_questions['count_question_id'];
 
                 $row['count_questions'] = $count_questions;
@@ -340,7 +343,6 @@ switch ($action) {
             unset($objQuestionTmp);
 
             // Looping the question list
-
             foreach ($question_list as $my_question_id) {
                 if ($debug) {
                     error_log("Saving question_id = $my_question_id ");
@@ -350,8 +352,7 @@ switch ($action) {
                     continue;
                 }
 
-                $my_choice = isset($choice[$my_question_id]) ?
-                    $choice[$my_question_id] : null;
+                $my_choice = isset($choice[$my_question_id]) ? $choice[$my_question_id] : null;
 
                 if ($debug) {
                     error_log("my_choice = ".print_r($my_choice, 1)."");
@@ -361,8 +362,13 @@ switch ($action) {
                 $objQuestionTmp = Question::read($my_question_id, $course_id);
 
                 // Getting free choice data.
-                if ($objQuestionTmp->type  == FREE_ANSWER && $type == 'all') {
-                    $my_choice = isset($_REQUEST['free_choice'][$my_question_id]) && !empty($_REQUEST['free_choice'][$my_question_id]) ? $_REQUEST['free_choice'][$my_question_id]: null;
+                if (
+                    ($objQuestionTmp->type  == FREE_ANSWER || $objQuestionTmp->type  == ORAL_EXPRESSION)
+                    && $type == 'all'
+                ) {
+                    $my_choice = isset($_REQUEST['free_choice'][$my_question_id]) && !empty($_REQUEST['free_choice'][$my_question_id])
+                        ? $_REQUEST['free_choice'][$my_question_id]
+                        : null;
                 }
 
                 if ($type == 'all') {
@@ -472,7 +478,7 @@ switch ($action) {
 
                 $_SESSION['duration_time'][$key] = time();
 
-                Event::update_event_exercice(
+                Event::update_event_exercise(
                     $exe_id,
                     $objExercise->selectId(),
                     $total_score,

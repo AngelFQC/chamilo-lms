@@ -48,7 +48,6 @@
         "ext-xml": "*",
         "ext-json": "*",
         "ext-mbstring": "*",
-
         "twig/twig": "1.*",
         "twig/extensions": "~1.0",
         "doctrine/orm": "~2.4",
@@ -56,7 +55,7 @@
 
         "doctrine/migrations": "~1.0@dev",
         "symfony/doctrine-bridge": "~2.8",
-        "symfony/validator": "2.6.4",
+        "symfony/validator": "~2.8",
         "symfony/filesystem": "~2.8",
         "symfony/security": "~2.8",
         "doctrine/data-fixtures": "~1.0@dev",
@@ -76,10 +75,10 @@
         "zendframework/zend-http": "2.5.1",
 
         "ezyang/htmlpurifier": "4.6.0",
-        "szymach/c-pchart": "1.*",
+        "szymach/c-pchart": "2.0.4",
         "aferrandini/phpqrcode": "1.0.1",
         "mpdf/mpdf": "6.1.*",
-        "barryvdh/elfinder-builds": "2.1.0.3",
+        "studio-42/elfinder": "2.1.*",
         "jbroadway/urlify": "dev-master",
         "monolog/monolog": "~1.0",
         "ircmaxell/password-compat": "~1.0.4",
@@ -104,7 +103,8 @@
         "facebook/php-sdk-v4" : "~5.0",
         "kigkonsult/icalcreator" : "0.1.0",
         "essence/essence": "2.6.1",
-        "pclzip/pclzip": "2.8.2"
+        "pclzip/pclzip": "2.8.2",
+        "chamilo/chash": "dev-master"
     },
     "require-dev": {
         "behat/behat": "@stable",

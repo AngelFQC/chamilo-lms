@@ -25,6 +25,7 @@ class ExtraField extends BaseAttribute
     const LP_FIELD_TYPE = 6;
     const LP_ITEM_FIELD_TYPE = 7;
     const SKILL_FIELD_TYPE = 8;
+    const WORK_FIELD_TYPE = 9;
 
     /**
      * @var integer
@@ -124,8 +125,8 @@ class ExtraField extends BaseAttribute
     public function __construct()
     {
         parent::__construct();
-        $this->visibleToOthers = 0;
-        $this->visibleToSelf = 0;
+        $this->visibleToOthers = false;
+        $this->visibleToSelf = false;
     }
 
     /**

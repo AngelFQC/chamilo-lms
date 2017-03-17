@@ -7,7 +7,7 @@
 // resetting the course id
 $cidReset = true;
 
-require_once '../inc/global.inc.php';
+require_once __DIR__.'/../inc/global.inc.php';
 
 $xajax = new xajax();
 $xajax->registerFunction('search_courses');
@@ -196,12 +196,12 @@ if (!empty($OkMsg)) {
         if (!empty($rows_session_category)) {
             foreach($rows_session_category as $category) {
                 if($category['id'] == $categoryId)
-                      echo '<option value="'.$category['id'].'" selected>'.$category['name'].'</option>';
-                  else
-                      echo '<option value="'.$category['id'].'">'.$category['name'].'</option>';
+                        echo '<option value="'.$category['id'].'" selected>'.$category['name'].'</option>';
+                    else
+                        echo '<option value="'.$category['id'].'">'.$category['name'].'</option>';
             }
         }
-          ?>
+            ?>
       </select>
     </td>
 </tr>

@@ -2,14 +2,14 @@
 /* For licensing terms, see /license.txt */
 
 /**
-*	Interface for assigning users to Human Resources Manager
-*	@package chamilo.admin
-*/
+ *  Interface for assigning users to Human Resources Manager
+ *  @package chamilo.admin
+ */
 
 // resetting the course id
 $cidReset = true;
 
-require_once '../inc/global.inc.php';
+require_once __DIR__.'/../inc/global.inc.php';
 
 $ajax_search = false;
 // create an ajax object

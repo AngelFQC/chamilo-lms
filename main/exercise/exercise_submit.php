@@ -28,7 +28,7 @@ use ChamiloSession as Session;
 *   Modified by hubert.borderiou (2011-10-21 question category)
 */
 
-require_once '../inc/global.inc.php';
+require_once __DIR__.'/../inc/global.inc.php';
 $current_course_tool  = TOOL_QUIZ;
 $this_section = SECTION_COURSES;
 $debug = false;
@@ -91,6 +91,7 @@ $choice = empty($choice) ? isset($_REQUEST['choice2']) ? $_REQUEST['choice2'] : 
 
 //From submit modal
 $current_question = isset($_REQUEST['num']) ? intval($_REQUEST['num']) : null;
+
 $currentAnswer = isset($_REQUEST['num_answer']) ? intval($_REQUEST['num_answer']) : null;
 $endExercise = isset($_REQUEST['end_exercise']) && $_REQUEST['end_exercise'] == 1 ? true : false;
 
@@ -147,6 +148,10 @@ if (!is_object($objExercise)) {
     exit;
 }
 
+// if the user has submitted the form
+$exercise_title = $objExercise->selectTitle();
+$exercise_sound = $objExercise->selectSound();
+
 // If reminder ends we jump to the exercise_reminder
 if ($objExercise->review_answers) {
     if ($remind_question_id == -1) {
@@ -164,7 +169,7 @@ $my_remind_list = array();
 
 $time_control = false;
 if ($objExercise->expired_time != 0) {
-	$time_control = true;
+    $time_control = true;
 }
 
 // Generating the time control key for the user
@@ -173,14 +178,14 @@ $current_expired_time_key = ExerciseLib::get_time_control_key($objExercise->id, 
 $_SESSION['duration_time'][$current_expired_time_key] = $current_timestamp;
 
 if ($time_control) {
-	// Get the expired time of the current exercise in track_e_exercises
-	$total_seconds = $objExercise->expired_time*60;
+    // Get the expired time of the current exercise in track_e_exercises
+    $total_seconds = $objExercise->expired_time*60;
 }
 
 $show_clock = true;
 $user_id = api_get_user_id();
 if ($objExercise->selectAttempts() > 0) {
-	$attempt_html = '';
+    $attempt_html = '';
     $attempt_count = Event::get_attempt_count(
         $user_id,
         $exerciseId,
@@ -189,11 +194,10 @@ if ($objExercise->selectAttempts() > 0) {
         $learnpath_item_view_id
     );
 
-	if ($attempt_count >= $objExercise->selectAttempts()) {
-		$show_clock = false;
-		if (!api_is_allowed_to_edit(null,true)) {
+    if ($attempt_count >= $objExercise->selectAttempts()) {
+        $show_clock = false;
+        if (!api_is_allowed_to_edit(null, true)) {
             if ($objExercise->results_disabled == 0 && $origin != 'learnpath') {
-
                 // Showing latest attempt according with task BT#1628
                 $exercise_stat_info = Event::getExerciseResultsByUser(
                     $user_id,
@@ -221,44 +225,78 @@ if ($objExercise->selectAttempts() > 0) {
                     );
 
                     if (!empty($last_attempt_info['question_list'])) {
-                        foreach($last_attempt_info['question_list'] as $question_data) {
-                            $question_id = $question_data['question_id'];
-                            $marks       = $question_data['marks'];
+                        foreach ($last_attempt_info['question_list'] as $questions) {
+                            foreach ($questions as $question_data) {
+                                $question_id = $question_data['question_id'];
+                                $marks = $question_data['marks'];
 
-                            $question_info = Question::read($question_id);
-                            $attempt_html .= Display::div($question_info->question, array('class'=>'question_title'));
-                            $attempt_html .= Display::div(get_lang('Score').' '.$marks, array('id'=>'question_question_titlescore'));
+                                $question_info = Question::read($question_id);
+                                $attempt_html .= Display::div(
+                                    $question_info->question,
+                                    array('class' => 'question_title')
+                                );
+                                $attempt_html .= Display::div(
+                                    get_lang('Score').' '.$marks,
+                                    array('id' => 'question_question_titlescore')
+                                );
+                            }
                         }
                     }
-					$score =  ExerciseLib::show_score($last_attempt_info['exe_result'], $last_attempt_info['exe_weighting']);
-					$attempt_html .= Display::div(get_lang('YourTotalScore').' '.$score, array('id'=>'question_score'));
-				} else {
-					$attempt_html .= Display::return_message(sprintf(get_lang('ReachedMaxAttempts'), $exercise_title, $objExercise->selectAttempts()), 'warning', false);
-				}
-			} else {
-				$attempt_html .= Display::return_message(sprintf(get_lang('ReachedMaxAttempts'), $exercise_title, $objExercise->selectAttempts()), 'warning', false);
-			}
-		} else {
-			$attempt_html .= Display :: return_message(sprintf(get_lang('ReachedMaxAttempts'), $exercise_title, $objExercise->selectAttempts()), 'warning', false);
-		}
+                    $score = ExerciseLib::show_score(
+                        $last_attempt_info['exe_result'],
+                        $last_attempt_info['exe_weighting']
+                    );
+                    $attempt_html .= Display::div(
+                        get_lang('YourTotalScore').' '.$score,
+                        array('id' => 'question_score')
+                    );
+                } else {
+                    $attempt_html .= Display::return_message(
+                        sprintf(
+                            get_lang('ReachedMaxAttempts'),
+                            $exercise_title,
+                            $objExercise->selectAttempts()
+                        ),
+                        'warning',
+                        false
+                    );
+                }
+            } else {
+                $attempt_html .= Display::return_message(
+                    sprintf(
+                        get_lang('ReachedMaxAttempts'),
+                        $exercise_title,
+                        $objExercise->selectAttempts()
+                    ),
+                    'warning',
+                    false
+                );
+            }
+        } else {
+            $attempt_html .= Display::return_message(
+                sprintf(
+                    get_lang('ReachedMaxAttempts'),
+                    $exercise_title,
+                    $objExercise->selectAttempts()
+                ),
+                'warning',
+                false
+            );
+        }
 
-		if ($origin == 'learnpath') {
-			Display :: display_reduced_header();
-		} else {
-			Display :: display_header(get_lang('Exercises'));
-		}
+        if ($origin == 'learnpath') {
+            Display :: display_reduced_header();
+        } else {
+            Display :: display_header(get_lang('Exercises'));
+        }
 
-		echo $attempt_html;
+        echo $attempt_html;
 
         if ($origin != 'learnpath') {
             Display:: display_footer();
         }
-		exit;
-	}
-}
-
-if ($debug) {
-    error_log("4. Setting the exe_id: $exe_id");
+        exit;
+    }
 }
 
 /* 5. Getting user exercise info (if the user took the exam before)
@@ -275,15 +313,14 @@ $questionListUncompressed = $objExercise->getQuestionListWithMediasUncompressed(
 Session::write('question_list_uncompressed', $questionListUncompressed);
 
 $clock_expired_time = null;
-
 if (empty($exercise_stat_info)) {
-    if ($debug)  error_log('5  $exercise_stat_info is empty ');
-	$total_weight = 0;
-	$questionList = $objExercise->get_validated_question_list();
-	foreach ($questionListUncompressed as $question_id) {
-		$objQuestionTmp = Question::read($question_id);
-		$total_weight += floatval($objQuestionTmp->weighting);
-	}
+    if ($debug) error_log('5  $exercise_stat_info is empty ');
+    $total_weight = 0;
+    $questionList = $objExercise->get_validated_question_list();
+    foreach ($questionListUncompressed as $question_id) {
+        $objQuestionTmp = Question::read($question_id);
+        $total_weight += floatval($objQuestionTmp->weighting);
+    }
 
 	if ($time_control) {
 		$expected_time = $current_timestamp + $total_seconds;
@@ -317,6 +354,7 @@ if (empty($exercise_stat_info)) {
 	$exe_id = $exercise_stat_info['exe_id'];
     // Remember last question id position.
     $isFirstTime = Session::read('firstTime');
+
     if ($isFirstTime && $objExercise->type == ONE_PER_PAGE) {
         $resolvedQuestions = Event::getAllExerciseEventByExeId($exe_id);
         if (!empty($resolvedQuestions) &&
@@ -444,7 +482,7 @@ if ($time_control) {
 	        if ($debug) {error_log('7.11. Setting the $_SESSION[expired_time]: '.$_SESSION['expired_time'][$current_expired_time_key] ); };
         }
     } else {
-        $clock_expired_time =  $_SESSION['expired_time'][$current_expired_time_key];
+        $clock_expired_time = $_SESSION['expired_time'][$current_expired_time_key];
     }
 } else {
     if ($debug) { error_log("7 No time control"); };
@@ -461,12 +499,7 @@ if ($time_control) { //Sends the exercise form when the expired time is finished
 	$htmlHeadXtra[] = $objExercise->show_time_control_js($time_left);
 }
 
-// if the user has submitted the form
-$exercise_title = $objExercise->selectTitle();
-$exercise_sound = $objExercise->selectSound();
-
 //in LP's is enabled the "remember question" feature?
-
 if (!isset($_SESSION['questionList'])) {
     // selects the list of question ID
     $questionList = $objExercise->get_validated_question_list();
@@ -490,7 +523,11 @@ if (!empty($questionList)) {
 }
 
 if ($current_question > $question_count) {
-    $current_question = 0;
+    // If time control then don't change the current question, otherwise there will be a loop.
+    // @todo
+    if ($time_control == false) {
+        $current_question = 0;
+    }
 }
 
 if ($formSent && isset($_POST)) {
@@ -563,7 +600,7 @@ if ($formSent && isset($_POST)) {
 
     // the script "exercise_result.php" will take the variable $exerciseResult from the session
     Session::write('exerciseResult', $exerciseResult);
-    Session::write('remind_list', $remind_list);
+//    Session::write('remind_list', $remind_list);
     Session::write('exerciseResultCoordinates',$exerciseResultCoordinates);
 
     // if all questions on one page OR if it is the last question (only for an exercise with one question per page)
@@ -618,13 +655,14 @@ if ($formSent && isset($_POST)) {
 $latestQuestionId = Event::getLatestQuestionIdFromAttempt($exe_id);
 
 if (is_null($current_question)) {
-        $current_question = 1;
+    $current_question = 1;
     if ($latestQuestionId) {
         $current_question = $objExercise->getPositionInCompressedQuestionList($latestQuestionId);
     }
 } else {
     $current_question++;
 }
+
 
 if ($question_count != 0) {
 	if (($objExercise->type == ALL_ON_ONE_PAGE ||
@@ -729,6 +767,7 @@ $is_visible_return = $objExercise->is_visible(
     $learnpath_item_id,
     $learnpath_item_view_id
 );
+
 if ($is_visible_return['value'] == false) {
     echo $is_visible_return['message'];
     if ($origin != 'learnpath') {
@@ -737,6 +776,7 @@ if ($is_visible_return['value'] == false) {
     exit;
 }
 
+$exercise_timeover = false;
 $limit_time_exists = (!empty($objExercise->start_time) || !empty($objExercise->end_time)) ? true : false;
 
 if ($limit_time_exists) {
@@ -752,8 +792,6 @@ if ($limit_time_exists) {
     if ($_SERVER['REQUEST_METHOD'] != 'POST') {
         if (!empty($objExercise->end_time)) {
             $exercise_timeover = (($time_now - $exercise_end_time) > 0) ? true : false;
-        } else {
-            $exercise_timeover = false;
         }
     }
 
@@ -806,7 +844,6 @@ if ($reminder == 2)  {
 
     $data_tracking  = $exercise_stat_info['data_tracking'];
     $data_tracking  = explode(',', $data_tracking);
-
     $current_question = 1; //set by default the 1st question
 
     if (!empty($my_remind_list)) {
@@ -1098,12 +1135,12 @@ if (!empty($error)) {
 
 	// Show list of questions
     $i = 1;
-    $attempt_list = array();
+    $attempt_list = [];
     if (isset($exe_id)) {
         $attempt_list = Event::getAllExerciseEventByExeId($exe_id);
     }
 
-    $remind_list  = array();
+    $remind_list = [];
     if (isset($exercise_stat_info['questions_to_check']) && !empty($exercise_stat_info['questions_to_check'])) {
         $remind_list = explode(',', $exercise_stat_info['questions_to_check']);
     }
@@ -1163,7 +1200,7 @@ if (!empty($error)) {
         }
 
         // Showing the exercise description
-        if (!empty($objExercise->description)){
+        if (!empty($objExercise->description)) {
             if ($objExercise->type == ONE_PER_PAGE || ($objExercise->type != ONE_PER_PAGE && $i==1)) {
                 echo Display::panelCollapse('<span>'.
                     get_lang('ExerciseDescriptionLabel').'</span>',

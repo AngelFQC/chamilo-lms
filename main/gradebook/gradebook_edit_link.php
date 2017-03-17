@@ -5,7 +5,7 @@
  * Script
  * @package chamilo.gradebook
  */
-require_once '../inc/global.inc.php';
+require_once __DIR__.'/../inc/global.inc.php';
 
 api_block_anonymous_users();
 GradebookUtils::block_students();
@@ -70,18 +70,21 @@ if ($form->validate()) {
         $row_attendance = Database::fetch_array($rs_attendance);
         $attendance_id  = $row_attendance['ref_id'];
         $sql = 'UPDATE '.$tbl_attendance.' SET
-                    attendance_weight ='.floatval($final_weight).'
+                    attendance_weight ='.api_float_val($final_weight).'
                 WHERE c_id = '.$course_id.' AND id = '.intval($attendance_id);
         Database::query($sql);
     }
 
     //Update weight into forum thread
-    $sql_t = 'UPDATE '.$tbl_forum_thread.' SET thread_weight='.$final_weight.'
-			  WHERE c_id = '.$course_id.' AND thread_id=(
+    $sql = 'UPDATE '.$tbl_forum_thread.' SET 
+                thread_weight = '.api_float_val($final_weight).'
+            WHERE 
+			    c_id = '.$course_id.' AND 
+			    thread_id = (
                     SELECT ref_id FROM '.$tbl_grade_links.'
-			        WHERE id='.intval($_GET['editlink']).' and type=5
-              ) ';
-    Database::query($sql_t);
+			        WHERE id='.intval($_GET['editlink']).' AND type = 5
+            )';
+    Database::query($sql);
 
     //Update weight into student publication(work)
     $em

@@ -1,6 +1,9 @@
 <?php
 /* For licensing terms, see /license.txt */
 
+use Chamilo\CourseBundle\Entity\CCalendarEvent;
+use Chamilo\CourseBundle\Entity\CItemProperty;
+
 if (PHP_SAPI != 'cli') {
     die('Run this script through the command line or comment this line in the code');
 }
@@ -13,6 +16,7 @@ require_once __DIR__.'/../inc/global.inc.php';
 
 ini_set('memory_limit', -1);
 ini_set('max_execution_time', 0);
+ini_set('log_errors', '1');
 
 /**
  * Class ImportCsv
@@ -48,6 +52,7 @@ class ImportCsv
     public $daysCoachAccessBeforeBeginning = 14;
     public $daysCoachAccessAfterBeginning = 14;
     public $conditions;
+    private $updateEmailToDummy;
 
     /**
      * @param Monolog\Logger $logger
@@ -57,6 +62,7 @@ class ImportCsv
     {
         $this->logger = $logger;
         $this->conditions = $conditions;
+        $this->updateEmailToDummy = false;
     }
 
     /**
@@ -202,6 +208,7 @@ class ImportCsv
                         } else {
                             $this->$method($file, true);
                         }
+                        $this->logger->addInfo("--Finish reading file--");
                     }
                 }
             }
@@ -237,9 +244,12 @@ class ImportCsv
                             $teacherBackup,
                             $groupBackup
                         );
+                        $this->logger->addInfo("--Finish reading file--");
                     }
                 }
             }
+            $this->logger->addInfo("teacher backup");
+            $this->logger->addInfo(print_r($teacherBackup, 1));
         }
     }
 
@@ -346,14 +356,14 @@ class ImportCsv
 
         $row['teachers'] = array();
         if (isset($row['Teacher']) && !empty($row['Teacher'])) {
-            //$this->logger->addInfo("Teacher list found: ".$row['Teacher']);
+            $this->logger->addInfo("Teacher list found: ".$row['Teacher']);
             $teachers = explode(',', $row['Teacher']);
             if (!empty($teachers)) {
                 foreach ($teachers as $teacherUserName) {
                     $teacherUserName = trim($teacherUserName);
                     $userInfo = api_get_user_info_from_username($teacherUserName);
                     if (!empty($userInfo)) {
-                        //$this->logger->addInfo("Username found: $teacherUserName");
+                        $this->logger->addInfo("Username found: $teacherUserName");
                         $row['teachers'][] = $userInfo['user_id'];
                     }
                 }
@@ -373,7 +383,7 @@ class ImportCsv
      */
     private function importTeachersStatic($file)
     {
-        $this->importTeachers($file, false);
+        $this->importTeachers($file, true);
     }
 
     /**
@@ -518,6 +528,8 @@ class ImportCsv
         if ($moveFile) {
             $this->moveFile($file);
         }
+
+        $this->updateUsersEmails();
     }
 
     /**
@@ -525,7 +537,7 @@ class ImportCsv
      */
     private function importStudentsStatic($file)
     {
-        $this->importStudents($file, false);
+        $this->importStudents($file, true);
     }
 
     /**
@@ -744,6 +756,8 @@ class ImportCsv
         if ($moveFile) {
             $this->moveFile($file);
         }
+
+        $this->updateUsersEmails();
     }
 
     /**
@@ -751,7 +765,7 @@ class ImportCsv
      */
     private function importCoursesStatic($file, $moveFile, &$teacherBackup = array(), &$groupBackup = array())
     {
-        $this->importCourses($file, false, $teacherBackup, $groupBackup);
+        $this->importCourses($file, true, $teacherBackup, $groupBackup);
     }
 
     /**
@@ -763,12 +777,15 @@ class ImportCsv
     private function importCalendarStatic($file, $moveFile = true)
     {
         $this->fixCSVFile($file);
+
+        $this->updateUsersEmails();
         $data = Import::csvToArray($file);
 
         if (!empty($data)) {
             $this->logger->addInfo(count($data)." records found.");
             $eventsToCreate = array();
             $errorFound = false;
+
             foreach ($data as $row) {
                 $sessionId = null;
                 $externalSessionId = null;
@@ -827,7 +844,6 @@ class ImportCsv
 
                 if (empty($teacherId)) {
                     $errorFound = true;
-
                     $this->logger->addInfo(
                         "No teacher found in course code : '$courseCode' and session: '$sessionId'"
                     );
@@ -854,11 +870,6 @@ class ImportCsv
                     $errorFound = true;
                 }
 
-                // If old events do nothing.
-                /*if (api_strtotime($startDate) < time()) {
-                    continue;
-                }*/
-
                 if ($errorFound == false) {
                     $eventsToCreate[] = array(
                         'start' => $startDate,
@@ -883,12 +894,6 @@ class ImportCsv
                 return 0;
             }
 
-            $this->logger->addInfo(
-                "Ready to insert events"
-            );
-
-            $agenda = new Agenda();
-
             $extraFieldValue = new ExtraFieldValue('calendar_event');
             $extraFieldName = $this->extraFieldIdNameList['calendar_event'];
             $externalEventId = null;
@@ -906,6 +911,19 @@ class ImportCsv
                 return 0;
             }
 
+            $this->logger->addInfo('Ready to insert # '.count($eventsToCreate).' events');
+            $batchSize = $this->batchSize;
+            $counter = 1;
+            $em = Database::getManager();
+            $eventStartDateList = [];
+            $eventEndDateList = [];
+            $report = [
+                'mail_sent' => 0,
+                'mail_not_sent_announcement_exists' => 0,
+                'mail_not_sent_because_date' => 0
+            ];
+
+            $eventsToCreateFinal = [];
             foreach ($eventsToCreate as $event) {
                 $update = false;
                 $item = null;
@@ -932,46 +950,224 @@ class ImportCsv
                     );
 
                     if (!empty($item)) {
-                        $this->logger->addInfo(
-                            "Event #$externalEventId was already added. Updating ..."
-                        );
                         $update = true;
-                        //continue;
-                    } else {
-                        $this->logger->addInfo(
-                            "Event #$externalEventId was not added. Preparing to be created ..."
-                        );
                     }
                 }
 
                 $courseInfo = api_get_course_info_by_id($event['course_id']);
+                $event['course_info'] = $courseInfo;
+                $event['update'] = $update;
+                $event['item'] = $item;
+
+                /* Check if event changed of course code */
+                /** @var CCalendarEvent $calendarEvent */
+                $calendarEvent = $em->getRepository('ChamiloCourseBundle:CCalendarEvent')->find($item['item_id']);
+                if ($calendarEvent) {
+                    $this->logger->addInfo('Calendar event found '.$item['item_id']);
+                    if ($calendarEvent->getCId() != $courseInfo['real_id']) {
+                        $this->logger->addInfo('Move from course #'.$calendarEvent->getCId().' to #'.$courseInfo['real_id']);
+                        // Seems that the course id changed in the csv
+                        $calendarEvent->setCId($courseInfo['real_id']);
+                        $em->persist($calendarEvent);
+                        $em->flush();
+
+                        $criteria = [
+                            'tool' => 'calendar_event',
+                            'ref' => $item['item_id']
+                        ];
+                        /** @var CItemProperty $itemProperty */
+                        $itemProperty = $em->getRepository('ChamiloCourseBundle:CItemProperty')->findOneBy($criteria);
+                        $courseEntity = $em->getRepository('ChamiloCoreBundle:Course')->find($courseInfo['real_id']);
+                        if ($itemProperty && $courseEntity) {
+                            $itemProperty->setCourse($courseEntity);
+                            $em->persist($itemProperty);
+                            $em->flush();
+                        }
+                    }
+                } else {
+                    $this->logger->addInfo('Calendar event not found '.$item['item_id']);
+                }
+
+                $event['external_event_id'] = $externalEventId;
+                if (isset($eventStartDateList[$courseInfo['real_id']]) &&
+                    isset($eventStartDateList[$courseInfo['real_id']][$event['session_id']])
+                ) {
+                    $currentItemDate = api_strtotime($event['start']);
+                    $firstDate = $eventStartDateList[$courseInfo['real_id']][$event['session_id']];
+                    if ($currentItemDate < api_strtotime($firstDate)) {
+                        $eventStartDateList[$courseInfo['real_id']][$event['session_id']] = $event['start'];
+                        $eventEndDateList[$courseInfo['real_id']][$event['session_id']] = $event['end'];
+                    }
+                } else {
+                    // First time
+                    $eventStartDateList[$courseInfo['real_id']][$event['session_id']] = $event['start'];
+                    $eventEndDateList[$courseInfo['real_id']][$event['session_id']] = $event['end'];
+                }
+                $eventsToCreateFinal[] = $event;
+            }
+
+            $eventAlreadySent = [];
+            foreach ($eventsToCreateFinal as $event) {
+                $courseInfo = $event['course_info'];
+                $item = $event['item'];
+                $update = $event['update'];
+                $externalEventId = $event['external_event_id'];
+                $info = 'Course: '.$courseInfo['real_id'].' ('.$courseInfo['code'].') - Session: '.$event['session_id'];
+
+                $agenda = new Agenda(
+                    'course',
+                    $event['sender_id'],
+                    $courseInfo['real_id'],
+                    $event['session_id']
+                );
                 $agenda->set_course($courseInfo);
-                $agenda->setType('course');
                 $agenda->setSessionId($event['session_id']);
                 $agenda->setSenderId($event['sender_id']);
                 $agenda->setIsAllowedToEdit(true);
-
                 $eventComment = $event['comment'];
                 $color = $event['color'];
 
                 // To use the event comment you need
                 // ALTER TABLE c_calendar_event ADD COLUMN comment TEXT;
                 // add in configuration.php allow_agenda_event_comment = true
-
                 if (empty($courseInfo)) {
                     $this->logger->addInfo(
-                        "No course found for added: #".$event['course_id']." Skipping ..."
+                        "No course found for event #$externalEventId Course #".$event['course_id']." Skipping ..."
                     );
                     continue;
                 }
 
                 if (empty($event['sender_id'])) {
                     $this->logger->addInfo(
-                        "No sender found: #".$event['sender_id']." Skipping ..."
+                        "No sender found for event #$externalEventId Send #".$event['sender_id']." Skipping ..."
                     );
                     continue;
                 }
 
+                // Taking first element of course-session event
+                $alreadyAdded = false;
+                $firstDate = $eventStartDateList[$courseInfo['real_id']][$event['session_id']];
+                $firstEndDate = $eventEndDateList[$courseInfo['real_id']][$event['session_id']];
+
+                if (isset($eventAlreadySent[$courseInfo['real_id']]) &&
+                    isset($eventAlreadySent[$courseInfo['real_id']][$event['session_id']])
+                ) {
+                    $alreadyAdded = true;
+                } else {
+                    $eventAlreadySent[$courseInfo['real_id']][$event['session_id']] = true;
+                }
+
+                // Working days (Mon-Fri)see BT#12156#note-16
+                $days = 5;
+                $startDatePlusDays = api_strtotime("$days weekdays");
+
+                $this->logger->addInfo(
+                    "startDatePlusDays: ".api_get_utc_datetime($startDatePlusDays).' - First date: '.$firstDate
+                );
+
+                // Send
+                if ($startDatePlusDays > api_strtotime($firstDate)) {
+                    $sendMail = true;
+                } else {
+                    $sendMail = false;
+                }
+
+                // Send announcement to users
+                if ($sendMail && $alreadyAdded == false) {
+                    $start = $firstDate;
+                    $end = $firstEndDate;
+
+                    if (!empty($end) &&
+                        api_format_date($start, DATE_FORMAT_LONG) == api_format_date($end, DATE_FORMAT_LONG)
+                    ) {
+                        $date = api_format_date($start, DATE_FORMAT_LONG).' ('.
+                            api_format_date($start, TIME_NO_SEC_FORMAT).' '.
+                            api_format_date($end, TIME_NO_SEC_FORMAT).')';
+                    } else {
+                        $date = api_format_date($start,DATE_TIME_FORMAT_LONG_24H).' - '.
+                                api_format_date($end, DATE_TIME_FORMAT_LONG_24H);
+                    }
+
+                    $sessionName = '';
+                    if (!empty($event['session_id'])) {
+                        $sessionName = ' ('.api_get_session_name($event['session_id']).')';
+                    }
+
+                    $courseTitle = $courseInfo['title'].$sessionName;
+
+                    $emailBody = get_lang('Dear').' ((user_firstname)) <br />'.
+                        sprintf(
+                        get_lang('YouHaveBeenSubscribedToCourseXTheStartDateXAndCommentX'),
+                        $courseTitle,
+                        $date,
+                        $event['comment']
+                    );
+
+                    $subject = sprintf(
+                        get_lang('AgendaAvailableInCourseX'),
+                        $courseInfo['title']
+                    );
+
+                    $coaches = SessionManager::getCoachesByCourseSession(
+                        $courseInfo['real_id'],
+                        $event['session_id']
+                    );
+
+                    // Search if an announcement exists:
+                    $announcementsWithTitleList = AnnouncementManager::getAnnouncementsByTitle(
+                        $subject,
+                        $courseInfo['real_id'],
+                        $event['session_id'],
+                        1
+                    );
+
+                    if (count($announcementsWithTitleList) === 0) {
+                        $this->logger->addInfo(
+                            "Mail to be sent because start date: ".$event['start']." and no announcement found."
+                        );
+                        $announcementId = AnnouncementManager::add_announcement(
+                            $courseInfo,
+                            $event['session_id'],
+                            $subject,
+                            $emailBody,
+                            [
+                                'everyone',
+                                'users' => $coaches
+                            ],
+                            [],
+                            null,
+                            null,
+                            false,
+                            $this->defaultAdminId
+                        );
+
+                        if ($announcementId) {
+                            $this->logger->addInfo(
+                                "Announcement added: ".(int)($announcementId)." in $info"
+                            );
+                            $this->logger->addInfo(
+                                "<<--SENDING MAIL-->>"
+                            );
+
+                            $report['mail_sent']++;
+                            AnnouncementManager::sendEmail(
+                                $courseInfo,
+                                $event['session_id'],
+                                $announcementId,
+                                false
+                            );
+                        }
+                    } else {
+                        $report['mail_not_sent_announcement_exists']++;
+                        $this->logger->addInfo(
+                            "Mail NOT sent. An announcement seems to be already saved in '$info'"
+                        );
+                    }
+                } else {
+                    if ($sendMail == false) {
+                        $report['mail_not_sent_because_date']++;
+                    }
+                }
                 $content = '';
                 if ($update && isset($item['item_id'])) {
                     //the event already exists, just update
@@ -985,18 +1181,20 @@ class ImportCsv
                         array('everyone'), // $usersToSend
                         array(), //$attachmentArray = array(),
                         [], //$attachmentCommentList
-                        null, //$attachmentComment = null,
                         $eventComment,
-                        $color
+                        $color,
+                        false,
+                        false,
+                        $this->defaultAdminId
                     );
 
                     if ($eventResult !== false) {
                         $this->logger->addInfo(
-                            "Event updated: #".$item['item_id']
+                            "Event updated #".$item['item_id']." External cal Id: (".$externalEventId.") $info"
                         );
                     } else {
                         $this->logger->addInfo(
-                            "Error while updating event."
+                            "Error while updating event with external id: $externalEventId"
                         );
                     }
                 } else {
@@ -1012,13 +1210,11 @@ class ImportCsv
                         null, //  $parentEventId
                         array(), //$attachmentArray = array(),
                         [], //$attachmentCommentList
-                        null, //$attachmentComment = null,
                         $eventComment,
                         $color
                     );
 
                     if (!empty($eventId)) {
-                        //$extraFieldValue->is_course_model = true;
                         $extraFieldValue->save(
                             array(
                                 'value' => $externalEventId,
@@ -1027,15 +1223,28 @@ class ImportCsv
                             )
                         );
                         $this->logger->addInfo(
-                            "Event added: #$eventId"
+                            "Event added: #$eventId External cal id: (".$externalEventId.") $info"
                         );
                     } else {
                         $this->logger->addInfo(
-                            "Error while creating event."
+                            "Error while creating event external id: $externalEventId"
                         );
                     }
                 }
+
+                if (($counter % $batchSize) === 0) {
+                    $em->flush();
+                    $em->clear(); // Detaches all objects from Doctrine!
+                }
+                $counter++;
             }
+
+            $em->clear(); // Detaches all objects from Doctrine!
+            $this->logger->addInfo('------Summary------');
+            foreach ($report as $title => $count) {
+                $this->logger->addInfo("$title: $count");
+            }
+            $this->logger->addInfo('------End Summary------');
         }
 
         if ($moveFile) {
@@ -1117,13 +1326,15 @@ class ImportCsv
                     }
 
                     if ($addTeacherToSession) {
+                        $this->logger->addInfo("Add teacher to all course sessions");
                         CourseManager::updateTeachers(
                             $courseInfo,
                             $row['teachers'],
                             false,
                             true,
                             false,
-                            $teacherBackup
+                            $teacherBackup,
+                            $this->logger
                         );
                     } else {
                         CourseManager::updateTeachers(
@@ -1132,7 +1343,8 @@ class ImportCsv
                             true,
                             false,
                             false,
-                            $teacherBackup
+                            $teacherBackup,
+                            $this->logger
                         );
                     }
 
@@ -1181,7 +1393,7 @@ class ImportCsv
      * Parse filename: encora_subsessionsextid-static_31082016.csv
      * @param string $file
      */
-    private function importSubscribeUserToCourseSessionExtStatic($file)
+    private function importSubscribeUserToCourseSessionExtStatic($file, $moveFile = true)
     {
         $data = Import::csv_reader($file);
         if (!empty($data)) {
@@ -1238,7 +1450,6 @@ class ImportCsv
                         break;
                     case 'drh':
                         $removeAllSessionsFromUser = true;
-
                         if (in_array($userId, $userIdList)) {
                             $removeAllSessionsFromUser = false;
                         } else {
@@ -1261,12 +1472,17 @@ class ImportCsv
 
             }
         }
+
+        if ($moveFile) {
+            $this->moveFile($file);
+        }
     }
 
     /**
-     * @param string $file
+     * @param $file
+     * @param bool $moveFile
      */
-    private function importUnsubSessionsExtIdStatic($file)
+    private function importUnsubSessionsExtIdStatic($file, $moveFile = true)
     {
         $data = Import::csv_reader($file);
 
@@ -1319,13 +1535,16 @@ class ImportCsv
             }
         }
 
+        if ($moveFile) {
+            $this->moveFile($file);
+        }
     }
 
     /**
      *
      * @param string $file
      */
-    private function importSessionsExtIdStatic($file)
+    private function importSessionsExtIdStatic($file, $moveFile = true)
     {
         $data = Import::csv_reader($file);
 
@@ -1388,13 +1607,18 @@ class ImportCsv
                 );
             }
         }
+
+        if ($moveFile) {
+            $this->moveFile($file);
+        }
     }
 
     /**
      * Updates the session synchronize with the csv file.
+     * @param bool $moveFile
      * @param string $file
      */
-    private function importSessionsStatic($file)
+    private function importSessionsStatic($file, $moveFile = true)
     {
         $content = file($file);
         $sessions = array();
@@ -1416,10 +1640,8 @@ class ImportCsv
                         $tag_name
                     );
                 }
-                if (!in_array('SessionName', $tag_names) || !in_array(
-                        'DateStart',
-                        $tag_names
-                    ) || !in_array('DateEnd', $tag_names)
+                if (!in_array('SessionName', $tag_names) ||
+                    !in_array('DateStart',$tag_names) || !in_array('DateEnd', $tag_names)
                 ) {
                     $error_message = get_lang('NoNeededData');
                     break;
@@ -1459,15 +1681,15 @@ class ImportCsv
                     $date->sub($interval);
                     $coachBefore = $date->format('Y-m-d h:i');
 
-                    $date = new \DateTime($dateStart);
+                    $date = new \DateTime($dateEnd);
                     $interval = new DateInterval('P'.$this->daysCoachAccessAfterBeginning.'D');
                     $date->add($interval);
                     $coachAfter = $date->format('Y-m-d h:i');
 
-                    $dateStart = api_get_utc_datetime($dateStart);
+                    /*$dateStart = api_get_utc_datetime($dateStart);
                     $dateEnd = api_get_utc_datetime($dateEnd);
                     $coachBefore = api_get_utc_datetime($coachBefore);
-                    $coachAfter = api_get_utc_datetime($coachAfter);
+                    $coachAfter = api_get_utc_datetime($coachAfter);*/
 
                     if (empty($sessionId)) {
                         $result = SessionManager::create_session(
@@ -1652,6 +1874,10 @@ class ImportCsv
         } else {
             $this->logger->addInfo($error_message);
         }
+
+        if ($moveFile) {
+            $this->moveFile($file);
+        }
     }
 
     /**
@@ -1687,7 +1913,7 @@ class ImportCsv
             false, // updateCourseCoaches
             true, // sessionWithCoursesModifier
             true, //$addOriginalCourseTeachersAsCourseSessionCoaches
-            true, //$removeAllTeachersFromCourse
+            false, //$removeAllTeachersFromCourse
             1, // $showDescription,
             $teacherBackup,
             $groupBackup
@@ -1705,8 +1931,9 @@ class ImportCsv
 
     /**
      * @param string $file
+     * @param bool $moveFile
      */
-    private function importSubscribeStatic($file)
+    private function importSubscribeStatic($file, $moveFile = true)
     {
         $data = Import::csv_reader($file);
 
@@ -1762,20 +1989,23 @@ class ImportCsv
                 );
             }
         }
+
+        if ($moveFile) {
+            $this->moveFile($file);
+        }
     }
 
     /**
      * @param $file
      * @param bool $moveFile
      */
-    private function importSubscribeUserToCourse($file, $moveFile = false)
+    private function importSubscribeUserToCourse($file, $moveFile = false, &$teacherBackup = [])
     {
         $data = Import::csv_reader($file);
 
         if (!empty($data)) {
             $this->logger->addInfo(count($data) . " records found.");
             foreach ($data as $row) {
-
                 $chamiloUserName = $row['UserName'];
                 $chamiloCourseCode = $row['CourseCode'];
                 $status = $row['Status'];
@@ -1800,20 +2030,38 @@ class ImportCsv
                     continue;
                 }
 
+                $userCourseCategory = '';
+                if (isset($teacherBackup[$userId]) &&
+                    isset($teacherBackup[$userId][$courseInfo['code']])
+                ) {
+                    $courseUserData = $teacherBackup[$userId][$courseInfo['code']];
+                    $userCourseCategory = $courseUserData['user_course_cat'];
+                }
+
                 CourseManager::subscribe_user(
                     $userId,
                     $courseInfo['code'],
-                    $status
+                    $status,
+                    0,
+                    $userCourseCategory
                 );
+
                 $this->logger->addInfo(
-                    "User $userId added to course $chamiloCourseCode as $status"
+                    "User $userId added to course ".$courseInfo['code']." with status '$status' with course category: '$userCourseCategory'"
                 );
             }
+        }
+
+        if ($moveFile) {
+            $this->moveFile($file);
         }
     }
 
     /**
      * @param string $file
+     * @param bool $moveFile
+     * @param array $teacherBackup
+     * @param array $groupBackup
      */
     private function importUnsubscribeStatic(
         $file,
@@ -1853,16 +2101,18 @@ class ImportCsv
                 $sql = "SELECT * FROM ".Database::get_main_table(TABLE_MAIN_COURSE_USER)."
                         WHERE
                             user_id = ".$userId." AND
-                            course_code = '".$courseInfo['code']."'
+                            c_id = '".$courseInfo['real_id']."'
                         ";
-
                 $result = Database::query($sql);
-                $userCourseData = Database::fetch_array($result, 'ASSOC');
-                $teacherBackup[$userId][$courseInfo['code']] = $userCourseData;
+                $rows = Database::num_rows($result);
+                if ($rows > 0) {
+                    $userCourseData = Database::fetch_array($result, 'ASSOC');
+                    if (!empty($userCourseData)) {
+                        $teacherBackup[$userId][$courseInfo['code']] = $userCourseData;
+                    }
+                }
 
-                $sql = "SELECT * FROM ".Database::get_course_table(
-                        TABLE_GROUP_USER
-                    )."
+                $sql = "SELECT * FROM ".Database::get_course_table(TABLE_GROUP_USER)."
                         WHERE
                             user_id = ".$userId." AND
                             c_id = '".$courseInfo['real_id']."'
@@ -1894,6 +2144,10 @@ class ImportCsv
                     "User '$chamiloUserName' was removed from session: #$chamiloSessionId, Course: ".$courseInfo['code']
                 );
             }
+        }
+
+        if ($moveFile) {
+            $this->moveFile($file);
         }
     }
 
@@ -2034,6 +2288,35 @@ class ImportCsv
             fwrite($f, '";');
         }*/
     }
+
+    /**
+     * @return mixed
+     */
+    public function getUpdateEmailToDummy()
+    {
+        return $this->updateEmailToDummy;
+    }
+
+    /**
+     * @param mixed $updateEmailToDummy
+     */
+    public function setUpdateEmailToDummy($updateEmailToDummy)
+    {
+        $this->updateEmailToDummy = $updateEmailToDummy;
+    }
+
+    /**
+     * Change emails of all users except admins
+     *
+     */
+    public function updateUsersEmails()
+    {
+        if ($this->getUpdateEmailToDummy() === true) {
+            $sql = "UPDATE user SET email = CONCAT(username,'@example.com') WHERE id NOT IN (SELECT user_id FROM admin)";
+            Database::query($sql);
+        }
+    }
+
 }
 
 use Monolog\Logger;
@@ -2090,6 +2373,8 @@ if (isset($_configuration['import_csv_disable_dump']) &&
 } else {
     $import->setDumpValues($dump);
 }
+
+$import->setUpdateEmailToDummy(api_get_configuration_value('update_users_email_to_dummy_except_admins'));
 
 // Do not moves the files to treated
 if (isset($_configuration['import_csv_test'])) {

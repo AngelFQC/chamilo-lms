@@ -10,7 +10,7 @@ use ChamiloSession as Session;
 * @author Julio Montoya <gugli100@gmail.com>
 */
 
-require_once '../inc/global.inc.php';
+require_once __DIR__.'/../inc/global.inc.php';
 
 $current_course_tool  = TOOL_QUIZ;
 
@@ -268,8 +268,7 @@ if (!empty($attempts)) {
         case RESULT_DISABLE_SHOW_SCORE_ONLY:
             if ($objExercise->feedback_type != EXERCISE_FEEDBACK_TYPE_END) {
                $header_names = array(get_lang('Attempt'), get_lang('StartDate'), get_lang('IP'), get_lang('Score'));
-            }
-            else {
+            } else {
                 $header_names = array(get_lang('Attempt'), get_lang('StartDate'), get_lang('IP'), get_lang('Score'), get_lang('Details'));
             }
             break;

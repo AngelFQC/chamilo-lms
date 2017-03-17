@@ -8,7 +8,7 @@
  */
 
 $cidReset = true;
-require_once '../inc/global.inc.php';
+require_once __DIR__.'/../inc/global.inc.php';
 $this_section = SECTION_PLATFORM_ADMIN;
 $tool_name = get_lang('CourseRequestEdit');
 
@@ -22,7 +22,6 @@ $id = intval($_GET['id']);
 $caller = intval($_GET['caller']);
 
 if ($course_validation_feature) {
-
     // Retrieve request's data from the corresponding database record.
     $course_request_info = CourseRequestManager::get_course_request_info($id);
     if (!is_array($course_request_info)) {
@@ -30,7 +29,6 @@ if ($course_validation_feature) {
         $message = get_lang('CourseRequestHasNotBeenFound');
         $is_error_message = true;
     } else {
-
         // Ensure the database prefix + database name do not get over 40 characters.
         $maxlength = 40;
 
@@ -84,8 +82,7 @@ if ($course_validation_feature) {
         $form->addRule('target_audience', get_lang('ThisFieldIsRequired'), 'required');
 
         // Course language.
-        $form->addElement('select_language', 'course_language', get_lang('Ln'));
-        $form->applyFilter('select_language', 'html_filter');
+        $form->addSelectLanguage('course_language', get_lang('Ln'));
 
         // Exemplary content checkbox.
         $form->addElement('checkbox', 'exemplary_content', get_lang('FillWithExemplaryContent'));
@@ -226,7 +223,8 @@ if ($course_validation_feature) {
 // Functions.
 
 // Converts the given numerical id to the name of the page that opened this editor.
-function get_caller_name($caller_id) {
+function get_caller_name($caller_id)
+{
     switch ($caller_id) {
         case 1:
             return 'course_request_accepted.php';

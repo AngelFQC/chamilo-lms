@@ -1,7 +1,7 @@
 <?php
 /* For licensing terms, see /license.txt */
 
-require_once '../inc/global.inc.php';
+require_once __DIR__.'/../inc/global.inc.php';
 $current_course_tool  = TOOL_STUDENTPUBLICATION;
 
 api_protect_course_script(true);
@@ -109,6 +109,20 @@ switch ($action) {
             }
         }
         break;
+    case 'delete_correction':
+        $result = get_work_user_list(null, null, null, null, $workId);
+        if ($result) {
+            foreach ($result as $item) {
+                $workToDelete = get_work_data_by_id($item['id']);
+                deleteCorrection($courseInfo, $workToDelete);
+            }
+            Display::addFlash(
+                Display::return_message(get_lang('Deleted'), 'confirmation')
+            );
+        }
+        header('Location: '.api_get_self().'?'.api_get_cidreq().'&id='.$workId);
+        exit;
+        break;
     case 'make_visible':
         /*	Visible */
         if ($is_allowed_to_edit) {
@@ -155,7 +169,6 @@ $actionsLeft = '<a href="'.api_get_path(WEB_CODE_PATH).'work/work.php?'.api_get_
     Display::return_icon('back.png', get_lang('BackToWorksList'), '', ICON_SIZE_MEDIUM).'</a>';
 
 if (api_is_allowed_to_session_edit(false, true) && !empty($workId) && !$isDrhOfCourse) {
-
     $actionsLeft .= '<a href="'.api_get_path(WEB_CODE_PATH).'work/add_document.php?'.api_get_cidreq().'&id='.$workId.'">';
     $actionsLeft .= Display::return_icon('new_document.png', get_lang('AddDocument'), '', ICON_SIZE_MEDIUM).'</a>';
 
@@ -180,6 +193,8 @@ if (api_is_allowed_to_session_edit(false, true) && !empty($workId) && !$isDrhOfC
     $url = api_get_path(WEB_CODE_PATH).'work/upload_corrections.php?'.api_get_cidreq().'&id='.$workId;
     $actionsLeft .= '<a class="btn-toolbar" href="'.$url.'">'.
         Display::return_icon('upload_package.png', get_lang('UploadCorrectionsPackage'), '', ICON_SIZE_MEDIUM) . ' ' . get_lang('UploadCorrectionsPackage') . '</a>';
+    $url = api_get_path(WEB_CODE_PATH).'work/work_list_all.php?'.api_get_cidreq().'&id='.$workId.'&action=delete_correction';
+    $actionsLeft .= Display::toolbarButton(get_lang('DeleteCorrections'), $url, 'remove', 'danger');
 }
 
 echo Display::toolbarAction('toolbar-worklist', array($actionsLeft), 1);
@@ -197,15 +212,15 @@ if (!empty($my_folder_data['description'])) {
 
 $check_qualification = intval($my_folder_data['qualification']);
 
+$orderName = api_is_western_name_order() ? 'firstname' : 'lastname';
+
 if (!empty($work_data['enable_qualification']) &&
     !empty($check_qualification)
 ) {
     $type = 'simple';
 
     $columns = array(
-        //get_lang('Type'),
         get_lang('FullUserName'),
-        //get_lang('LastName'),
         get_lang('Title'),
         get_lang('Feedback'),
         get_lang('Date'),
@@ -215,28 +230,13 @@ if (!empty($work_data['enable_qualification']) &&
     );
 
     $column_model = array(
-        /*array(
-            'name' => 'type',
-            'index' => 'file',
-            'width' => '8',
-            'align' => 'left',
-            'search' => 'false',
-            'sortable' => 'false',
-        ),*/
         array(
             'name' => 'fullname',
-            'index' => 'fullname',
+            'index' => $orderName,
             'width' => '30',
             'align' => 'left',
             'search' => 'true',
         ),
-        /*array(
-            'name' => 'lastname',
-            'index' => 'lastname',
-            'width' => '35',
-            'align' => 'left',
-            'search' => 'true',
-        ),*/
         array(
             'name' => 'title',
             'index' => 'title',
@@ -274,6 +274,7 @@ if (!empty($work_data['enable_qualification']) &&
             'align' => 'left',
             'search' => 'false',
             'sortable' => 'false',
+            'title' => 'false'
         ),
         array(
             'name' => 'actions',
@@ -288,7 +289,6 @@ if (!empty($work_data['enable_qualification']) &&
     $type = 'complex';
 
     $columns = array(
-        //get_lang('Type'),
         get_lang('FullUserName'),
         get_lang('Title'),
         get_lang('Feedback'),
@@ -298,17 +298,9 @@ if (!empty($work_data['enable_qualification']) &&
     );
 
     $column_model = array(
-        /*array(
-            'name' => 'type',
-            'index' => 'file',
-            'width' => '8',
-            'align' => 'left',
-            'search' => 'false',
-            'sortable' => 'false',
-        ),*/
         array(
             'name' => 'fullname',
-            'index' => 'fullname',
+            'index' => $orderName,
             'width' => '35',
             'align' => 'left',
             'search' => 'true',
@@ -343,6 +335,7 @@ if (!empty($work_data['enable_qualification']) &&
             'align' => 'left',
             'search' => 'false',
             'sortable' => 'false',
+            'title' => 'false',
         ),
         array(
             'name' => 'actions',
@@ -357,10 +350,10 @@ if (!empty($work_data['enable_qualification']) &&
 }
 
 $extra_params = array(
-    'autowidth' =>  'true',
-    'height' =>  'auto',
-    'sortname' => 'fullname',
-    'sortable' => 'false'
+    'autowidth' => 'true',
+    'height' => 'auto',
+    'sortname' => $orderName,
+    'sortable' => 'false',
 );
 
 $url = api_get_path(WEB_AJAX_PATH).'model.ajax.php?a=get_work_user_list_all&work_id='.$workId.'&type='.$type.'&'.api_get_cidreq();

@@ -272,7 +272,7 @@ abstract class ChamiloForm
         $status = $this->_upload_manager->preprocess_files();
 
         // now check that we really want each file
-        foreach ($_FILES as $elname=>$file) {
+        foreach ($_FILES as $elname => $file) {
             if ($mform->elementExists($elname) and $mform->getElementType($elname)=='file') {
                 $required = $mform->isElementRequired($elname);
                 if (!empty($this->_upload_manager->files[$elname]['uploadlog']) &&
@@ -294,9 +294,7 @@ abstract class ChamiloForm
 
         // return errors if found
         if ($status && 0 == count($errors)) {
-
             return true;
-
         } else {
             $files = array();
 
@@ -352,9 +350,7 @@ class InstanceForm extends ChamiloForm
         $form->addHeader($plugin->get_lang('hostdefinition'));
         $form->addText('sitename', [$plugin->get_lang('sitename'), $plugin->get_lang('SiteNameExample')]);
         $form->applyFilter('sitename', 'trim');
-
         $form->addText('institution', [$plugin->get_lang('institution'), $plugin->get_lang('InstitutionExample')]);
-
         $form->applyFilter('institution', 'trim');
 
         // Host's name.
@@ -365,7 +361,21 @@ class InstanceForm extends ChamiloForm
         );
         $form->applyFilter('root_web', 'trim');
 
+        $form->addElement(
+            'text',
+            'url_append',
+            ['url_append', $plugin->get_lang('UrlAppendExample')]
+        );
+
         if ($this->_mode == 'update') {
+            $encryptList = Virtual::getEncryptList();
+            $encryptMethod = $form->addElement(
+                'select',
+                'password_encryption',
+                get_lang('EncryptMethodUserPass'),
+                $encryptList
+            );
+            $encryptMethod->freeze();
             $elementWeb->freeze();
         }
 
@@ -405,6 +415,11 @@ class InstanceForm extends ChamiloForm
             'onclick="opencnxpopup(\''.$_configuration['root_web'].'\'); return false;"'
         );
 
+        $form->addText('archive_url', $this->_plugin->get_lang('ArchiveUrl'));
+        $form->addText('home_url', $this->_plugin->get_lang('HomeUrl'));
+        $form->addText('upload_url', $this->_plugin->get_lang('UploadUrl'));
+        //$form->addText('course_url', $this->_plugin->get_lang('CourseUrl'));
+
         /**
          * Template selection.
          */
@@ -421,6 +436,33 @@ class InstanceForm extends ChamiloForm
             );
         } else {
             if ($this->instance) {
+                $form->addLabel(
+                    'slug',
+                    $this->instance['slug']
+                );
+
+                $form->addLabel(
+                    'archive_real_root',
+                    api_add_trailing_slash(Virtual::getConfig('vchamilo', 'archive_real_root')).
+                    $this->instance['slug']
+                );
+
+                $form->addLabel(
+                    'course_real_root',
+                    api_add_trailing_slash(Virtual::getConfig('vchamilo', 'course_real_root')).
+                        $this->instance['slug']
+                );
+
+                $form->addLabel(
+                    'home_real_root',
+                    api_add_trailing_slash(Virtual::getConfig('vchamilo', 'home_real_root')).$this->instance['slug']
+                );
+
+                $form->addLabel(
+                    'upload_real_root',
+                    api_add_trailing_slash(Virtual::getConfig('vchamilo', 'upload_real_root')).$this->instance['slug']
+                );
+
                 $form->addLabel(
                     $this->_plugin->get_lang('template'),
                     $this->instance['template']

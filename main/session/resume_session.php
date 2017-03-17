@@ -10,7 +10,7 @@ use Chamilo\CoreBundle\Entity\Repository\SequenceRepository;
 use Chamilo\CoreBundle\Entity\SequenceResource;
 
 $cidReset = true;
-require_once '../inc/global.inc.php';
+require_once __DIR__.'/../inc/global.inc.php';
 
 // setting breadcrumbs
 $interbreadcrumb[] = array('url' => 'session_list.php', 'name' => get_lang('Sessions'));
@@ -155,7 +155,7 @@ if ($sessionInfo['nbr_courses'] == 0) {
     $sessionRepository = Database::getManager()->getRepository('ChamiloCoreBundle:Session');
     $courses = $sessionRepository->getCoursesOrderedByPosition($session);
 
-	foreach ($courses as $course) {
+    foreach ($courses as $course) {
         //select the number of users
         $sql = "SELECT count(*)
                 FROM $tbl_session_rel_user sru,
@@ -167,37 +167,37 @@ if ($sessionInfo['nbr_courses'] == 0) {
                     sru.relation_type <> ".SESSION_RELATION_TYPE_RRHH." AND
                     srcru.session_id = '".intval($sessionId)."'";
 
-		$rs = Database::query($sql);
+        $rs = Database::query($sql);
         $numberOfUsers = Database::result($rs, 0, 0);
 
-		// Get coachs of the courses in session
+        // Get coachs of the courses in session
 
-		$sql = "SELECT user.lastname, user.firstname, user.username
+        $sql = "SELECT user.lastname, user.firstname, user.username
                 FROM $tbl_session_rel_course_rel_user session_rcru, $tbl_user user
 				WHERE
 				    session_rcru.user_id = user.user_id AND
 				    session_rcru.session_id = '".intval($sessionId)."' AND
 				    session_rcru.c_id ='".intval($course->getId())."' AND
 				    session_rcru.status=2";
-		$rs = Database::query($sql);
+        $rs = Database::query($sql);
 
-		$coachs = array();
-		if (Database::num_rows($rs) > 0) {
-			while($info_coach = Database::fetch_array($rs)) {
+        $coachs = array();
+        if (Database::num_rows($rs) > 0) {
+            while($info_coach = Database::fetch_array($rs)) {
                 $coachs[] = api_get_person_name(
                         $info_coach['firstname'],
                         $info_coach['lastname']
                     ).' ('.$info_coach['username'].')';
-			}
-		} else {
-			$coach = get_lang('None');
-		}
+            }
+        } else {
+            $coach = get_lang('None');
+        }
 
-		if (count($coachs) > 0) {
-			$coach = implode('<br />',$coachs);
-		} else {
-			$coach = get_lang('None');
-		}
+        if (count($coachs) > 0) {
+            $coach = implode('<br />',$coachs);
+        } else {
+            $coach = get_lang('None');
+        }
 
         $orderButtons = null;
 
@@ -233,8 +233,8 @@ if ($sessionInfo['nbr_courses'] == 0) {
 
         $courseUrl = api_get_course_url($course->getCode(), $sessionId);
 
-		// hide_course_breadcrumb the parameter has been added to hide the name
-		// of the course, that appeared in the default $interbreadcrumb
+        // hide_course_breadcrumb the parameter has been added to hide the name
+        // of the course, that appeared in the default $interbreadcrumb
         $courseItem .= '
 		<tr>
 			<td class="title">'.Display::url(
@@ -248,19 +248,21 @@ if ($sessionInfo['nbr_courses'] == 0) {
                 Display::return_icon('course_home.gif', get_lang('Course')).'</a>
                 '.$orderButtons.'
                 <a href="session_course_user_list.php?id_session='.$sessionId.'&course_code='.$course->getCode().'">'.
-                Display::return_icon('user.png', get_lang('Edit'), '', ICON_SIZE_SMALL).'</a>
-                <a href="'.api_get_path(WEB_CODE_PATH).'/user/user_import.php?action=import&cidReq='.$course->getCode().'&id_session='.$sessionId.'">'.
+                Display::return_icon('user.png', get_lang('Users'), '', ICON_SIZE_SMALL).'</a>
+                <a href="'.api_get_path(WEB_CODE_PATH).'user/user_import.php?action=import&cidReq='.$course->getCode().'&id_session='.$sessionId.'">'.
                 Display::return_icon('import_csv.png', get_lang('ImportUsersToACourse'), null, ICON_SIZE_SMALL).'</a>
+                <a href="'.api_get_path(WEB_CODE_PATH).'user/user_export.php?file_type=csv&course_session='.$course->getCode().':'.$sessionId.'&addcsvheader=1">'.
+                Display::return_icon('export_csv.png', get_lang('ExportUsersOfACourse'), null, ICON_SIZE_SMALL).'</a>
 				<a href="../tracking/courseLog.php?id_session='.$sessionId.'&cidReq='.$course->getCode().$orig_param.'&hide_course_breadcrumb=1">'.
                 Display::return_icon('statistics.gif', get_lang('Tracking')).'</a>&nbsp;
 				<a href="session_course_edit.php?id_session='.$sessionId.'&page=resume_session.php&course_code='.$course->getCode().''.$orig_param.'">'.
-                Display::return_icon('edit.png', get_lang('Edit'), '', ICON_SIZE_SMALL).'</a>
+                Display::return_icon('teacher.png', get_lang('ModifyCoach'), '', ICON_SIZE_SMALL).'</a>
 				<a href="'.api_get_self().'?id_session='.$sessionId.'&action=delete&idChecked[]='.$course->getCode().'" onclick="javascript:if(!confirm(\''.get_lang('ConfirmYourChoice').'\')) return false;">'.
             Display::return_icon('delete.png', get_lang('Delete')).'</a>
 			</td>
 		</tr>';
         $count++;
-	}
+    }
     $courseListToShow .= $courseItem;
 }
 $courseListToShow .= '</table><br />';
@@ -273,6 +275,11 @@ $url .= Display::url(
     Display::return_icon('import_csv.png', get_lang('ImportUsers'), array(), ICON_SIZE_SMALL),
     "session_user_import.php?id_session=$sessionId"
 );
+$url .= Display::url(
+    Display::return_icon('export_csv.png', get_lang('ExportUsers'), array(), ICON_SIZE_SMALL),
+    "/main/user/user_export.php?file_type=csv&session=$sessionId&addcsvheader=1"
+);
+
 
 $userListToShow = Display::page_subheader(get_lang('UserList').$url);
 

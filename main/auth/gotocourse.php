@@ -11,7 +11,7 @@
  *
  */
 
-require_once '../inc/global.inc.php';
+require_once __DIR__.'/../inc/global.inc.php';
 require_once api_get_path(SYS_PATH).'main/auth/cas/authcas.php';
 $msg = null;
 if (isset($_GET['firstpage'])) {
@@ -51,7 +51,7 @@ if (isset($_GET['firstpage'])) {
 
     $msg .= '<div class="well_login">';
     $msg .= $form->return_form();
-    $msg .='</div>';
+    $msg .= '</div>';
     if (api_is_cas_activated()) {
         $msg .= "</div>";
     }

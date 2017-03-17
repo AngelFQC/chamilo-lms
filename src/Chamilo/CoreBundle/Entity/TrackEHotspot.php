@@ -8,11 +8,25 @@ use Doctrine\ORM\Mapping as ORM;
 /**
  * TrackEHotspot
  *
- * @ORM\Table(name="track_e_hotspot", indexes={@ORM\Index(name="hotspot_course_code", columns={"hotspot_course_code"}), @ORM\Index(name="hotspot_user_id", columns={"hotspot_user_id"}), @ORM\Index(name="hotspot_exe_id", columns={"hotspot_exe_id"}), @ORM\Index(name="hotspot_question_id", columns={"hotspot_question_id"})})
+ * @ORM\Table(name="track_e_hotspot", indexes={
+ *     @ORM\Index(name="hotspot_course_code", columns={"hotspot_course_code"}),
+ *     @ORM\Index(name="hotspot_user_id", columns={"hotspot_user_id"}),
+ *     @ORM\Index(name="hotspot_exe_id", columns={"hotspot_exe_id"}),
+ *     @ORM\Index(name="hotspot_question_id", columns={"hotspot_question_id"})
+ * })
  * @ORM\Entity
  */
 class TrackEHotspot
 {
+    /**
+     * @var integer
+     *
+     * @ORM\Column(name="hotspot_id", type="integer")
+     * @ORM\Id
+     * @ORM\GeneratedValue
+     */
+    private $hotspotId;
+
     /**
      * @var integer
      *
@@ -68,17 +82,6 @@ class TrackEHotspot
      * @ORM\Column(name="hotspot_coordinate", type="text", nullable=false)
      */
     private $hotspotCoordinate;
-
-    /**
-     * @var integer
-     *
-     * @ORM\Column(name="hotspot_id", type="integer")
-     * @ORM\Id
-     * @ORM\GeneratedValue(strategy="IDENTITY")
-     */
-    private $hotspotId;
-
-
 
     /**
      * Set hotspotUserId

@@ -1,7 +1,7 @@
 <?php
 /* For licensing terms, see /license.txt */
 
-require_once '../inc/global.inc.php';
+require_once __DIR__.'/../inc/global.inc.php';
 
 $survey_id = isset($_REQUEST['i']) ? intval($_REQUEST['i']) : null;
 
@@ -11,7 +11,7 @@ if (empty($survey_id)) {
 if (!SurveyManager::survey_generation_hash_available()) {
     api_not_allowed(true);
 }
-$course_info  = api_get_course_info_by_id($_REQUEST['c']);
+$course_info = api_get_course_info_by_id($_REQUEST['c']);
 
 $hash_is_valid = SurveyManager::validate_survey_hash(
     $survey_id,

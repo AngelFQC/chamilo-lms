@@ -12,7 +12,7 @@ use ChamiloSession as Session;
 if (!empty($_POST['language'])) {
     $_GET['language'] = $_POST['language'];
 }
-require_once '../inc/global.inc.php';
+require_once __DIR__.'/../inc/global.inc.php';
 $hideHeaders = isset($_GET['hide_headers']);
 
 $allowedFields = [
@@ -30,7 +30,13 @@ if ($allowedFieldsConfiguration !== false) {
     $allowedFields = $allowedFieldsConfiguration;
 }
 
-$userGeolocalization = api_get_setting('enable_profile_user_address_geolocalization') == 'true';
+$gMapsPlugin = GoogleMapsPlugin::create();
+$geolocalization = $gMapsPlugin->get('enable_api') === 'true';
+
+if ($geolocalization) {
+    $gmapsApiKey = $gMapsPlugin->get('api_key');
+    $htmlHeadXtra[] = '<script type="text/javascript" src="//maps.googleapis.com/maps/api/js?sensor=true&key='. $gmapsApiKey . '" ></script>';
+}
 
 $htmlHeadXtra[] = api_get_password_checker_js('#username', '#pass1');
 // User is not allowed if Terms and Conditions are disabled and
@@ -48,112 +54,27 @@ if (!empty($_SESSION['user_language_choice'])) {
 } else {
     $user_selected_language = api_get_setting('platformLanguage');
 }
-$htmlHeadXtra[] = '<script type="text/javascript" src="//maps.googleapis.com/maps/api/js?sensor=true" ></script>';
-
-if ($userGeolocalization) {
-    $htmlHeadXtra[] = '<script>
-    $(document).ready(function() {
-
-        initializeGeo(false, false);
-
-        $("#geolocalization").on("click", function() {
-            var address = $("#address").val();
-            initializeGeo(address, false);
-            return false;
-        });
-
-        $("#myLocation").on("click", function() {
-            myLocation();
-            return false;
-        });
-
-        $("#address").keypress(function (event) {
-            if (event.which == 13) {
-                $("#geolocalization").click();
-                return false;
-            }
-        });
-    });
-
-    function myLocation() {
-        if (navigator.geolocation) {
-            var geoPosition = function(position) {
-                var lat = position.coords.latitude;
-                var lng = position.coords.longitude;
-                var latLng = new google.maps.LatLng(lat, lng);
-                initializeGeo(false, latLng)
-            };
-
-            var geoError = function(error) {
-                alert("Geocode ' . get_lang('Error') . ': " + error);
-            };
-
-            var geoOptions = {
-                enableHighAccuracy: true
-            };
-
-            navigator.geolocation.getCurrentPosition(geoPosition, geoError, geoOptions);
-        }
-    }
-
-    function initializeGeo(address, latLng) {
-        var geocoder = new google.maps.Geocoder();
-        var latlng = new google.maps.LatLng(-75.503, 22.921);
-        var myOptions = {
-            zoom: 15,
-            center: latlng,
-            mapTypeControl: true,
-            mapTypeControlOptions: {
-                style: google.maps.MapTypeControlStyle.DROPDOWN_MENU
-            },
-            navigationControl: true,
-            mapTypeId: google.maps.MapTypeId.ROADMAP
-        };
-
-        map = new google.maps.Map(document.getElementById("map"), myOptions);
-
-        var parameter = address ? { "address": address } : latLng ? { "latLng": latLng } : { "address": "Google" };
-
-        if (geocoder && parameter) {
-            geocoder.geocode(parameter, function(results, status) {
-                if (status == google.maps.GeocoderStatus.OK) {
-                    if (status != google.maps.GeocoderStatus.ZERO_RESULTS) {
-                        map.setCenter(results[0].geometry.location);
-                        if (!address) {
-                            $("#address").val(results[0].formatted_address);
-                        }
-                        var infowindow = new google.maps.InfoWindow({
-                            content: "<b>" + $("#address").val() + "</b>",
-                            size: new google.maps.Size(150, 50)
-                        });
-
-                        var marker = new google.maps.Marker({
-                            position: results[0].geometry.location,
-                            map: map,
-                            title: $("#address").val()
-                        });
-                        google.maps.event.addListener(marker, "click", function() {
-                            infowindow.open(map, marker);
-                        });
-                    } else {
-                        alert("' . get_lang("NotFound") . '");
-                    }
-
-                } else {
-                    alert("Geocode ' . get_lang('Error') . ': " + status);
-                }
-            });
-        }
-    }
-
-    </script>';
-}
 
 $form = new FormValidator('registration');
 
 $user_already_registered_show_terms = false;
 if (api_get_setting('allow_terms_conditions') == 'true') {
     $user_already_registered_show_terms = isset($_SESSION['term_and_condition']['user_id']);
+}
+
+$sessionPremiumChecker = Session::read('SessionIsPremium');
+$sessionId = Session::read('sessionId');
+
+// Direct Link Session Subscription feature #12220
+$sessionRedirect = isset($_REQUEST['s']) && !empty($_REQUEST['s']) ? $_REQUEST['s'] : null;
+$onlyOneCourseSessionRedirect = isset($_REQUEST['cr']) && !empty($_REQUEST['cr']) ? $_REQUEST['cr'] : null;
+
+if (api_get_configuration_value('allow_redirect_to_session_after_inscription_about')) {
+
+    if (!empty($sessionRedirect)) {
+        Session::write('session_redirect', $sessionRedirect);
+        Session::write('only_one_course_session_redirect', $onlyOneCourseSessionRedirect);
+    }
 }
 
 // Direct Link Subscription feature #5299
@@ -223,6 +144,7 @@ if ($user_already_registered_show_terms === false) {
         $form->addText(
             'username',
             get_lang('UserName'),
+            true,
             array(
                 'id' => 'username',
                 'size' => USERNAME_MAX_LENGTH,
@@ -284,39 +206,11 @@ if ($user_already_registered_show_terms === false) {
             );
         }
     }
-    if ($userGeolocalization) {
-        // Geolocation
-        if (in_array('address', $allowedFields)) {
-            $form->addElement('text', 'address', get_lang('AddressField'), ['id' => 'address']);
-            $form->addHtml('
-                <div class="form-group">
-                    <label for="geolocalization" class="col-sm-2 control-label"></label>
-                    <div class="col-sm-8">
-                        <button class="null btn btn-default " id="geolocalization" name="geolocalization" type="submit"><em class="fa fa-map-marker"></em> ' . get_lang('Geolocalization') . '</button>
-                        <button class="null btn btn-default " id="myLocation" name="myLocation" type="submit"><em class="fa fa-crosshairs"></em> ' . get_lang('MyLocation') . '</button>
-                    </div>
-                </div>
-            ');
-
-            $form->addHtml('
-                <div class="form-group">
-                    <label for="map" class="col-sm-2 control-label">
-                        ' . get_lang('Map') . '
-                    </label>
-                    <div class="col-sm-8">
-                        <div name="map" id="map" style="width:100%; height:300px;">
-                        </div>
-                    </div>
-                </div>
-            ');
-        }
-    }
 
     // Language
     if (in_array('language', $allowedFields)) {
         if (api_get_setting('registration', 'language') == 'true') {
-            $form->addElement(
-                'select_language',
+            $form->addSelectLanguage(
                 'language',
                 get_lang('Language')
             );
@@ -550,7 +444,6 @@ if (!CustomPages::enabled()) {
 
 // Terms and conditions
 if (api_get_setting('allow_terms_conditions') == 'true') {
-
     if (!api_is_platform_admin()) {
         if (api_get_setting('show_terms_if_profile_completed') === 'true') {
             $userInfo = api_get_user_info();
@@ -600,6 +493,7 @@ if (api_get_setting('allow_terms_conditions') == 'true') {
 $form->addButtonCreate(get_lang('RegisterUser'));
 
 $course_code_redirect = Session::read('course_redirect');
+$sessionToRedirect = Session::read('session_redirect');
 
 if ($form->validate()) {
     $values = $form->getSubmitValues(1);
@@ -737,6 +631,19 @@ if ($form->validate()) {
                 $sql .= implode(',', $sql_set);
                 $sql .= " WHERE user_id = ".intval($user_id)."";
                 Database::query($sql);
+            }
+
+            // Saving user to Session if it was set
+            if (!empty($sessionToRedirect) && !$sessionPremiumChecker) {
+                $sessionInfo = api_get_session_info($sessionToRedirect);
+                if (!empty($sessionInfo)) {
+                    SessionManager::subscribe_users_to_session(
+                        $sessionToRedirect,
+                        [$user_id],
+                        SESSION_VISIBLE_READ_ONLY,
+                        false
+                    );
+                }
             }
 
             // Saving user to course if it was set.
@@ -879,12 +786,17 @@ if ($form->validate()) {
         '<p>'.
         get_lang('Dear', null, $_user['language']).' '.
         stripslashes(Security::remove_XSS($recipient_name)).',<br /><br />'.
-        get_lang('PersonalSettings',null,$_user['language']).".</p>";
+        get_lang('PersonalSettings').".</p>";
 
     $form_data = array(
-        'button' => Display::button('next', get_lang('Next', null, $_user['language']), array('class' => 'btn btn-primary btn-large')),
-        'message' => null,
-        'action' => api_get_path(WEB_PATH).'user_portal.php'
+        'button' => Display::button(
+            'next',
+            get_lang('Next', null, $_user['language']),
+            array('class' => 'btn btn-primary btn-large')
+        ),
+        'message' => '',
+        'action' => api_get_path(WEB_PATH).'user_portal.php',
+        'go_button' => ''
     );
 
     if (api_get_setting('allow_terms_conditions') === 'true' && $user_already_registered_show_terms) {
@@ -945,6 +857,14 @@ if ($form->validate()) {
         }
     }
 
+    if ($sessionPremiumChecker && $sessionId) {
+        header('Location:' . api_get_path(WEB_PLUGIN_PATH) . 'buycourses/src/process.php?i=' . $sessionId . '&t=2');
+        Session::erase('SessionIsPremium');
+        Session::erase('sessionId');
+        exit;
+    }
+
+    SessionManager::redirectToSession();
     $form_data = CourseManager::redirectToCourse($form_data);
 
     $form_register = new FormValidator('form_register', 'post', $form_data['action']);
@@ -963,6 +883,8 @@ if ($form->validate()) {
     // Just in case
     Session::erase('course_redirect');
     Session::erase('exercise_redirect');
+    Session::erase('session_redirect');
+    Session::erase('only_one_course_session_redirect');
 
     if (CustomPages::enabled()) {
         CustomPages::display(

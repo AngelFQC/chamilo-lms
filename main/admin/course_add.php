@@ -2,10 +2,10 @@
 /* For licensing terms, see /license.txt */
 
 /**
- *	@package chamilo.admin
+ * @package chamilo.admin
  */
 $cidReset = true;
-require_once '../inc/global.inc.php';
+require_once __DIR__.'/../inc/global.inc.php';
 $this_section = SECTION_PLATFORM_ADMIN;
 
 api_protect_admin_script();
@@ -106,14 +106,12 @@ if (count($languages['name']) === 1) {
     // If there's only one language available, there's no point in asking
     $form->addElement('hidden', 'course_language', $languages['folder'][0]);
 } else {
-    $form->addElement(
-        'select_language',
+    $form->addSelectLanguage(
         'course_language',
         get_lang('Ln'),
         array(),
         array('style' => 'width:150px')
     );
-    $form->applyFilter('select_language', 'html_filter');
 }
 
 if (api_get_setting('teacher_can_select_course_template') === 'true') {
@@ -212,8 +210,10 @@ if ($form->validate()) {
     if ($courseInfo && isset($courseInfo['course_public_url'])) {
         Display::addFlash(
             Display::return_message(
-                get_lang('Added').'&nbsp;'.
-                Display::url($courseInfo['course_public_url'], $courseInfo['course_public_url']),
+                sprintf(
+                    get_lang('CourseXAdded'),
+                    Display::url($courseInfo['title'], $courseInfo['course_public_url'])
+                ),
                 'confirmation',
                 false
             )

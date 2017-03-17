@@ -20,7 +20,12 @@ class ResultTable extends SortableTable
      */
     public function __construct($evaluation, $results = array(), $iscourse, $addparams = null,$forprint = false)
     {
-        parent :: __construct('resultlist', null, null, (api_is_western_name_order() xor api_sort_by_first_name()) ? 2 : 1);
+        parent:: __construct(
+            'resultlist',
+            null,
+            null,
+            (api_is_western_name_order() xor api_sort_by_first_name()) ? 2 : 1
+        );
 
         $this->datagen = new ResultsDataGenerator($evaluation, $results, true);
 
@@ -28,7 +33,7 @@ class ResultTable extends SortableTable
         $this->iscourse = $iscourse;
         $this->forprint = $forprint;
 
-        if (isset ($addparams))  {
+        if (isset($addparams)) {
             $this->set_additional_parameters($addparams);
         }
         $scoredisplay = ScoreDisplay :: instance();
@@ -51,7 +56,7 @@ class ResultTable extends SortableTable
             $this->set_header($column++, get_lang('Display'));
         }
         if (!$this->forprint) {
-            $this->set_header($column++, get_lang('Modify'),false);
+            $this->set_header($column++, get_lang('Modify'), false);
         }
     }
 
@@ -137,9 +142,8 @@ class ResultTable extends SortableTable
         return $sortable_data;
     }
 
-    private function build_edit_column ($item)
+    private function build_edit_column($item)
     {
-        $status = CourseManager::get_user_in_course_status(api_get_user_id(), api_get_course_id());
         $locked_status = $this->evaluation->get_locked();
         if (api_is_allowed_to_edit(null, true) && $locked_status == 0) {
             //api_is_course_admin()

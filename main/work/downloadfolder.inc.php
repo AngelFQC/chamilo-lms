@@ -8,7 +8,7 @@
  */
 
 $work_id = $_GET['id'];
-require_once '../inc/global.inc.php';
+require_once __DIR__.'/../inc/global.inc.php';
 $current_course_tool  = TOOL_STUDENTPUBLICATION;
 $_course = api_get_course_info();
 
@@ -73,20 +73,20 @@ if (api_is_allowed_to_edit() || api_is_coach()) {
                 title,
                 description,
                 insert_user_id,
-                insert_date,
+                sent_date,
                 contains_file
                 $filenameCondition
             FROM $tbl_student_publication AS work
             INNER JOIN $prop_table AS props
+            ON (work.id = props.ref AND props.c_id = work.c_id)
             INNER JOIN $tableUser as u
             ON (
-                props.c_id = $course_id AND
-                work.c_id = $course_id AND
-                work.id = props.ref AND
-                props.tool='work' AND
                 work.user_id = u.user_id
             )
- 			WHERE
+            WHERE
+ 			    props.tool = 'work' AND
+ 			    props.c_id = $course_id AND
+                work.c_id = $course_id AND
                 work.parent_id = $work_id AND
                 work.filetype = 'file' AND
                 props.visibility <> '2' AND
@@ -115,15 +115,18 @@ if (api_is_allowed_to_edit() || api_is_coach()) {
                 title,
                 description,
                 insert_user_id,
-                insert_date,
+                sent_date,
                 contains_file
                 $filenameCondition
             FROM $tbl_student_publication AS work
             INNER JOIN $prop_table AS props
-            ON (props.c_id = $course_id AND
-                work.c_id = $course_id AND
-                work.id = props.ref)
+            ON (
+                props.c_id = work.c_id AND 
+                work.id = props.ref
+            )
             WHERE
+                props.c_id = $course_id AND
+                work.c_id = $course_id AND                
                 props.tool = 'work' AND
                 work.accepted = 1 AND
                 work.active = 1 AND
@@ -138,9 +141,8 @@ $query = Database::query($sql);
 
 //add tem to the zip file
 while ($not_deleted_file = Database::fetch_assoc($query)) {
-
     $user_info = api_get_user_info($not_deleted_file['insert_user_id']);
-    $insert_date = api_get_local_time($not_deleted_file['insert_date']);
+    $insert_date = api_get_local_time($not_deleted_file['sent_date']);
     $insert_date = str_replace(array(':', '-', ' '), '_', $insert_date);
 
     $title = basename($not_deleted_file['title']);
@@ -164,8 +166,7 @@ while ($not_deleted_file = Database::fetch_assoc($query)) {
             'my_pre_add_callback'
         );
     } else {
-    // Convert texts in html files
-    //if ($not_deleted_file['contains_file'] == 0) {
+        // Convert texts in html files
         $filename = trim($filename).".html";
         $work_temp = api_get_path(SYS_ARCHIVE_PATH).api_get_unique_id().'_'.$filename;
         file_put_contents($work_temp, $not_deleted_file['description']);

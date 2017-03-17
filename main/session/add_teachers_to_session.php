@@ -7,7 +7,7 @@
 $cidReset = true;
 
 // including some necessary files
-require_once '../inc/global.inc.php';
+require_once __DIR__.'/../inc/global.inc.php';
 
 // setting the section (for the tabs)
 $this_section = SECTION_PLATFORM_ADMIN;
@@ -70,13 +70,13 @@ echo Display::input('hidden', 'form_sent', '1');
     <tr>
         <td align="center">
             <?php
-             echo Display::select(
-                 'sessions[]',
-                 $sessionList,
-                 '',
-                 array('style'=>'width:360px', 'multiple'=>'multiple','id'=>'sessions', 'size'=>'15px'),
-                 false
-             );
+                echo Display::select(
+                    'sessions[]',
+                    $sessionList,
+                    '',
+                    array('style'=>'width:360px', 'multiple'=>'multiple','id'=>'sessions', 'size'=>'15px'),
+                    false
+                );
             ?>
         </td>
         <td align="center">

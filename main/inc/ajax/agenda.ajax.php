@@ -10,7 +10,7 @@ if ($type == 'personal') {
     $cidReset = true; // fixes #5162
 }
 
-require_once '../global.inc.php';
+require_once __DIR__.'/../global.inc.php';
 
 $action = isset($_REQUEST['a']) ? $_REQUEST['a'] : null;
 $group_id = api_get_group_id();
@@ -19,21 +19,17 @@ if ($type == 'course') {
     api_protect_course_script(true);
 }
 
-$group_id = api_get_group_id();
-
-$is_group_tutor = GroupManager::is_tutor_of_group(api_get_user_id(), $group_id);
-
-$agenda = new Agenda();
-$agenda->setType($type);
+$agenda = new Agenda($type);
 
 switch ($action) {
     case 'add_event':
-        if ((!api_is_allowed_to_edit(null, true) && !$is_group_tutor) && $type == 'course') {
+        if (!$agenda->getIsAllowedToEdit()) {
             break;
         }
         $add_as_announcement = isset($_REQUEST['add_as_annonuncement']) ? $_REQUEST['add_as_annonuncement'] : null;
         $comment = isset($_REQUEST['comment']) ? $_REQUEST['comment'] : null;
         $userToSend = isset($_REQUEST['users_to_send']) ? $_REQUEST['users_to_send'] : array();
+
         echo $agenda->addEvent(
             $_REQUEST['start'],
             $_REQUEST['end'],
@@ -49,7 +45,7 @@ switch ($action) {
         );
         break;
     case 'edit_event':
-        if (!api_is_allowed_to_edit(null, true) && $type == 'course') {
+        if (!$agenda->getIsAllowedToEdit()) {
             break;
         }
         $id_list = explode('_', $_REQUEST['id']);
@@ -64,7 +60,7 @@ switch ($action) {
         );
         break;
     case 'delete_event':
-        if (!api_is_allowed_to_edit(null, true) && $type == 'course') {
+        if (!$agenda->getIsAllowedToEdit()) {
             break;
         }
         $id_list = explode('_', $_REQUEST['id']);
@@ -73,24 +69,23 @@ switch ($action) {
         $agenda->deleteEvent($id, $deleteAllEventsFromSerie);
         break;
     case 'resize_event':
-        if (!api_is_allowed_to_edit(null, true) && $type == 'course') {
+        if (!$agenda->getIsAllowedToEdit()) {
             break;
         }
-        $day_delta = $_REQUEST['day_delta'];
         $minute_delta = $_REQUEST['minute_delta'];
         $id = explode('_', $_REQUEST['id']);
         $id = $id[1];
-        $agenda->resizeEvent($id, $day_delta, $minute_delta);
+        $agenda->resizeEvent($id, $minute_delta);
         break;
     case 'move_event':
-        if (!api_is_allowed_to_edit(null, true) && $type == 'course') {
+        if (!$agenda->getIsAllowedToEdit()) {
             break;
         }
-        $day_delta = $_REQUEST['day_delta'];
         $minute_delta = $_REQUEST['minute_delta'];
+        $allDay = $_REQUEST['all_day'];
         $id = explode('_', $_REQUEST['id']);
         $id = $id[1];
-        $agenda->move_event($id, $day_delta, $minute_delta);
+        $agenda->move_event($id, $minute_delta, $allDay);
         break;
     case 'get_events':
         $filter = isset($_REQUEST['user_id']) ? $_REQUEST['user_id'] : null;
@@ -114,7 +109,6 @@ switch ($action) {
             $groupId,
             $userId
         );
-
         echo $events;
         break;
     case 'get_user_agenda':

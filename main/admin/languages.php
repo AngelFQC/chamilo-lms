@@ -13,15 +13,12 @@
  * @since Dokeos 1.6
  * @package chamilo.admin
  */
-/**
- * 	   INIT SECTION
- */
 
 // we are in the admin area so we do not need a course id
 $cidReset = true;
 
 // include global script
-require_once '../inc/global.inc.php';
+require_once __DIR__.'/../inc/global.inc.php';
 $this_section = SECTION_PLATFORM_ADMIN;
 
 api_protect_admin_script();

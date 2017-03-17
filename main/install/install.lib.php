@@ -5,6 +5,9 @@ use Doctrine\ORM\EntityManager;
 use Chamilo\CoreBundle\Entity\ExtraField;
 use Chamilo\CoreBundle\Entity\ExtraFieldOptions;
 use Chamilo\CoreBundle\Entity\ExtraFieldValues;
+use Chamilo\TicketBundle\Entity\Project as TicketProject;
+use Chamilo\TicketBundle\Entity\Category as TicketCategory;
+use Chamilo\TicketBundle\Entity\Priority as TicketPriority;
 
 /**
  * Chamilo LMS
@@ -120,6 +123,22 @@ function checkPhpSettingExists($phpSetting)
     }
 
     return false;
+}
+
+/**
+ * Check if the current url is the same root_web when the multiple_access_url is enabled
+ * @return bool
+ */
+function checkAccessUrl()
+{
+    if (api_get_configuration_value('multiple_access_urls') !== true) {
+        return true;
+    }
+
+    $currentWebPath = api_get_path(WEB_PATH);
+    $rootWeb = api_get_configuration_value('root_web');
+
+    return $currentWebPath === $rootWeb;
 }
 
 /**
@@ -689,6 +708,18 @@ function display_requirements(
     }
     echo '</div>';
 
+    $properlyAccessUrl =  checkAccessUrl();
+
+    if (!$properlyAccessUrl) {
+        echo '
+            <div class="alert alert-danger">
+                ' . Display::return_icon('error.png', get_lang('Error'), [], ICON_SIZE_MEDIUM) .
+            ' ' .
+            sprintf(get_lang('InstallMultiURLDetectedNotMainURL'), api_get_configuration_value('root_web')) . '
+            </div>
+        ';
+    }
+
     //  SERVER REQUIREMENTS
     echo '<div class="RequirementHeading"><h4>'.get_lang('ServerRequirements').'</h4>';
 
@@ -1090,6 +1121,10 @@ function display_requirements(
                 <?php } ?>
             </ul>
             <?php
+        }
+
+        if (!$properlyAccessUrl) {
+            $error = true;
         }
 
         // And now display the choice buttons (go back or install)
@@ -2105,9 +2140,10 @@ function migrate($chamiloVersion, EntityManager $manager)
  */
 function fixIds(EntityManager $em)
 {
-    $debug = true;
     $connection = $em->getConnection();
-
+    $database = new Database();
+    $database->setManager($em);
+    $debug = true;
     if ($debug) {
         error_log('fixIds');
     }
@@ -2274,7 +2310,6 @@ function fixIds(EntityManager $em)
 
         $sql = "SELECT * FROM c_item_property WHERE c_id = $courseId";
         $result = $connection->fetchAll($sql);
-
         foreach ($result as $item) {
             $sessionId = intval($item['session_id']);
             $groupId = intval($item['to_group_id']);
@@ -2330,13 +2365,13 @@ function fixIds(EntityManager $em)
                 error_log($sql);
                 $connection->executeQuery($sql);
             }
-
-            if ($debug) {
-                // Print a status in the log once in a while
-                error_log("Process item #$counter/$totalCourse");
-            }
-            $counter++;
         }
+
+        if ($debug) {
+            // Print a status in the log once in a while
+            error_log("Course process #$counter/$totalCourse");
+        }
+        $counter++;
     }
 
     if ($debug) {
@@ -2348,16 +2383,19 @@ function fixIds(EntityManager $em)
     $result = $connection->fetchAll($sql);
     foreach ($result as $item) {
         $courseCode = $item['course_code'];
-        $courseInfo = api_get_course_info($courseCode);
 
+        $sql = "SELECT * FROM course WHERE code = '$courseCode'";
+        $courseInfo = $connection->fetchAssoc($sql);
         if (empty($courseInfo)) {
             continue;
         }
-        $courseId = $courseInfo['real_id'];
+
+        $courseId = $courseInfo['id'];
+
         $ref = $item['ref_id'];
         $iid = $item['id'];
-        $sql = '';
 
+        $sql = '';
         switch ($item['type']) {
             case LINK_LEARNPATH:
                 $sql = "SELECT * FROM c_link WHERE c_id = $courseId AND id = $ref ";
@@ -2414,7 +2452,6 @@ function fixIds(EntityManager $em)
                 'created_at' => $group['created_on']
             ];
             $connection->insert('usergroup', $params);
-            //$connection->executeQuery($sql);
             $id = $connection->lastInsertId('id');
             $oldGroups[$group['id']] = $id;
         }
@@ -2448,7 +2485,6 @@ function fixIds(EntityManager $em)
             foreach ($dataList as $data) {
                 if (isset($oldGroups[$data['group_id']])) {
                     $data['group_id'] = $oldGroups[$data['group_id']];
-
                     $userId = $data['user_id'];
 
                     $sql = "SELECT id FROM user WHERE user_id = $userId";
@@ -2701,7 +2737,100 @@ function finishInstallation(
 ) {
     $sysPath = !empty($sysPath) ? $sysPath : api_get_path(SYS_PATH);
 
-    // Inserting data
+    $connection = $manager->getConnection();
+
+    // Add version table
+    $connection->executeQuery('CREATE TABLE IF NOT EXISTS version (id int unsigned NOT NULL AUTO_INCREMENT, version varchar(20), PRIMARY KEY(id), UNIQUE(version))');
+
+    // Add tickets defaults
+    $ticketProject = new TicketProject();
+    $ticketProject
+        ->setId(1)
+        ->setName('Ticket System')
+        ->setInsertUserId(1);
+
+    $manager->persist($ticketProject);
+    $manager->flush();
+
+    $categories = array(
+        get_lang('TicketEnrollment') => get_lang('TicketsAboutEnrollment'),
+        get_lang('TicketGeneralInformation') => get_lang('TicketsAboutGeneralInformation'),
+        get_lang('TicketRequestAndPapework') => get_lang('TicketsAboutRequestAndPapework'),
+        get_lang('TicketAcademicIncidence') => get_lang('TicketsAboutAcademicIncidence'),
+        get_lang('TicketVirtualCampus') => get_lang('TicketsAboutVirtualCampus'),
+        get_lang('TicketOnlineEvaluation') => get_lang('TicketsAboutOnlineEvaluation')
+    );
+
+    $i = 1;
+
+    /**
+     * @var string $category
+     * @var string $description
+     */
+    foreach ($categories as $category => $description) {
+        // Online evaluation requires a course
+        $ticketCategory = new TicketCategory();
+        $ticketCategory
+            ->setId($i)
+            ->setName($category)
+            ->setDescription($description)
+            ->setProject($ticketProject)
+            ->setInsertUserId(1);
+
+        $isRequired = $i == 6;
+        $ticketCategory->setCourseRequired($isRequired);
+
+        $manager->persist($ticketCategory);
+        $manager->flush();
+
+        $i++;
+    }
+
+    // Default Priorities
+    $defaultPriorities = array(
+        TicketManager::PRIORITY_NORMAL => get_lang('PriorityNormal'),
+        TicketManager::PRIORITY_HIGH => get_lang('PriorityHigh'),
+        TicketManager::PRIORITY_LOW => get_lang('PriorityLow')
+    );
+
+    $table = Database::get_main_table(TABLE_TICKET_PRIORITY);
+    $i = 1;
+    foreach ($defaultPriorities as $code => $priority) {
+        $ticketPriority = new TicketPriority();
+        $ticketPriority
+            ->setId($i)
+            ->setName($priority)
+            ->setCode($code)
+            ->setInsertUserId(1);
+
+        $manager->persist($ticketPriority);
+        $manager->flush();
+        $i++;
+    }
+
+    $table = Database::get_main_table(TABLE_TICKET_STATUS);
+
+    // Default status
+    $defaultStatus = array(
+        TicketManager::STATUS_NEW => get_lang('StatusNew'),
+        TicketManager::STATUS_PENDING => get_lang('StatusPending'),
+        TicketManager::STATUS_UNCONFIRMED => get_lang('StatusUnconfirmed'),
+        TicketManager::STATUS_CLOSE => get_lang('StatusClose'),
+        TicketManager::STATUS_FORWARDED => get_lang('StatusForwarded')
+    );
+
+    $i = 1;
+    foreach ($defaultStatus as $code => $status) {
+        $attributes = array(
+            'id' => $i,
+            'code' => $code,
+            'name' => $status
+        );
+        Database::insert($table, $attributes);
+        $i++;
+    }
+
+    // Inserting data.sql
     $data = file_get_contents($sysPath.'main/install/data.sql');
     $result = $manager->getConnection()->prepare($data);
     $result->execute();
@@ -2775,9 +2904,14 @@ function finishInstallation(
     updateDirAndFilesPermissions();
 
     // Set the latest version
-    $path = api_get_path(SYS_PATH).'app/Migrations/Schema/V111/';
+    $path = $sysPath.'app/Migrations/Schema/V111/';
     $finder = new \Symfony\Component\Finder\Finder();
     $files = $finder->files()->in($path);
+
+    // Needed for chash
+    $sql = 'CREATE TABLE IF NOT EXISTS version (id int unsigned NOT NULL AUTO_INCREMENT, version varchar(255), PRIMARY KEY(id), UNIQUE(version));';
+    Database::query($sql);
+
     foreach ($files as $version) {
         $version = str_replace(['Version',  '.php' ], '', $version->getFilename());
         $sql = "INSERT INTO version (version) VALUES ('$version')";
@@ -2920,6 +3054,9 @@ function migrateSwitch($fromVersion, $manager, $processFiles = true)
 
     $connection = $manager->getConnection();
 
+    $database = new Database();
+    $database->setManager($manager);
+
     switch ($fromVersion) {
         case '1.9.0':
         case '1.9.2':
@@ -2932,6 +3069,10 @@ function migrateSwitch($fromVersion, $manager, $processFiles = true)
         case '1.9.10':
         case '1.9.10.2':
         case '1.9.10.4':
+
+            $database = new Database();
+            $database->setManager($manager);
+
             // Fix type "enum" before running the migration with Doctrine
             $connection->executeQuery("ALTER TABLE course_category MODIFY COLUMN auth_course_child VARCHAR(40) DEFAULT 'TRUE'");
             $connection->executeQuery("ALTER TABLE course_category MODIFY COLUMN auth_cat_child VARCHAR(40) DEFAULT 'TRUE'");
@@ -2999,6 +3140,8 @@ function migrateSwitch($fromVersion, $manager, $processFiles = true)
         case '1.10.6':
             // no break
         case '1.10.8':
+            $database = new Database();
+            $database->setManager($manager);
             // Migrate using the migration files located in:
             // src/Chamilo/CoreBundle/Migrations/Schema/V111
             $result = migrate(
@@ -3054,10 +3197,10 @@ function migrateSwitch($fromVersion, $manager, $processFiles = true)
                     $sessionId = $row['session_id'];
                     $workId = $row['id'];
                     $itemInfo = api_get_item_property_info(
-                      $courseId,
-                       'work',
-                      $workId,
-                      $sessionId
+                        $courseId,
+                        'work',
+                        $workId,
+                        $sessionId
                     );
                     $courseInfo = api_get_course_info_by_id($courseId);
                     if (empty($itemInfo)) {
@@ -3075,7 +3218,8 @@ function migrateSwitch($fromVersion, $manager, $processFiles = true)
                         );
                     }
                 }
-                $connection->executeQuery("UPDATE settings_current SET selected_value = '1.11.0' WHERE variable = 'chamilo_database_version'");
+                $sql = "UPDATE settings_current SET selected_value = '1.11.0' WHERE variable = 'chamilo_database_version'";
+                $connection->executeQuery($sql);
 
                 if ($processFiles) {
                     include __DIR__.'/update-files-1.10.0-1.11.0.inc.php';

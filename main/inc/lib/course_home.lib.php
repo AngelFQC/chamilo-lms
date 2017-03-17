@@ -441,19 +441,21 @@ class CourseHome
     /**
      * Gets the tools of a certain category. Returns an array expected
      * by show_tools_category()
-     * @param string $course_tool_category	contains the category of tools to
+     * @param string $course_tool_category contains the category of tools to
      * display: "toolauthoring", "toolinteraction", "tooladmin", "tooladminplatform", "toolplugin"
+     * @param int $courseId Optional
+     * @param int $sessionId Optional
      * @return array
      */
-    public static function get_tools_category($course_tool_category)
+    public static function get_tools_category($course_tool_category, $courseId = 0, $sessionId = 0)
     {
         $course_tool_table = Database::get_course_table(TABLE_TOOL_LIST);
         $is_platform_admin = api_is_platform_admin();
         $all_tools_list = array();
 
         // Condition for the session
-        $session_id = api_get_session_id();
-        $course_id = api_get_course_int_id();
+        $session_id = $sessionId ?: api_get_session_id();
+        $course_id = $courseId ?: api_get_course_int_id();
         $condition_session = api_get_session_condition($session_id, true, true, 't.session_id');
 
         switch ($course_tool_category) {
@@ -503,7 +505,7 @@ class CourseHome
                 //Other queries recover id, name, link, image, visibility, admin, address, added_tool, target, category and session_id
                 // but plugins are not present in the tool table, only globally and inside the course_settings table once configured
                 $sql = "SELECT * FROM $course_tool_table t
-                        WHERE category = 'plugin' AND c_id = $course_id $condition_session
+                        WHERE category = 'plugin' AND name <> 'courseblock' AND c_id = $course_id $condition_session
                         ORDER BY id";
                 $result = Database::query($sql);
                 break;
@@ -781,7 +783,6 @@ class CourseHome
                 }
 
                 $item['visibility'] = null;
-
                 if (isset($lnk) && is_array($lnk)) {
                     foreach ($lnk as $this_link) {
                         if (empty($tool['adminlink'])) {
@@ -1124,8 +1125,19 @@ class CourseHome
             while ($row = Database::fetch_array($sql_result)) {
                 $navigation_items[$row['id']] = $row;
                 if (stripos($row['link'], 'http://') === false && stripos($row['link'], 'https://') === false) {
-                    $navigation_items[$row['id']]['link'] = api_get_path(WEB_CODE_PATH).$row['link'];
-                    $navigation_items[$row['id']]['name'] = CourseHome::translate_tool_name($row);
+                    $navigation_items[$row['id']]['link'] = api_get_path(WEB_CODE_PATH);
+
+                    if ($row['category'] == 'plugin') {
+                        $plugin = new AppPlugin();
+                        $pluginInfo = $plugin->getPluginInfo($row['name']);
+
+                        $navigation_items[$row['id']]['link'] = api_get_path(WEB_PLUGIN_PATH);
+                        $navigation_items[$row['id']]['name'] = $pluginInfo['title'];
+                    } else {
+                        $navigation_items[$row['id']]['name'] = CourseHome::translate_tool_name($row);
+                    }
+
+                    $navigation_items[$row['id']]['link'] .= $row['link'];
                 }
             }
 
@@ -1244,6 +1256,9 @@ class CourseHome
 
     /**
      * Show a toolbar with shortcuts to the course tool
+     * @param int $orientation
+     *
+     * @return string
      */
     public static function show_navigation_tool_shortcuts($orientation = SHORTCUTS_HORIZONTAL)
     {
@@ -1268,15 +1283,33 @@ class CourseHome
                     $html .= ' id="here"';
                 }
                 $html .= ' target="_top" title="'.$navigation_item['name'].'">';
-                $html .= Display::return_icon(substr($navigation_item['image'],0,-3)."png", $navigation_item['name'], null, ICON_SIZE_MEDIUM);
-                //$html .= '<img src="'.api_get_path(WEB_IMG_PATH).$navigation_item['image'].'" alt="'.$navigation_item['name'].'"/>';
+
+                if (isset($navigation_item['category']) && $navigation_item['category'] == 'plugin') {
+                    /*$plugin_info = $app_plugin->getPluginInfo($navigation_item['name']);
+                    if (isset($plugin_info) && isset($plugin_info['title'])) {
+                        $tool_name = $plugin_info['title'];
+                    }*/
+
+                    if (!file_exists(api_get_path(SYS_CODE_PATH).'img/'.$navigation_item['image']) &&
+                        !file_exists(api_get_path(SYS_CODE_PATH).'img/icons/'.ICON_SIZE_MEDIUM.'/'.$navigation_item['image'])
+                    ) {
+                        $navigation_item['image'] = 'plugins.png';
+                    }
+                    //$tool_link_params['href'] = api_get_path(WEB_PLUGIN_PATH).$navigation_item['link'].'?'.api_get_cidreq();
+                }
+
+                $html .= Display::return_icon(
+                    substr($navigation_item['image'], 0, -3).'png',
+                    $navigation_item['name'],
+                    [],
+                    ICON_SIZE_MEDIUM
+                );
                 $html .= '</a> ';
                 if ($orientation == SHORTCUTS_VERTICAL) {
                     $html .= '<br />';
                 }
             }
             $html .= '</div>';
-
         }
 
         return $html;
