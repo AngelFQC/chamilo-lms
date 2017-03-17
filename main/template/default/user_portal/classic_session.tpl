@@ -56,13 +56,7 @@
                             <div class="courses">
                                 <div class="row">
                                     <div class="col-md-2">
-                                        {% if item.link %}
-                                            <a href="{{ item.link }}" class="thumbnail">
-                                                <img class="img-responsive" src="{{ item.icon }}">
-                                            </a>
-                                        {% else %}
-                                            {{ 'blackboard.png' | img(48, item.title ) }}
-                                        {% endif %}
+                                        <img class="img-responsive" src="{{ item.thumbnails ? item.thumbnails : item.icon }}">
                                     </div>
                                     <div class="col-md-10">
                                         <h4>{{ item.title }}</h4>

@@ -233,7 +233,7 @@ if (!empty($_GET['history'])) {
     $historyClass = 'courses-history';
 }
 $controller->tpl->assign('course_history_page', $historyClass);
-$controller->tpl->display_two_col_template();
+$controller->tpl->display_one_col_template();
 
 // Deleting the session_id.
 Session::erase('session_id');

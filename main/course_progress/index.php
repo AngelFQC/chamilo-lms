@@ -43,7 +43,8 @@ $actions = array(
     'thematic_advance_list',
     'thematic_advance_add',
     'thematic_advance_edit',
-    'thematic_advance_delete'
+    'thematic_advance_delete',
+    'export_single_thematic'
 );
 
 $action  = 'thematic_details';
@@ -230,6 +231,27 @@ if ($action == 'thematic_advance_add' || $action == 'thematic_advance_edit') {
     $interbreadcrumb[] = array ('url' => '#', 'name' => get_lang('NewThematicAdvance'));
 }
 
+if ($action == 'thematic_plan_list') {
+    $htmlHeadXtra[] = "
+        <script>
+            $(function () {
+                $('.btn-delete').on('click', function (e) {
+                    e.preventDefault();
+                    
+                    var id = $(this).data('id') || 0;
+                    
+                    if (!id) {
+                        return;
+                    }
+                    
+                    //$('[name=\"title[' + id + ']\"]').val('');
+                    CKEDITOR.instances['description[' + id + ']'].setData('');
+                });
+            });
+        </script>
+    ";
+}
+
 // Distpacher actions to controller
 switch ($action) {
     case 'thematic_add':
@@ -248,6 +270,7 @@ switch ($action) {
     case 'thematic_export':
     case 'thematic_export_pdf':
     case 'thematic_details':
+    case 'export_single_thematic':
         $thematic_controller->thematic($action);
         break;
     case 'thematic_plan_add':
