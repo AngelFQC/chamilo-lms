@@ -272,6 +272,7 @@ class Version111 extends AbstractMigrationChamilo
                 $this->addSql('ALTER TABLE ticket_message_attachments ENGINE=InnoDB');
                 $this->addSql('ALTER TABLE ticket_message_attachments DROP message_attch_id, CHANGE id id INT AUTO_INCREMENT NOT NULL, CHANGE message_id message_id INT DEFAULT NULL, CHANGE ticket_id ticket_id INT DEFAULT NULL, CHANGE filename filename LONGTEXT NOT NULL, CHANGE size size INT NOT NULL, CHANGE sys_insert_user_id sys_insert_user_id INT NOT NULL, CHANGE sys_insert_datetime sys_insert_datetime DATETIME NOT NULL, CHANGE sys_lastedit_user_id sys_lastedit_user_id INT DEFAULT NULL;');
                 $this->addSql('ALTER TABLE ticket_message_attachments ADD CONSTRAINT FK_70BF9E26700047D2 FOREIGN KEY (ticket_id) REFERENCES ticket_ticket (id);');
+                $this->addSql('ALTER TABLE ticket_message_attachments CHANGE COLUMN message_id message_id INT UNSIGNED;');
                 $this->addSql('ALTER TABLE ticket_message_attachments ADD CONSTRAINT FK_70BF9E26537A1329 FOREIGN KEY (message_id) REFERENCES ticket_message (id);');
                 $this->addSql('CREATE INDEX IDX_70BF9E26700047D2 ON ticket_message_attachments (ticket_id);');
             } else {
