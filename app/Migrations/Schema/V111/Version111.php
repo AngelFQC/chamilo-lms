@@ -169,7 +169,7 @@ class Version111 extends AbstractMigrationChamilo
             $this->addSql('DROP INDEX UN_ticket_code ON plugin_ticket_ticket;');
             $this->addSql('DROP INDEX FK_ticket_category ON plugin_ticket_ticket;');
             $this->addSql('ALTER TABLE plugin_ticket_ticket DROP PRIMARY KEY;');
-            $this->addSql('ALTER TABLE plugin_ticket_ticket ADD id INT, ADD code VARCHAR(255) NOT NULL, CHANGE project_id project_id INT DEFAULT NULL, CHANGE course_id course_id INT DEFAULT NULL, CHANGE session_id session_id INT DEFAULT NULL, CHANGE personal_email personal_email VARCHAR(255) NOT NULL, CHANGE assigned_last_user assigned_last_user INT DEFAULT NULL, CHANGE status_id status_id INT DEFAULT NULL, CHANGE total_messages total_messages INT NOT NULL, CHANGE keyword keyword VARCHAR(255) DEFAULT NULL, CHANGE source source VARCHAR(255) DEFAULT NULL, CHANGE start_date start_date DATETIME DEFAULT NULL, CHANGE sys_insert_user_id sys_insert_user_id INT NOT NULL, CHANGE sys_insert_datetime sys_insert_datetime DATETIME NOT NULL, CHANGE sys_lastedit_user_id sys_lastedit_user_id INT DEFAULT NULL, CHANGE subject subject VARCHAR(255) NOT NULL, CHANGE message message LONGTEXT DEFAULT NULL;');
+            $this->addSql('ALTER TABLE plugin_ticket_ticket ADD id INT, ADD code VARCHAR(255) NOT NULL, CHANGE project_id project_id INT DEFAULT NULL, CHANGE course_id course_id INT DEFAULT NULL, CHANGE session_id session_id INT DEFAULT NULL, CHANGE personal_email personal_email VARCHAR(255) NOT NULL, CHANGE assigned_last_user assigned_last_user INT DEFAULT NULL, CHANGE total_messages total_messages INT NOT NULL, CHANGE keyword keyword VARCHAR(255) DEFAULT NULL, CHANGE source source VARCHAR(255) DEFAULT NULL, CHANGE start_date start_date DATETIME DEFAULT NULL, CHANGE sys_insert_user_id sys_insert_user_id INT NOT NULL, CHANGE sys_insert_datetime sys_insert_datetime DATETIME NOT NULL, CHANGE sys_lastedit_user_id sys_lastedit_user_id INT DEFAULT NULL, CHANGE subject subject VARCHAR(255) NOT NULL, CHANGE message message LONGTEXT DEFAULT NULL;');
 
             $this->addSql('UPDATE plugin_ticket_ticket SET code = ticket_code');
             $this->addSql('UPDATE plugin_ticket_ticket SET id = ticket_id');
@@ -296,6 +296,7 @@ class Version111 extends AbstractMigrationChamilo
             $this->addSql('UPDATE ticket_ticket t SET priority_id = (SELECT id FROM ticket_priority t2 WHERE t2.code = t.priority_id)');
             $this->addSql('ALTER TABLE ticket_ticket CHANGE priority_id priority_id INT DEFAULT NULL');
             $this->addSql('UPDATE ticket_ticket t SET status_id = (SELECT id FROM ticket_status t2 WHERE t2.code = t.status_id)');
+            $this->addSql('ALTER TABLE ticket_ticket CHANGE status_id status_id INT DEFAULT NULL;');
             $this->addSql('ALTER TABLE ticket_ticket ADD CONSTRAINT FK_EDE2C768497B19F9 FOREIGN KEY (priority_id) REFERENCES ticket_priority (id);');
             $this->addSql('UPDATE ticket_ticket SET project_id = 1 WHERE project_id is NULL or project_id = 0');
             $this->addSql('ALTER TABLE ticket_ticket ADD CONSTRAINT FK_EDE2C768166D1F9C FOREIGN KEY (project_id) REFERENCES ticket_project (id);');
