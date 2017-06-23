@@ -12,6 +12,7 @@ if ($activeDirectoryPlugin->get(AzureActiveDirectory::SETTING_ENABLE) === 'true'
     $signUp = $activeDirectoryPlugin->get(AzureActiveDirectory::SETTING_SIGNIN_POLICY);
     $signIn = $activeDirectoryPlugin->get(AzureActiveDirectory::SETTING_SIGNUP_POLICY);
     $signUnified = $activeDirectoryPlugin->get(AzureActiveDirectory::SETTING_SIGNUNIFIED_POLICY);
+    $samlSignIn = $activeDirectoryPlugin->get(AzureActiveDirectory::SETTING_SAML_SIGNIN);
 
     $_template['block_title'] = $activeDirectoryPlugin->get(AzureActiveDirectory::SETTING_BLOCK_NAME);
 
@@ -25,6 +26,10 @@ if ($activeDirectoryPlugin->get(AzureActiveDirectory::SETTING_ENABLE) === 'true'
 
     if ($signUnified) {
         $_template['signunified_url'] = $activeDirectoryPlugin->getUrl(AzureActiveDirectory::URL_TYPE_SIGNUNIFIED);
+    }
+
+    if ($samlSignIn) {
+        $_template['saml_singin_url'] = $samlSignIn;
     }
 
     $_template['signout_url'] = $activeDirectoryPlugin->getUrl(AzureActiveDirectory::URL_TYPE_SIGNOUT);

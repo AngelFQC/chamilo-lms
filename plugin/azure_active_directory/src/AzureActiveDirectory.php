@@ -13,6 +13,8 @@ class AzureActiveDirectory extends Plugin
     const SETTING_SIGNIN_POLICY = 'signin_policy';
     const SETTING_SIGNUNIFIED_POLICY = 'signunified_policy';
     const SETTING_BLOCK_NAME = 'block_name';
+    const SETTING_SAML_SIGNIN = 'saml_signin_url';
+    const SETTING_SAML_SIGNOUT = 'saml_signout_url';
     const URL_TYPE_SIGNUP = 'sign-up';
     const URL_TYPE_SIGNIN = 'sign-in';
     const URL_TYPE_SIGNUNIFIED = 'sign-unified';
@@ -25,12 +27,14 @@ class AzureActiveDirectory extends Plugin
     {
         $settings = [
             self::SETTING_ENABLE => 'boolean',
+            self::SETTING_BLOCK_NAME => 'text',
             self::SETTING_APP_ID => 'text',
             self::SETTING_TENANT => 'text',
             self::SETTING_SIGNUP_POLICY => 'text',
             self::SETTING_SIGNIN_POLICY => 'text',
             self::SETTING_SIGNUNIFIED_POLICY => 'text',
-            self::SETTING_BLOCK_NAME => 'text'
+            self::SETTING_SAML_SIGNIN => 'text',
+            self::SETTING_SAML_SIGNOUT => 'text'
         ];
 
         parent::__construct('1.1', 'Angel Fernando Quiroz Campos', $settings);

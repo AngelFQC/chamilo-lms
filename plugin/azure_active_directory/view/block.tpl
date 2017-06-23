@@ -15,5 +15,13 @@
         {% if not azure_active_directory.signunified_url is empty %}
             <a href="{{ azure_active_directory.signunified_url }}" class="btn btn-info">{{ 'SignUpAndSignIn'|get_plugin_lang('AzureActiveDirectory') }}</a>
         {% endif %}
+
+        {% if not azure_active_directory.saml_singin_url is empty %}
+            <p>
+                <a class="btn btn-info btn-sm" href="{{ _p.web_plugin }}azure_active_directory/saml.php">
+                    SAML Provider
+                </a>
+            </p>
+        {% endif %}
     </div>
 {% endif %}

@@ -20,4 +20,7 @@ $strings['signin_policy_help'] = 'Enter your sign in policy name, e.g. b2c_1_sig
 $strings['signunified_policy'] = 'Unified sign in and sign up policy';
 $strings['signunified_policy_help'] = 'Enter your name of unified sign in and sign up policy, e.g. b2c_1_sign_unified';
 $strings['block_name'] = 'Block name';
+$strings['saml_signin_url'] = 'SAML Sign-In Url';
+$strings['saml_signout_url'] = 'SAML Sign-Out Url';
+
 $strings['SignUpAndSignIn'] = 'Sign up and sign in';
