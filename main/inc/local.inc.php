@@ -2,6 +2,7 @@
 /* For licensing terms, see /license.txt */
 
 use ChamiloSession as Session;
+use Chamilo\CoreBundle\Component\Utils\ChamiloApi;
 
 /**
  *
@@ -131,12 +132,31 @@ if (isset($_SESSION['conditional_login']['uid']) && $_SESSION['conditional_login
     Session::write('_user', $_user);
     Session::erase('conditional_login');
     $uidReset = true;
-    Event::event_login($_user['user_id']);
+    Event::eventLogin($_user['user_id']);
 }
 
 // parameters passed via GET
 $logout = isset($_GET["logout"]) ? $_GET["logout"] : '';
 $gidReq = isset($_GET["gidReq"]) ? intval($_GET["gidReq"]) : '';
+
+// Keep a trace of the course and session from which we are getting out, to
+// enable proper course logout tracking in courseLogout()
+$logoutInfo = [];
+if (!empty($logout) || !empty($cidReset)) {
+    $uid = 0;
+    if (!empty($_SESSION['_user']) && !empty($_SESSION['_user']['user_id'])) {
+        $uid = $_SESSION['_user']['user_id'];
+    }
+    $cid = 0;
+    if (!empty($_SESSION['_cid'])) {
+        $cid = api_get_course_int_id($_SESSION['_cid']);
+    }
+    $logoutInfo = [
+        'uid' => $uid,
+        'cid' => $cid,
+        'sid' => api_get_session_id()
+    ];
+}
 
 //this fixes some problems with generic functionalities like
 //My Agenda & What's New icons linking to courses
@@ -257,7 +277,6 @@ if (!empty($_SESSION['_user']['user_id']) && !($login || $logout)) {
     }
 
     if ((isset($_POST['login']) && isset($_POST['password'])) || ($cas_login)) {
-
         // $login && $password are given to log in
         if ($cas_login && empty($_POST['login'])) {
             $login = $cas_login;
@@ -386,7 +405,7 @@ if (!empty($_SESSION['_user']['user_id']) && !($login || $logout)) {
                                         $_user['user_id'] = $uData['user_id'];
                                         $_user['status'] = $uData['status'];
                                         Session::write('_user', $_user);
-                                        Event::event_login($_user['user_id']);
+                                        Event::eventLogin($_user['user_id']);
                                         $logging_in = true;
                                     } else {
                                         $loginFailed = true;
@@ -399,6 +418,7 @@ if (!empty($_SESSION['_user']['user_id']) && !($login || $logout)) {
                                             .'index.php?loginFailed=1&error=access_url_inactive';
                                         if ($cas_login) {
                                             cas_logout(null, $location);
+                                            Event::courseLogout($logoutInfo);
                                         } else {
                                             header('Location: '.$location);
                                         }
@@ -412,7 +432,7 @@ if (!empty($_SESSION['_user']['user_id']) && !($login || $logout)) {
                                         $_user['user_id'] = $uData['user_id'];
                                         $_user['status']  = $uData['status'];
                                         Session::write('_user', $_user);
-                                        Event::event_login($_user['user_id']);
+                                        Event::eventLogin($_user['user_id']);
                                         $logging_in = true;
                                     } else {
                                         //This means a secondary admin wants to login so we check as he's a normal user
@@ -420,7 +440,7 @@ if (!empty($_SESSION['_user']['user_id']) && !($login || $logout)) {
                                             $_user['user_id'] = $uData['user_id'];
                                             $_user['status']  = $uData['status'];
                                             Session::write('_user', $_user);
-                                            Event::event_login($_user['user_id']);
+                                            Event::eventLogin($_user['user_id']);
                                             $logging_in = true;
                                         } else {
                                             $loginFailed = true;
@@ -440,7 +460,7 @@ if (!empty($_SESSION['_user']['user_id']) && !($login || $logout)) {
                                 $_user['status'] = $uData['status'];
 
                                 Session::write('_user', $_user);
-                                Event::event_login($uData['user_id']);
+                                Event::eventLogin($uData['user_id']);
                                 $logging_in = true;
 
                             }
@@ -631,6 +651,7 @@ if (!empty($_SESSION['_user']['user_id']) && !($login || $logout)) {
             if ($logout) {
                 // Make custom redirect after logout
                 online_logout($_SESSION['_user']['user_id'], false);
+                Event::courseLogout($logoutInfo);
                 $osso->logout(); //redirects and exits
             }
         } elseif (!$logout) {
@@ -702,6 +723,7 @@ if (!empty($_SESSION['_user']['user_id']) && !($login || $logout)) {
             //if there was an attempted logout without a previous login, log
             // this anonymous user out as well but avoid redirect
             online_logout(null, false);
+            Event::courseLogout($logoutInfo);
             $osso->logout(); //redirects and exits
         }
     } elseif (api_get_setting('openid_authentication') == 'true') {
@@ -742,7 +764,7 @@ if (!empty($_SESSION['_user']['user_id']) && !($login || $logout)) {
                                     $_user['status'] = $uData['status'];
 
                                     Session::write('_user', $_user);
-                                    Event::event_login($_user['user_id']);
+                                    Event::eventLogin($_user['user_id']);
                                 } else {
                                     $loginFailed = true;
                                     Session::erase('_uid');
@@ -882,53 +904,8 @@ if (!isset($_SESSION['login_as'])) {
         // Disables the updates in the TRACK_E_COURSE_ACCESS table
         if (isset($_dont_save_user_course_access) && $_dont_save_user_course_access == true) {
             $save_course_access = false;
-        }
-
-        if ($save_course_access) {
-            $course_tracking_table = Database::get_main_table(TABLE_STATISTIC_TRACK_E_COURSE_ACCESS);
-            /*
-            * When $_configuration['session_lifetime'] is too big 100 hours (in order to let users take exercises with no problems)
-            * the function Tracking::get_time_spent_on_the_course() returns big values (200h) due the condition:
-            * login_course_date > now() - INTERVAL $session_lifetime SECOND
-            *
-            */
-            /*
-            if (isset($_configuration['session_lifetime'])) {
-                $session_lifetime    = $_configuration['session_lifetime'];
-            } else {
-                $session_lifetime    = 3600; // 1 hour
-            }*/
-
-            $session_lifetime = 3600; // 1 hour
-            $time = api_get_utc_datetime();
-            if (isset($_user['user_id']) && !empty($_user['user_id'])) {
-                //We select the last record for the current course in the course tracking table
-                //But only if the login date is < than now + max_life_time
-                $sql = "SELECT course_access_id
-                        FROM $course_tracking_table
-                        WHERE
-                            user_id = ".intval($_user['user_id'])." AND
-                            c_id = ".$_course['real_id']."  AND
-                            session_id  = ".api_get_session_id()." AND
-                            login_course_date > '$time' - INTERVAL $session_lifetime SECOND
-                        ORDER BY login_course_date DESC LIMIT 0,1";
-                $result = Database::query($sql);
-                if (Database::num_rows($result) > 0) {
-                    $i_course_access_id = Database::result($result, 0, 0);
-                    // We update the course tracking table
-                    $sql = "UPDATE $course_tracking_table  
-                            SET logout_course_date = '$time', counter = counter+1
-                            WHERE 
-                                course_access_id = ".intval($i_course_access_id)." AND 
-                                session_id = ".api_get_session_id();
-                    Database::query($sql);
-                } else {
-                    $ip = api_get_real_ip();
-                    $sql = "INSERT INTO $course_tracking_table (c_id, user_ip, user_id, login_course_date, logout_course_date, counter, session_id)
-                            VALUES('".$_course['real_id']."', '".$ip."', '".$_user['user_id']."', '$time', '$time', '1','".api_get_session_id()."')";
-                    Database::query($sql);
-                }
-            }
+        } else {
+            Event::courseLogout($logoutInfo);
         }
     }
 }
@@ -980,7 +957,7 @@ if (isset($cidReset) && $cidReset) {
             if (!isset($_SESSION['login_as'])) {
                 //Course login
                 if (isset($_user['user_id'])) {
-                    Event::event_course_login(
+                    Event::eventCourseLogin(
                         api_get_course_int_id(),
                         api_get_user_id(),
                         api_get_session_id()
@@ -992,6 +969,8 @@ if (isset($cidReset) && $cidReset) {
             header('location:'.api_get_path(WEB_PATH));
         }
     } else {
+        // Leave a logout time in the track_e_course_access table if we were in a course
+        Event::courseLogout($logoutInfo);
         Session::erase('_cid');
         Session::erase('_real_cid');
         Session::erase('_course');
@@ -1037,7 +1016,7 @@ if (isset($cidReset) && $cidReset) {
         }
     }
 
-    if (empty($_SESSION['_course']) or empty($_SESSION['_cid'])) { //no previous values...
+    if (empty($_SESSION['_course']) || empty($_SESSION['_cid'])) { //no previous values...
         $_cid = -1; // Set default values
         $_course = -1;
     } else {
@@ -1171,9 +1150,20 @@ if ((isset($uidReset) && $uidReset) || (isset($cidReset) && $cidReset)) {
                         );
                     }
                 }
-                $url = api_get_path(WEB_CODE_PATH).'auth/inscription.php';
-                header("Location:".$url);
-                exit;
+
+                $redirect = true;
+                $allow = api_get_configuration_value('allow_public_course_with_no_terms_conditions');
+                if ($allow === true &&
+                    isset($_course['visibility']) &&
+                    $_course['visibility'] == COURSE_VISIBILITY_OPEN_WORLD
+                ) {
+                    $redirect = false;
+                }
+                if ($redirect) {
+                    $url = api_get_path(WEB_CODE_PATH).'auth/inscription.php';
+                    header("Location:".$url);
+                    exit;
+                }
             }
         }
     }
@@ -1227,7 +1217,7 @@ if ((isset($uidReset) && $uidReset) || (isset($cidReset) && $cidReset)) {
                     $is_courseMember     = false;
                     $is_courseTutor      = false;
                     $is_courseAdmin      = false;
-                    $is_session_general_coach      = false;
+                    $is_session_general_coach = false;
                     $is_sessionAdmin     = true;
                 } else {
                     // Am I a session coach for this session?
@@ -1527,5 +1517,14 @@ if ((isset($cas_login) && $cas_login && exist_firstpage_parameter()) ||
     }
 }
 
+Event::eventCourseLoginUpdate(
+    api_get_course_int_id(),
+    api_get_user_id(),
+    api_get_session_id()
+);
+
 Redirect::session_request_uri($logging_in, $user_id);
 
+if (!ChamiloApi::isAjaxRequest() && api_get_configuration_value('allow_mandatory_survey')) {
+    SurveyManager::protectByMandatory();
+}

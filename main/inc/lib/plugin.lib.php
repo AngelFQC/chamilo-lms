@@ -1,6 +1,8 @@
 <?php
 /* See license terms in /license.txt */
 
+use ChamiloSession as Session;
+
 /**
  * Class AppPlugin
  */
@@ -158,9 +160,9 @@ class AppPlugin
             'setting',
             'Plugins',
             $pluginName,
-            null,
-            null,
-            null,
+            '',
+            '',
+            '',
             $urlId,
             1
         );
@@ -255,7 +257,7 @@ class AppPlugin
 
     /**
      * @param string $region
-     * @param string $template
+     * @param Template $template
      * @param bool   $forced
      *
      * @return null|string
@@ -348,7 +350,6 @@ class AppPlugin
         if (isset($_plugins[$region]) && is_array($_plugins[$region])) {
             // Load the plugin information
             foreach ($_plugins[$region] as $plugin_name) {
-
                 // The plugin_info variable is available inside the plugin index
                 $plugin_info = $this->getPluginInfo($plugin_name, $forced);
 
@@ -359,7 +360,6 @@ class AppPlugin
                 $plugin_file = api_get_path(SYS_PLUGIN_PATH)."$plugin_name/index.php";
 
                 if (file_exists($plugin_file)) {
-
                     //Loading the lang variables of the plugin if exists
                     self::load_plugin_lang_variables($plugin_name);
 
@@ -410,33 +410,43 @@ class AppPlugin
      */
     public function getPluginInfo($plugin_name, $forced = false)
     {
-        static $plugin_data = array();
+        $pluginData = Session::read('plugin_data');
 
-        if (isset($plugin_data[$plugin_name]) && $forced == false) {
-            return $plugin_data[$plugin_name];
+        if (isset($pluginData[$plugin_name]) && $forced == false) {
+            return $pluginData[$plugin_name];
         } else {
             $plugin_file = api_get_path(SYS_PLUGIN_PATH)."$plugin_name/plugin.php";
 
             $plugin_info = array();
             if (file_exists($plugin_file)) {
-
                 require $plugin_file;
             }
 
+            // @todo check if settings are already added
             // Extra options
             $plugin_settings = api_get_settings_params(
                 array(
-                    "subkey = ? AND category = ? AND type = ? " => array($plugin_name, 'Plugins', 'setting')
+                    "subkey = ? AND category = ? AND type = ? AND access_url = ?" => array(
+                        $plugin_name,
+                        'Plugins',
+                        'setting',
+                        api_get_current_access_url_id()
+                    )
                 )
             );
 
             $settings_filtered = array();
             foreach ($plugin_settings as $item) {
+                if (!empty($item['selected_value'])) {
+                    if (@unserialize($item['selected_value']) !== false) {
+                        $item['selected_value'] = unserialize($item['selected_value']);
+                    }
+                }
                 $settings_filtered[$item['variable']] = $item['selected_value'];
             }
             $plugin_info['settings'] = $settings_filtered;
-            $plugin_data[$plugin_name] = $plugin_info;
-
+            $pluginData[$plugin_name] = $plugin_info;
+            Session::write('plugin_data', $pluginData);
             return $plugin_info;
         }
     }
@@ -479,7 +489,6 @@ class AppPlugin
      */
     public function add_to_region($plugin, $region)
     {
-        $access_url_id = api_get_current_access_url_id();
         api_add_setting(
             $plugin,
             $region,
@@ -487,10 +496,10 @@ class AppPlugin
             'region',
             'Plugins',
             $plugin,
-            null,
-            null,
-            null,
-            $access_url_id,
+            '',
+            '',
+            '',
+            api_get_current_access_url_id(),
             1
         );
     }

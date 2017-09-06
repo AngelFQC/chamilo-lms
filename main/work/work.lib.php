@@ -24,8 +24,6 @@ use Chamilo\CourseBundle\Entity\CStudentPublication;
  */
 function display_action_links($id, $cur_dir_path, $action)
 {
-    global $gradebook;
-
     $id = $my_back_id = intval($id);
     if ($action == 'list') {
         $my_back_id = 0;
@@ -35,26 +33,47 @@ function display_action_links($id, $cur_dir_path, $action)
     $origin = api_get_origin();
 
     if (!empty($id)) {
-        $display_output .= '<a href="'.api_get_self().'?'.api_get_cidreq().'&gradebook='.$gradebook.'&id='.$my_back_id.'">'.
+        $display_output .= '<a href="'.api_get_self().'?'.api_get_cidreq().'&id='.$my_back_id.'">'.
             Display::return_icon('back.png', get_lang('BackToWorksList'), '', ICON_SIZE_MEDIUM).'</a>';
     }
 
     if (api_is_allowed_to_edit(null, true) && $origin != 'learnpath') {
         // Create dir
         if (empty($id)) {
-            $display_output .= '<a href="'.api_get_self().'?'.api_get_cidreq().'&action=create_dir&gradebook='.$gradebook.'">';
-            $display_output .= Display::return_icon('new_work.png', get_lang('CreateAssignment'), '', ICON_SIZE_MEDIUM).'</a>';
+            $display_output .= '<a href="'.api_get_self().'?'.api_get_cidreq().'&action=create_dir">';
+            $display_output .= Display::return_icon(
+                'new_work.png',
+                get_lang('CreateAssignment'),
+                '',
+                ICON_SIZE_MEDIUM
+            ).
+            '</a>';
         }
         if (empty($id)) {
             // Options
-            $display_output .= '<a href="'.api_get_self().'?'.api_get_cidreq().'&action=settings&gradebook='.$gradebook.'">';
-            $display_output .= Display::return_icon('settings.png', get_lang('EditToolOptions'), '', ICON_SIZE_MEDIUM).'</a>';
+            $display_output .= '<a href="'.api_get_self().'?'.api_get_cidreq().'&action=settings">';
+            $display_output .= Display::return_icon(
+                'settings.png',
+                get_lang('EditToolOptions'),
+                '',
+                ICON_SIZE_MEDIUM
+            ).'</a>';
         }
-        $display_output .= '<a id="open-view-list" href="#">'.Display::return_icon('listwork.png', get_lang('ViewStudents'), '', ICON_SIZE_MEDIUM).'</a>';
+        $display_output .= '<a id="open-view-list" href="#">'.
+        Display::return_icon(
+            'listwork.png',
+            get_lang('ViewStudents'),
+            '',
+            ICON_SIZE_MEDIUM
+        ).
+        '</a>';
 
     }
 
-    if (api_is_allowed_to_edit(null, true) && $origin != 'learnpath' && api_is_allowed_to_session_edit(false, true)) {
+    if (api_is_allowed_to_edit(null, true) &&
+        $origin != 'learnpath' &&
+        api_is_allowed_to_session_edit(false, true)
+    ) {
         // Delete all files
         if (api_get_setting('permanently_remove_deleted_files') == 'true') {
             $message = get_lang('ConfirmYourChoiceDeleteAllfiles');
@@ -1587,6 +1606,7 @@ function getWorkListTeacher(
 
             return $row['count'];
         }
+
         $url = api_get_path(WEB_CODE_PATH).'work/work_list_all.php?'.api_get_cidreq();
         while ($work = Database::fetch_array($result, 'ASSOC')) {
             $workId = $work['id'];
@@ -2368,6 +2388,54 @@ function send_reminder_users_without_publication($task_data)
 }
 
 /**
+ * @param int $courseId The course ID
+ * @param int $workId The work ID
+ * @param int $sessionId Optional. The session ID
+ */
+function sendEmailToDrhOnHomeworkCreation($courseId, $workId, $sessionId = 0)
+{
+    $courseInfo = api_get_course_info_by_id($courseId);
+    $assignment = get_work_assignment_by_id($workId, $courseId);
+    $work = get_work_data_by_id($workId, $courseId, $sessionId);
+    $workInfo = array_merge($assignment, $work);
+
+    if (empty($session_id)) {
+        $students = CourseManager::get_student_list_from_course_code($courseInfo['code']);
+    } else {
+        $students = CourseManager::get_student_list_from_course_code($courseInfo['code'], true, $sessionId);
+    }
+
+    $bodyView = new Template(null, false, false, false, false, false);
+
+    foreach ($students as $student) {
+        $student['complete_name'] = api_get_person_name($student["firstname"], $student["lastname"]);
+        $hrms = UserManager::getDrhListFromUser($student['id']);
+
+        foreach ($hrms as $hrm) {
+            $hrmName = api_get_person_name($hrm['firstname'], $hrm['lastname'], null, PERSON_NAME_EMAIL_ADDRESS);
+
+            $bodyView->assign('hrm_name', $hrmName);
+            $bodyView->assign('student', $student);
+            $bodyView->assign('course', $courseInfo);
+            $bodyView->assign('course_link', api_get_course_url($courseInfo['code'], $sessionId));
+            $bodyView->assign('work', $workInfo);
+
+            $bodyTemplate = $bodyView->get_template('mail/new_work_alert_hrm.tpl');
+
+            MessageManager::send_message(
+                $hrm['id'],
+                sprintf(
+                    get_lang('StudentXHasBeenAssignedNewWorkInCourseY'),
+                    $student['firstname'],
+                    $courseInfo['title']
+                ),
+                $bodyView->fetch($bodyTemplate)
+            );
+        }
+    }
+}
+
+/**
  * Sends an email to the students of a course when a homework is created
  *
  * @param int $courseId course_id
@@ -2378,7 +2446,7 @@ function send_reminder_users_without_publication($task_data)
  * @author Guillaume Viguier <guillaume.viguier@beeznest.com>
  * @author Julio Montoya <gugli100@gmail.com> Adding session support - 2011
  */
-function send_email_on_homework_creation($courseId, $sessionId = 0, $workId)
+function sendEmailToStudentsOnHomeworkCreation($courseId, $sessionId = 0, $workId)
 {
     $courseInfo = api_get_course_info_by_id($courseId);
     $courseCode = $courseInfo['code'];
@@ -3252,16 +3320,25 @@ function formatWorkScore($score, $weight)
     if (!empty($weight)) {
         $relativeScore = $score / $weight;
     }
+
     if ($relativeScore < 0.5) {
         $label = 'important';
     } elseif ($relativeScore < 0.75) {
         $label = 'warning';
     }
 
-    return Display::label(
-    api_number_format($score, 1).' / '.$weight,
-        $label
-    );
+    $scoreBasedInModel = ExerciseLib::convertScoreToModel($relativeScore*100);
+    if (empty($scoreBasedInModel)) {
+        $finalScore = api_number_format($score, 1).' / '.$weight;
+
+        return Display::label(
+            $finalScore,
+            $label
+        );
+    } else {
+        $finalScore = $scoreBasedInModel;
+        return $finalScore;
+    }
 }
 
 /**
@@ -3451,15 +3528,26 @@ function getWorkCommentForm($work, $workParent)
 
     if (api_is_allowed_to_edit()) {
         if (!empty($qualification) && intval($qualification) > 0) {
-            $form->addFloat(
-                'qualification',
-                array(get_lang('Qualification'), " / ".$qualification),
-                false,
-                [],
-                false,
-                0,
-                $qualification
-            );
+            $model = ExerciseLib::getCourseScoreModel();
+            if (empty($model)) {
+                $form->addFloat(
+                    'qualification',
+                    array(get_lang('Qualification'), " / ".$qualification),
+                    false,
+                    [],
+                    false,
+                    0,
+                    $qualification
+                );
+            } else {
+                ExerciseLib::addScoreModelInput(
+                    $form,
+                    'qualification',
+                    $qualification,
+                    $work['qualification']
+                );
+            }
+
 
             $form->addFile('file', get_lang('Correction'));
             $form->setDefaults(['qualification' => $work['qualification']]);
@@ -4060,12 +4148,13 @@ function addDir($formValues, $user_id, $courseInfo, $groupId, $session_id)
 
     $dirName = '/'.$created_dir;
     $today = new DateTime(api_get_utc_datetime(), new DateTimeZone('UTC'));
+    $title = isset($formValues['work_title']) ? $formValues['work_title'] : $formValues['new_dir'];
 
     $workTable = new CStudentPublication();
     $workTable
         ->setCId($course_id)
         ->setUrl($dirName)
-        ->setTitle($formValues['new_dir'])
+        ->setTitle($title)
         ->setDescription($formValues['description'])
         ->setActive(true)
         ->setAccepted(true)
@@ -4113,12 +4202,23 @@ function addDir($formValues, $user_id, $courseInfo, $groupId, $session_id)
     $workFieldValue = new ExtraFieldValue('work');
     $workFieldValue->saveFieldValues($formValues);
 
-    if (api_get_course_setting('email_alert_students_on_new_homework') == 1) {
-        send_email_on_homework_creation(
-            $course_id,
-            $session ? $session->getId() : 0,
-            $workTable->getIid()
-        );
+    $sendEmailAlert = api_get_course_setting('email_alert_students_on_new_homework');
+
+    switch ($sendEmailAlert) {
+        case 1:
+            sendEmailToStudentsOnHomeworkCreation(
+                $course_id,
+                $session ? $session->getId() : 0,
+                $workTable->getIid()
+            );
+            //no break
+        case 2:
+            sendEmailToDrhOnHomeworkCreation(
+                $course_id,
+                $workTable->getIid(),
+                $session ? $session->getId() : 0
+            );
+            break;
     }
 
     return $workTable->getIid();
@@ -4341,7 +4441,7 @@ function updatePublicationAssignment($workId, $params, $courseInfo, $groupId)
                     api_get_session_id()
                 );
             } else {
-                GradebookUtils::update_resource_from_course_gradebook(
+                GradebookUtils::updateResourceFromCourseGradebook(
                     $linkId,
                     $courseInfo['code'],
                     $params['weight']
@@ -4587,7 +4687,7 @@ function getFormWork($form, $defaults = array(), $workId = 0)
         $form->addHtml('<div id="option2" style="display: none;">');
     }
 
-    $timeNextWeek = time()+86400*7;
+    $timeNextWeek = time() + 86400 * 7;
     $nextWeek = substr(api_get_local_time($timeNextWeek), 0, 10);
     if (!isset($defaults['expires_on'])) {
         $date = substr($nextWeek, 0, 10);
@@ -4599,7 +4699,7 @@ function getFormWork($form, $defaults = array(), $workId = 0)
     $form->addElement('checkbox', 'enableEndDate', null, get_lang('EnableEndDate'), 'id="end_date"');
 
     if (!isset($defaults['ends_on'])) {
-        $nextDay = substr(api_get_local_time($timeNextWeek+86400), 0, 10);
+        $nextDay = substr(api_get_local_time($timeNextWeek + 86400), 0, 10);
         $date = substr($nextDay, 0, 10);
         $defaults['ends_on'] = $date.' 23:59';
     }

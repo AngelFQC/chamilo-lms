@@ -4,7 +4,7 @@ namespace Shibboleth;
 
 use ChamiloSession as Session;
 use Database;
-
+use Event;
 
 /**
  * A Chamilo user session. Used as there is no session object so far provided by the core API.
@@ -15,7 +15,6 @@ use Database;
  */
 class ShibbolethSession
 {
-
     /**
      * @return ShibbolethSession
      */
@@ -42,6 +41,8 @@ class ShibbolethSession
     {
         $_SESSION['_user'] = array();
         online_logout(null, false);
+        global $logoutInfo;
+        Event::courseLogout($logoutInfo);
     }
 
     /**
@@ -78,7 +79,7 @@ class ShibbolethSession
         $_SESSION['noredirection'] = true;
 
         //must be called before 'init_local.inc.php'
-        Event::event_login($_uid);
+        Event::eventLogin($_uid);
 
         //used in 'init_local.inc.php' this is BAD but and should be changed
         $loginFailed = false;

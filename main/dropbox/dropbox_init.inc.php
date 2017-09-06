@@ -103,13 +103,13 @@ Version 1.4 (Yannick Warnier)
  * @author René Haentjens, severalcontributions <rene.haentjens@UGent.be>
  * @author Roan Embrechts, virtual course support
  * @author Patrick Cool <patrick.cool@UGent.be>
- 				Chamilo Config Settings (AWACS)
- 				Refactoring
- 				tool introduction
- 				folders
- 				download file / folder (download icon)
- 				same action on multiple documents
- 				extended feedback
+ * Chamilo Config Settings (AWACS)
+ * Refactoring
+ * tool introduction
+ * folders
+ * download file / folder (download icon)
+ * same action on multiple documents
+ * extended feedback
  * @package chamilo.dropbox
  */
 
@@ -311,7 +311,9 @@ if (($postAction == 'download_received' || $postAction == 'download_sent') and !
  * Prevents access of all users that are not course members
  */
 
-if ((!$is_allowed_in_course || !$is_course_member) && !api_is_allowed_to_edit(null, true)) {
+if ((!$is_allowed_in_course || !$is_course_member) &&
+    !api_is_allowed_to_edit(null, true)
+) {
     if ($origin != 'learnpath') {
         api_not_allowed(true); //print headers/footers
     } else {
@@ -326,15 +328,15 @@ if ($view == 'received') {
         'url' => api_get_path(WEB_CODE_PATH).'dropbox/index.php?'.api_get_cidreq(),
         'name' => get_lang('Dropbox', ''),
     );
-	$nameTools = get_lang('ReceivedFiles');
+    $nameTools = get_lang('ReceivedFiles');
 
-	if ($action == 'addreceivedcategory') {
+    if ($action == 'addreceivedcategory') {
         $interbreadcrumb[] = array(
             'url' => api_get_path(WEB_CODE_PATH).'dropbox/index.php?view=received&'.api_get_cidreq(),
             'name' => get_lang('ReceivedFiles'),
         );
-		$nameTools = get_lang('AddNewCategory');
-	}
+        $nameTools = get_lang('AddNewCategory');
+    }
 }
 
 if ($view == 'sent' || empty($view)) {
@@ -369,7 +371,6 @@ if ($view == 'sent' || empty($view)) {
 }
 
 /*	HEADER & TITLE */
-
 if (isset($origin) && $origin == 'learnpath') {
     $htmlHeadXtra[] = $javascript;
     Display::display_reduced_header($nameTools, 'Dropbox');

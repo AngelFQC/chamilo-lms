@@ -52,7 +52,6 @@ $(document).ready(function() {
 
 </script>';
 
-$_SESSION['whereami'] = 'document/create';
 $this_section = SECTION_COURSES;
 $lib_path = api_get_path(LIBRARY_PATH);
 
@@ -164,7 +163,10 @@ if (!$is_certificate_mode) {
         "name" => get_lang('Documents'),
     );
 } else {
-    $interbreadcrumb[] = array('url' => '../gradebook/'.$_SESSION['gradebook_dest'], 'name' => get_lang('Gradebook'));
+    $interbreadcrumb[] = array(
+        'url' => Category::getUrl(),
+        'name' => get_lang('Gradebook')
+    );
 }
 
 if (empty($document_data['parents'])) {
@@ -325,8 +327,6 @@ if (file_exists($document_data['absolute_path'])) {
     }
 }
 
-/*	Display user interface */
-
 // Display the header
 $nameTools = get_lang('EditDocument').': '.Security::remove_XSS($document_data['title']);
 Display::display_header($nameTools, 'Doc');
@@ -363,7 +363,13 @@ if ($owner_id == api_get_user_id() ||
     if ($is_certificate_mode) {
         $action .= '&curdirpath=/certificates&selectcat=1';
     }
-    $form = new FormValidator('formEdit', 'post', $action, null, array('class' => 'form-vertical'));
+    $form = new FormValidator(
+        'formEdit',
+        'post',
+        $action,
+        null,
+        array('class' => 'form-vertical')
+    );
 
     // Form title
     $form->addElement('header', $nameTools);
@@ -374,7 +380,12 @@ if ($owner_id == api_get_user_id() ||
     $form->addElement('hidden', 'showedit');
     $form->addElement('hidden', 'origin');
     $form->addElement('hidden', 'origin_opt');
-    $form->addText('title', get_lang('Title'), true, array('cols-size' => [2, 10, 0], 'autofocus'));
+    $form->addText(
+        'title',
+        get_lang('Title'),
+        true,
+        array('cols-size' => [2, 10, 0], 'autofocus')
+    );
 
     $defaults['title'] = $document_data['title'];
 

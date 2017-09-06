@@ -184,7 +184,7 @@ class Template
 
         // Setting administrator variables
         $this->setAdministratorParams();
-        $this->setCSSEditor();
+        //$this->setCSSEditor();
 
         // Header and footer are showed by default
         $this->set_footer($show_footer);
@@ -201,6 +201,11 @@ class Template
         $this->assign('template', $this->templateFolder);
         $this->assign('locale', api_get_language_isocode());
         $this->assign('login_class', null);
+
+        $allow = api_get_configuration_value('show_language_selector_in_menu');
+        if ($allow) {
+            $this->assign('language_form', api_display_language_form());
+        }
 
         $this->setLoginForm();
 
@@ -441,12 +446,22 @@ class Template
     }
 
     /**
+     * If template not found in custom template folder, the default template
+     * will be used.
      * @param string $name
      *
      * @return string
      */
     public function get_template($name)
     {
+        if ($this->templateFolder != 'default') {
+            // Avoid missing template error, use the default file.
+            $file = api_get_path(SYS_CODE_PATH).'template/'.$this->templateFolder.'/'.$name;
+            if (!file_exists($file)) {
+                return 'default/'.$name;
+            }
+        }
+
         return $this->templateFolder.'/'.$name;
     }
 
@@ -523,20 +538,14 @@ class Template
     }
 
     /**
-     * Set system parameters
+     * Get the web paths
+     * @return array
      */
-    public function set_system_parameters()
+    private function getWebPaths()
     {
-        $this->theme = api_get_visual_theme();
-        if (!empty($this->preview_theme)) {
-            $this->theme = $this->preview_theme;
-        }
-
-        $this->themeDir = self::getThemeDir($this->theme);
-
-        // Setting app paths/URLs
-        $_p = array(
+        return [
             'web' => api_get_path(WEB_PATH),
+            'web_url' => api_get_web_url(),
             'web_relative' => api_get_path(REL_PATH),
             'web_course' => api_get_path(WEB_COURSE_PATH),
             'web_main' => api_get_path(WEB_CODE_PATH),
@@ -551,8 +560,23 @@ class Template
             'web_query_vars' => api_htmlentities($_SERVER['QUERY_STRING']),
             'web_self_query_vars' => api_htmlentities($_SERVER['REQUEST_URI']),
             'web_cid_query' => api_get_cidreq(),
-        );
-        $this->assign('_p', $_p);
+        ];
+    }
+
+    /**
+     * Set system parameters
+     */
+    public function set_system_parameters()
+    {
+        $this->theme = api_get_visual_theme();
+        if (!empty($this->preview_theme)) {
+            $this->theme = $this->preview_theme;
+        }
+
+        $this->themeDir = self::getThemeDir($this->theme);
+
+        // Setting app paths/URLs
+        $this->assign('_p', $this->getWebPaths());
 
         // Here we can add system parameters that can be use in any template
         $_s = array(
@@ -588,11 +612,12 @@ class Template
             'jquery.scrollbar/jquery.scrollbar.css',
             'bootstrap-daterangepicker/daterangepicker.css',
             'bootstrap-select/dist/css/bootstrap-select.min.css',
-            'select2/dist/css/select2.min.css'
+            'select2/dist/css/select2.min.css',
+            'flag-icon-css/css/flag-icon.min.css'
         ];
 
         foreach ($bowerCSSFiles as $file) {
-            $css[] = api_get_path(WEB_PATH).'web/assets/'.$file;
+            $css[] = api_get_path(WEB_PUBLIC_PATH).'assets/'.$file;
         }
 
         $css[] = api_get_path(WEB_LIBRARY_PATH).'javascript/chosen/chosen.css';
@@ -639,12 +664,6 @@ class Template
             if (is_file(api_get_path(SYS_CSS_PATH).$this->themeDir.'learnpath.css')) {
                 $css[] = api_get_path(WEB_CSS_PATH).$this->themeDir.'learnpath.css';
             }
-        }
-
-        if (is_file(api_get_path(SYS_CSS_PATH).$this->themeDir.'editor.css')) {
-            $css[] = api_get_path(WEB_CSS_PATH).$this->themeDir.'editor.css';
-        } else {
-            $css[] = api_get_cdn_path(api_get_path(WEB_CSS_PATH).'editor.css');
         }
 
         $css[] = api_get_cdn_path(api_get_path(WEB_CSS_PATH).$this->themeDir.'default.css');
@@ -759,7 +778,7 @@ class Template
         }
 
         foreach ($bowerJsFiles as $file) {
-            $js_file_to_string .= '<script type="text/javascript" src="'.api_get_path(WEB_PATH).'web/assets/'.$file.'"></script>'."\n";
+            $js_file_to_string .= '<script type="text/javascript" src="'.api_get_path(WEB_PUBLIC_PATH).'assets/'.$file.'"></script>'."\n";
         }
 
         foreach ($js_files as $file) {
@@ -775,8 +794,9 @@ class Template
         if (!$disable_js_and_css_files) {
             $this->assign('js_file_to_string', $js_file_to_string);
 
+            $extra_headers = '<script>var _p = '.json_encode($this->getWebPaths(), JSON_PRETTY_PRINT).'</script>';
             //Adding jquery ui by default
-            $extra_headers = api_get_jquery_ui_js();
+            $extra_headers .= api_get_jquery_ui_js();
 
             //$extra_headers = '';
             if (isset($htmlHeadXtra) && $htmlHeadXtra) {
@@ -1231,17 +1251,19 @@ class Template
     public function set_plugin_region($pluginRegion)
     {
         if (!empty($pluginRegion)) {
-            $regionContent = $this->plugin->load_region($pluginRegion, $this, $this->force_plugin_load);
+            $regionContent = $this->plugin->load_region(
+                $pluginRegion,
+                $this,
+                $this->force_plugin_load
+            );
 
             $pluginList = $this->plugin->get_installed_plugins();
             foreach ($pluginList as $plugin_name) {
-
                 // The plugin_info variable is available inside the plugin index
                 $pluginInfo = $this->plugin->getPluginInfo($plugin_name);
 
                 if (isset($pluginInfo['is_course_plugin']) && $pluginInfo['is_course_plugin']) {
                     $courseInfo = api_get_course_info();
-
                     if (!empty($courseInfo)) {
                         if (isset($pluginInfo['obj']) && $pluginInfo['obj'] instanceof Plugin) {
                             /** @var Plugin $plugin */
@@ -1330,7 +1352,7 @@ class Template
             // Only display if the user isn't logged in.
             $this->assign(
                 'login_language_form',
-                api_display_language_form(true)
+                api_display_language_form(true, true)
             );
             if ($setLoginForm) {
                 $this->assign('login_form', $this->displayLoginForm());

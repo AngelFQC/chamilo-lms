@@ -32,7 +32,8 @@ $loginFailed = isset($_GET['loginFailed']) ? true : isset($loginFailed);
 
 if (!empty($_GET['logout'])) {
     $redirect = !empty($_GET['no_redirect']) ? false : true;
-    $controller->logout($redirect);
+    // pass $logoutInfo defined in local.inc.php
+    $controller->logout($redirect, $logoutInfo);
 }
 
 /**
@@ -154,7 +155,7 @@ $controller->tpl->assign('notice_block', $controller->return_notice());
 $controller->tpl->assign('help_block', $controller->return_help());
 
 if (api_is_platform_admin() || api_is_drh()) {
-    $controller->tpl->assign('skills_block', $controller->return_skills_links());
+    $controller->tpl->assign('skills_block', $controller->returnSkillLinks());
 }
 
 if (api_is_anonymous()) {

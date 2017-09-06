@@ -31,12 +31,18 @@ exclude_paths:
 - app/cache/
 - app/logs/
 - app/config/
+- app/SymfonyRequirements.php
 - app/Migrations/
 - app/Resources/
 - main/admin/db.php
-- main/auth/cas/lib/CAS/
+- main/admin/ldap_synchro.php
+- main/auth/cas/lib/
 - main/auth/shibboleth
 - main/auth/openid
+- main/chat/emoji_strategy.php
+- main/default_course_document
+- main/document/Wami.swf
+- main/inc/ajax/Wami.swf
 - main/inc/lib/browser/
 - main/inc/lib/freemindflashbrowser/
 - main/inc/lib/internationalization_database/
@@ -49,6 +55,7 @@ exclude_paths:
 - main/inc/lib/pear/
 - main/inc/lib/phpmailer/
 - main/inc/lib/phpseclib/
+- main/inc/lib/portfolio.class.php
 - main/inc/lib/svg-edit/
 - main/inc/lib/swfobject/
 - main/inc/lib/wami-recorder/

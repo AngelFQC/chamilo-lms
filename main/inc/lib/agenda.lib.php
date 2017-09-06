@@ -62,7 +62,6 @@ class Agenda
 
                 // Check if teacher/admin rights.
                 $isAllowToEdit = api_is_allowed_to_edit(false, true);
-
                 // Check course setting.
                 if (api_get_course_setting('allow_user_edit_agenda') == '1'
                     && api_is_allowed_in_course()
@@ -1282,7 +1281,7 @@ class Agenda
         switch ($format) {
             case 'json':
                 if (empty($this->events)) {
-                    return '';
+                    return '[]';
                 }
 
                 return json_encode($this->events);
@@ -1513,9 +1512,9 @@ class Agenda
                         $row['enddate']
                     );
                 }
+
                 $event['description'] = $row['text'];
                 $event['allDay'] = isset($row['all_day']) && $row['all_day'] == 1 ? $row['all_day'] : 0;
-
                 $event['parent_event_id'] = 0;
                 $event['has_children'] = 0;
 
@@ -1675,24 +1674,28 @@ class Agenda
         $groupNameList = array();
         if (!empty($groupList)) {
             foreach ($groupList as $group) {
-                $groupNameList[$group['id']] = $group['name'];
+                $groupNameList[$group['iid']] = $group['name'];
             }
         }
 
         if (api_is_platform_admin() || api_is_allowed_to_edit()) {
             $isAllowToEdit = true;
         } else {
-            $isAllowToEdit = CourseManager::is_course_teacher(api_get_user_id(), $courseInfo['code']);
+            $isAllowToEdit = CourseManager::is_course_teacher(
+                api_get_user_id(),
+                $courseInfo['code']
+            );
         }
 
         $groupMemberships = [];
-
         if (!empty($groupId)) {
             $groupMemberships = array($groupId);
         } else {
             if ($isAllowToEdit) {
                 if (!empty($groupList)) {
-                    $groupMemberships = array_column($groupList, 'id');
+                    // c_item_property.to_group_id field was migrated to use
+                    // c_group_info.iid
+                    $groupMemberships = array_column($groupList, 'iid');
                 }
             } else {
                 // get only related groups from user
@@ -1719,8 +1722,6 @@ class Agenda
             ) ";
         }
 
-        //var_dump($courseInfo['code']);
-
         if ($isAllowToEdit) {
             // No group filter was asked
             if (empty($groupId)) {
@@ -1736,11 +1737,6 @@ class Agenda
                     if (!empty($groupMemberships)) {
                         // Show events sent to selected groups
                         $userCondition .= " OR (ip.to_user_id = 0 OR ip.to_user_id is NULL) AND (ip.to_group_id IN (".implode(", ", $groupMemberships).")) ";
-                    }
-
-                    //var_dump($this->type);
-                    if ($this->type === 'personal') {
-                        //$userCondition .= " OR (ip.to_user_id = ".api_get_user_id()." )  ";
                     }
                 } else {
                     // Show events of requested user in no group
@@ -1759,18 +1755,6 @@ class Agenda
                     $userCondition .= " OR (ip.to_user_id = $user_id) AND (ip.to_group_id IN (".implode(", ", $groupMemberships).")) ";
                 }
             }
-
-            /*// No user filter
-            if (empty($user_id)) {
-                //$userCondition .= ' OR (ip.to_group_id IS NULL OR ip.to_group_id = 0) ';
-            } else {
-                // Show send to $user_id in course
-                $userCondition .= " AND (ip.to_user_id = $user_id AND (ip.to_group_id IS NULL OR ip.to_group_id = 0)) ";
-                if (!empty($groupMemberships)) {
-                    // Show send to $user_id in selected groups
-                    $userCondition .= " OR (ip.to_user_id = $user_id) AND (ip.to_group_id IN (".implode(", ", $groupMemberships).")) ";
-                }
-            }*/
         } else {
             // No group filter was asked
             if (empty($groupId)) {
@@ -1783,7 +1767,6 @@ class Agenda
                 } else {
                     $userCondition .= " ) ";
                 }
-
                 $userCondition .= " OR (ip.to_user_id = ".api_get_user_id()." AND (ip.to_group_id IS NULL OR ip.to_group_id = 0)) ";
             } else {
                 if (!empty($groupMemberships)) {
@@ -1924,6 +1907,10 @@ class Agenda
                             $event['editable'] = false;
                         }
                     }
+                    // if user is author then he can edit the item
+                    if (api_get_user_id() == $row['insert_user_id']) {
+                        $event['editable'] = true;
+                    }
                 }
 
                 if (!empty($row['start_date'])) {
@@ -2017,12 +2004,8 @@ class Agenda
      */
     public function getPlatformEvents($start, $end)
     {
-        $start = isset($start) && !empty($start) ? api_get_utc_datetime(
-            intval($start)
-        ) : null;
-        $end = isset($end) && !empty($end) ? api_get_utc_datetime(
-            intval($end)
-        ) : null;
+        $start = isset($start) && !empty($start) ? api_get_utc_datetime(intval($start)) : null;
+        $end = isset($end) && !empty($end) ? api_get_utc_datetime(intval($end)) : null;
         $dateCondition = '';
 
         if (!empty($start) && !empty($end)) {
@@ -2061,25 +2044,18 @@ class Agenda
                 }
 
                 if (!empty($row['start_date'])) {
-                    $event['start'] = $this->formatEventDate(
-                        $row['start_date']
-                    );
-                    $event['start_date_localtime'] = api_get_local_time(
-                        $row['start_date']
-                    );
+                    $event['start'] = $this->formatEventDate($row['start_date']);
+                    $event['start_date_localtime'] = api_get_local_time($row['start_date']);
                 }
+
                 if (!empty($row['end_date'])) {
                     $event['end'] = $this->formatEventDate($row['end_date']);
-                    $event['end_date_localtime'] = api_get_local_time(
-                        $row['end_date']
-                    );
+                    $event['end_date_localtime'] = api_get_local_time($row['end_date']);
                 }
-
-                $event['description'] = $row['content'];
                 $event['allDay'] = isset($row['all_day']) && $row['all_day'] == 1 ? $row['all_day'] : 0;
-
                 $event['parent_event_id'] = 0;
                 $event['has_children'] = 0;
+                $event['description'] = $row['content'];
 
                 $my_events[] = $event;
                 $this->events[] = $event;
@@ -2957,7 +2933,8 @@ class Agenda
 
         $form = '';
         if (api_is_allowed_to_edit(false, true) ||
-            (api_get_course_setting('allow_user_edit_agenda') && !api_is_anonymous()) &&
+            (api_get_course_setting('allow_user_edit_agenda') == '1' &&
+                !api_is_anonymous()) &&
             api_is_allowed_to_session_edit(false, true) ||
             (GroupManager::user_has_access(
                 api_get_user_id(),
@@ -3026,15 +3003,27 @@ class Agenda
                         FormValidator::LAYOUT_INLINE
                     );
 
-                    $sessions = SessionManager::get_sessions_by_user(
-                        api_get_user_id()
-                    );
+                    if (api_is_drh()) {
+                        $sessionList = SessionManager::get_sessions_followed_by_drh(
+                            api_get_user_id()
+                        );
+                        if (!empty($sessionList)) {
+                            $sessions = [];
+                            foreach ($sessionList as $sessionItem) {
+                                $sessions[$sessionItem['id']] = strip_tags($sessionItem['name']);
+                            }
+                        }
+                    } else {
+                        $sessions = SessionManager::get_sessions_by_user(
+                            api_get_user_id()
+                        );
+                        $sessions = array_column(
+                            $sessions,
+                            'session_name',
+                            'session_id'
+                        );
+                    }
                     $form->addHidden('type', 'personal');
-                    $sessions = array_column(
-                        $sessions,
-                        'session_name',
-                        'session_id'
-                    );
                     $sessions = ['0' => get_lang('SelectAnOption')] + $sessions;
 
                     $form->addSelect(
