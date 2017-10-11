@@ -1106,55 +1106,43 @@ class Link extends Model
                     }
                 }
 
-                $iconLink = Display::return_icon(
-                    'url.png',
-                    get_lang('Link'),
-                    null,
-                    ICON_SIZE_SMALL
-                );
-
+                $showLink = false;
+                $titleClass = '';
                 if ($myrow['visibility'] == '1') {
+                    $showLink = true;
+                } else {
+                    if (api_is_allowed_to_edit(null, true)) {
+                        $showLink = true;
+                        $titleClass = 'text-muted';
+                    }
+                }
+
+                if ($showLink) {
+                    $iconLink = Display::return_icon(
+                        'url.png',
+                        get_lang('Link'),
+                        null,
+                        ICON_SIZE_SMALL
+                    );
+                    $url = api_get_path(WEB_CODE_PATH).'link/link_goto.php?'.api_get_cidreq().'&link_id='.$linkId.'&link_url='.urlencode($myrow['url']);
                     $content .= '<div class="list-group-item">';
                     $content .= '<div class="pull-right"><div class="btn-group">'.$toolbar.'</div></div>';
                     $content .= '<h4 class="list-group-item-heading">';
                     $content .= $iconLink;
-                    $url = api_get_path(WEB_CODE_PATH).'link/link_goto.php?'.api_get_cidreq().'&link_id='.$linkId.'&link_url='.urlencode($myrow['url']);
                     $content .= Display::tag(
                         'a',
                         Security::remove_XSS($myrow['title']),
                         array(
                             'href' => $url,
-                            'target' => $myrow['target']
+                            'target' => $myrow['target'],
+                            'class' => $titleClass
                         )
                     );
                     $content .= $link_validator;
                     $content .= $session_img;
                     $content .= '</h4>';
-
                     $content .= '<p class="list-group-item-text">'.$myrow['description'].'</p>';
                     $content .= '</div>';
-                } else {
-                    if (api_is_allowed_to_edit(null, true)) {
-                        $content .= '<div class="list-group-item">';
-                        $content .= '<div class="pull-right"><div class="btn-group">'.$toolbar.'</div></div>';
-                        $content .= '<h4 class="list-group-item-heading">';
-                        $content .= $iconLink;
-                        $url = api_get_path(WEB_CODE_PATH).'link/link_goto.php?'.api_get_cidreq().'&link_id='.$linkId."&link_url=".urlencode($myrow['url']);
-                        $content .= Display::tag(
-                            'a',
-                            Security::remove_XSS($myrow['title']),
-                            array(
-                                'href' => $url,
-                                'target' => '_blank',
-                                'class' => 'text-muted'
-                            )
-                        );
-                        $content .= $link_validator;
-                        $content .= $session_img;
-                        $content .= '</h4>';
-                        $content .= '<p class="list-group-item-text">'.$myrow['description'].'</p>';
-                        $content .= '</div>';
-                    }
                 }
                 $i++;
             }
@@ -1629,28 +1617,14 @@ class Link extends Model
             echo Display::return_icon('forum_nestedview.png', get_lang('NestedView'), '', ICON_SIZE_MEDIUM).'</a>';
         }
         echo '</div>';
-
-        // Displaying the links which have no category (thus category = 0 or NULL),
-        // if none present this will not be displayed
-        $sql = "
-            SELECT COUNT(1) AS count FROM $tbl_link l
-            INNER JOIN $tblCIP c
-                ON (l.c_id = c.c_id AND l.iid = c.ref)
-            WHERE
-                c.tool = 'link' AND
-                c.visibility != 2 AND
-                l.c_id = $course_id AND
-                (l.category_id = 0 OR l.category_id IS NULL)
-        ";
-        $result = Database::query($sql);
-        $count = Database::result($result, 0, 'count');
-
         $linksPerCategory = self::showLinksPerCategory(0, $course_id, $session_id);
 
-        if ($count && !$countCategories) {
+        if (empty($countCategories)) {
             echo $linksPerCategory;
-        } elseif ($count && $countCategories) {
-            echo Display::panel($linksPerCategory, get_lang('NoCategory'));
+        } else {
+            if (!empty($linksPerCategory)) {
+                echo Display::panel($linksPerCategory, get_lang('NoCategory'));
+            }
         }
 
         $counter = 0;

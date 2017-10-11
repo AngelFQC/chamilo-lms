@@ -214,7 +214,7 @@ class CourseHome
                 }
                 if (is_array($lnk)) {
                     foreach ($lnk as & $this_lnk) {
-                        if ($tool['adminlink']) {
+                        if (isset($tool['adminlink']) && $tool['adminlink']) {
                             $cell_content .= '<a href="'.$properties['adminlink'].'">'.
                                 Display::return_icon('edit.gif', get_lang('Edit')).'</a>';
                         } else {
@@ -234,9 +234,9 @@ class CourseHome
     /**
      * Displays the tools of a certain category.
      *
-     * @return void
-     * @param string $course_tool_category	contains the category of tools to display:
+     * @param string $course_tool_category contains the category of tools to display:
      * "Public", "PublicButHide", "courseAdmin", "claroAdmin"
+     * @return string
      */
     public static function show_tool_2column($course_tool_category)
     {
@@ -719,7 +719,64 @@ class CourseHome
             }
         }
 
+        $all_tools_list = CourseHome::filterPluginTools($all_tools_list, $course_tool_category);
+
         return $all_tools_list;
+    }
+
+    /**
+     * Filter tool icons. Only show if $patronKey is = :teacher
+     * Example dataIcons[i]['name']: parameter titleIcons1:teacher || titleIcons2 || titleIcons3:teacher
+     * @param array $dataIcons array Reference to icons
+     * @param string $courseToolCategory Current tools category
+     * @return array
+     */
+    private static function filterPluginTools($dataIcons, $courseToolCategory)
+    {
+        $patronKey = ':teacher';
+
+        if ($courseToolCategory == TOOL_STUDENT_VIEW) {
+            //Fix only coach can see external pages - see #8236 - icpna
+            if (api_is_coach()) {
+                foreach ($dataIcons as $indice => $array) {
+                    if (isset($array['name'])) {
+                        $dataIcons[$indice]['name'] = str_replace($patronKey, '', $array['name']);
+                    }
+                }
+
+                return $dataIcons;
+            }
+
+            $flagOrder = false;
+
+            foreach ($dataIcons as $indice => $array) {
+                if (!isset($array['name'])) {
+                    continue;
+                }
+
+                $pos = strpos($array['name'], $patronKey);
+
+                if ($pos !== false) {
+                    unset($dataIcons[$indice]);
+                    $flagOrder = true;
+                }
+            }
+
+            if ($flagOrder) {
+                return array_values($dataIcons);
+            }
+
+            return $dataIcons;
+        }
+
+        // clean patronKey of name icons
+        foreach ($dataIcons as $indice => $array) {
+            if (isset($array['name'])) {
+                $dataIcons[$indice]['name'] = str_replace($patronKey, '', $array['name']);
+            }
+        }
+
+        return $dataIcons;
     }
 
     /**

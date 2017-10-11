@@ -35,7 +35,10 @@ if (isset($current_thread['thread_id'])) {
         LINK_FORUM_THREAD
     );
 
-    $closedPost = null;
+    $buttonReply = '';
+    $buttonQuote = '';
+    $closedPost = '';
+
     if (!empty($rows)) {
         $postCount = count($rows);
         foreach ($rows as $row) {
@@ -240,7 +243,6 @@ if (isset($current_thread['thread_id'])) {
                 $my_forum_id = $clean_forum_id;
                 $info_thread = get_thread_information($clean_forum_id, $clean_thread_id);
                 $my_forum_id = $info_thread['forum_id'];
-
                 $userCanEdit = $current_thread['thread_peer_qualify'] == 1 && $row['poster_id'] != $userId;
                 /*if ($row['poster_id'] != $userId && $current_forum['moderated'] == 1 && $row['status']) {
                 }*/
@@ -310,7 +312,6 @@ if (isset($current_thread['thread_id'])) {
             }
             // The post title
             // The check if there is an attachment
-
             $attachment_list = getAllAttachment($row['post_id']);
             if (!empty($attachment_list) && is_array($attachment_list)) {
                 foreach ($attachment_list as $attachment) {

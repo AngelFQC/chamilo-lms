@@ -2954,9 +2954,6 @@ class DocumentManager
         $sys_course_path = api_get_path(SYS_COURSE_PATH);
         $base_work_dir = $sys_course_path.$course_dir;
 
-        $group_properties = GroupManager::get_group_properties(api_get_group_id());
-        $groupIid = isset($group_properties['iid']) ? $group_properties['iid'] : 0;
-
         if (isset($files[$fileKey])) {
             $upload_ok = process_uploaded_file($files[$fileKey], $show_output);
 
@@ -2967,7 +2964,7 @@ class DocumentManager
                     $base_work_dir,
                     $path,
                     api_get_user_id(),
-                    $groupIid,
+                    api_get_group_id(),
                     null,
                     $unzip,
                     $if_exists,
@@ -5420,8 +5417,8 @@ class DocumentManager
                 }
             } else {
                 // url-encode for problematic characters (we may not call them dangerous characters...)
-                $path = str_replace('%2F', '/', $url_path).'?'.$courseParams;
-                $url = $www.$path;
+                //$path = str_replace('%2F', '/', $url_path).'?'.$courseParams;
+                $url = $www.str_replace('%2F', '/', $url_path).'?'.$courseParams;
             }
         } else {
             $url = api_get_self().'?'.$courseParams.'&id='.$document_data['id'];
@@ -5607,17 +5604,20 @@ class DocumentManager
                     ) {
                         $url = 'showinframes.php?'.$courseParams.'&id='.$document_data['id'];
                         return '<a href="'.$url.'" title="'.$tooltip_title_alt.'" '.$visibility_class.' style="float:left">'.
-                        self::build_document_icon_tag($filetype, $path, $isAllowedToEdit).
-                        Display::return_icon('shared.png', get_lang('ResourceShared'), array()).'</a>';
+                            self::build_document_icon_tag($filetype, $path, $isAllowedToEdit).
+                            Display::return_icon('shared.png', get_lang('ResourceShared'), array()).
+                        '</a>';
                     } else {
                         return '<a href="'.$url.'" title="'.$tooltip_title_alt.'" '.$visibility_class.' style="float:left">'.
-                        self::build_document_icon_tag($filetype, $path, $isAllowedToEdit).
-                        Display::return_icon('shared.png', get_lang('ResourceShared'), array()).'</a>';
+                            self::build_document_icon_tag($filetype, $path, $isAllowedToEdit).
+                            Display::return_icon('shared.png', get_lang('ResourceShared'), array()).
+                        '</a>';
                     }
                 } else {
                     return '<a href="'.$url.'" title="'.$tooltip_title_alt.'" target="'.$target.'"'.$visibility_class.' style="float:left">'.
-                    self::build_document_icon_tag($filetype, $path, $isAllowedToEdit).
-                    Display::return_icon('shared.png', get_lang('ResourceShared'), array()).'</a>';
+                        self::build_document_icon_tag($filetype, $path, $isAllowedToEdit).
+                        Display::return_icon('shared.png', get_lang('ResourceShared'), array()).
+                    '</a>';
                 }
             } else {
                 if ($filetype == 'file') {
@@ -5642,14 +5642,17 @@ class DocumentManager
                     ) {
                         $url = 'showinframes.php?'.$courseParams.'&id='.$document_data['id']; //without preview
                         return '<a href="'.$url.'" title="'.$tooltip_title_alt.'" '.$visibility_class.' style="float:left">'.
-                        self::build_document_icon_tag($filetype, $path, $isAllowedToEdit).'</a>';
+                            self::build_document_icon_tag($filetype, $path, $isAllowedToEdit).
+                        '</a>';
                     } else {
                         return '<a href="'.$url.'" title="'.$tooltip_title_alt.'" '.$visibility_class.' style="float:left">'.
-                        self::build_document_icon_tag($filetype, $path, $isAllowedToEdit).'</a>';
+                            self::build_document_icon_tag($filetype, $path, $isAllowedToEdit).
+                        '</a>';
                     }
                 } else {
                     return '<a href="'.$url.'" title="'.$tooltip_title_alt.'" target="'.$target.'"'.$visibility_class.' style="float:left">'.
-                    self::build_document_icon_tag($filetype, $path, $isAllowedToEdit).'</a>';
+                        self::build_document_icon_tag($filetype, $path, $isAllowedToEdit).
+                    '</a>';
                 }
             }
         }

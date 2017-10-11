@@ -1,12 +1,14 @@
 <?php
 /* For licensing terms, see /license.txt */
 
+use Chamilo\UserBundle\Entity\User;
+use Chamilo\UserBundle\Entity\Repository\UserRepository;
+
+$_dont_save_user_course_access = true;
+
 /**
  * Responses to AJAX calls
  */
-
-use Chamilo\UserBundle\Entity\User;
-use Chamilo\UserBundle\Entity\Repository\UserRepository;
 
 require_once __DIR__.'/../global.inc.php';
 
@@ -75,8 +77,7 @@ switch ($action) {
         }
 
         /** @var UserRepository $repo */
-        $repo = Database::getManager()
-            ->getRepository('ChamiloUserBundle:User');
+        $repo = Database::getManager()->getRepository('ChamiloUserBundle:User');
 
         $users = $repo->findUsersToSendMessage(
             api_get_user_id(),
@@ -89,7 +90,7 @@ switch ($action) {
 
         /** @var User $user */
         foreach ($users as $user) {
-            $userName = $user->getCompleteName();
+            $userName = $user->getCompleteNameWithUsername();
 
             if ($showEmail) {
                 $userName .= " ({$user->getEmail()})";

@@ -16,6 +16,7 @@ define('WS_ERROR_SECRET_KEY', 1);
 define('WS_ERROR_NOT_FOUND_RESULT', 2);
 define('WS_ERROR_INVALID_INPUT', 3);
 define('WS_ERROR_SETTING', 4);
+define('DEFAULT_ADMIN_USER_ID', 1);
 
 /**
  * @param string $code
@@ -106,7 +107,7 @@ function WSHelperVerifyKey($params)
         $security_key = $_configuration['security_key'];
     } else {
         $security_key = $ip.$_configuration['security_key'];
-        //error_log($secret_key.'-'.$security_key);
+        //error_log($ip.'-'.$secret_key.'-'.$security_key);
     }
 
     $result = api_is_valid_secret_key($secret_key, $security_key);
@@ -255,7 +256,6 @@ $server->register(
 // Define the method WSCreateUsers
 function WSCreateUsers($params)
 {
-    global $_user;
     if (!WSHelperVerifyKey($params)) {
         return returnError(WS_ERROR_SECRET_KEY);
     }
@@ -345,11 +345,7 @@ function WSCreateUsers($params)
             $language = api_get_setting('platformLanguage');
         }
 
-        if (!empty($_user['user_id'])) {
-            $creator_id = $_user['user_id'];
-        } else {
-            $creator_id = '';
-        }
+        $creatorId = DEFAULT_ADMIN_USER_ID;
 
         // First check wether the login already exists.
         if (!UserManager::is_username_available($loginName)) {
@@ -371,7 +367,15 @@ function WSCreateUsers($params)
             $auth_source,
             $expiration_date,
             $active,
-            $hr_dept_id
+            $hr_dept_id,
+            [],
+            '',
+            false,
+            false,
+            '',
+            false,
+            null,
+            $creatorId
         );
 
         if ($userId) {
@@ -471,9 +475,9 @@ $server->wsdl->addComplexType(
     )
 );
 
-
 // Register the method to expose
-$server->register('WSCreateUser', // method name
+$server->register(
+    'WSCreateUser', // method name
     array('createUser' => 'tns:createUser'), // input parameters
     array('return' => 'xsd:string'), // output parameters
     'urn:WSRegistration', // namespace
@@ -483,11 +487,10 @@ $server->register('WSCreateUser', // method name
     'This service adds a user'                   // documentation
 );
 
-
 // Define the method WSCreateUser
 function WSCreateUser($params)
 {
-    global $_user, $debug;
+    global $debug;
 
     if (!WSHelperVerifyKey($params)) {
         return returnError(WS_ERROR_SECRET_KEY);
@@ -568,11 +571,7 @@ function WSCreateUser($params)
         $language = api_get_setting('platformLanguage');
     }
 
-    if (!empty($_user['user_id'])) {
-        $creator_id = $_user['user_id'];
-    } else {
-        $creator_id = '';
-    }
+    $creatorId = DEFAULT_ADMIN_USER_ID;
 
     // First check wether the login already exists
     if (!UserManager::is_username_available($loginName)) {
@@ -599,7 +598,15 @@ function WSCreateUser($params)
         $auth_source,
         $expiration_date,
         $active,
-        $hr_dept_id
+        $hr_dept_id,
+        [],
+        '',
+        false,
+        false,
+        '',
+        false,
+        null,
+        $creatorId
     );
 
     if ($userId) {
@@ -688,7 +695,6 @@ $server->wsdl->addComplexType(
     )
 );
 
-
 $server->wsdl->addComplexType(
     'createUsersPassEncryptParamsList',
     'complexType',
@@ -704,7 +710,6 @@ $server->wsdl->addComplexType(
     ),
     'tns:createUsersPassEncryptParams'
 );
-
 
 // Register the data structures used by the service
 $server->wsdl->addComplexType(
@@ -755,7 +760,8 @@ $server->wsdl->addComplexType(
 );
 
 // Register the method to expose
-$server->register('WSCreateUsersPasswordCrypted', // method name
+$server->register(
+    'WSCreateUsersPasswordCrypted', // method name
     array('createUsersPasswordCrypted' => 'tns:createUsersPasswordCrypted'), // input parameters
     array('return' => 'tns:results_createUsersPassEncrypt'), // output parameters
     'urn:WSRegistration', // namespace
@@ -768,7 +774,7 @@ $server->register('WSCreateUsersPasswordCrypted', // method name
 // Define the method WSCreateUsersPasswordCrypted
 function WSCreateUsersPasswordCrypted($params)
 {
-    global $_user, $_configuration;
+    global $_configuration;
     if (!WSHelperVerifyKey($params)) {
         return returnError(WS_ERROR_SECRET_KEY);
     }
@@ -914,11 +920,8 @@ function WSCreateUsersPasswordCrypted($params)
             $language = api_get_setting('platformLanguage');
         }
 
-        if (!empty($_user['user_id'])) {
-            $creator_id = $_user['user_id'];
-        } else {
-            $creator_id = '';
-        }
+        $creator_id = DEFAULT_ADMIN_USER_ID;
+
         // First check wether the login already exists
         if (!UserManager::is_username_available($loginName)) {
             $results[] = 0;
@@ -1245,7 +1248,7 @@ $server->register(
 // Define the method WSCreateUserPasswordCrypted
 function WSCreateUserPasswordCrypted($params)
 {
-    global $_user, $_configuration, $debug;
+    global $_configuration, $debug;
     $debug = 1;
     if ($debug) error_log('WSCreateUserPasswordCrypted');
     if ($debug) error_log(print_r($params, 1));
@@ -1376,11 +1379,7 @@ function WSCreateUserPasswordCrypted($params)
         $language = api_get_setting('platformLanguage');
     }
 
-    if (!empty($_user['user_id'])) {
-        $creator_id = $_user['user_id'];
-    } else {
-        $creator_id = '';
-    }
+    $creator_id = DEFAULT_ADMIN_USER_ID;
 
     // First check wether the login already exists
     if (!UserManager::is_username_available($loginName)) {
@@ -2864,6 +2863,7 @@ function WSCreateCourse($params)
     $table_course = Database::get_main_table(TABLE_MAIN_COURSE);
     $courses_params = $params['courses'];
     $results = array();
+    $sessionAdminId = DEFAULT_ADMIN_USER_ID;
     $orig_course_id_value = array();
     foreach ($courses_params as $course_param) {
         $title = $course_param['title'];
@@ -2943,7 +2943,7 @@ function WSCreateCourse($params)
         $params['course_category'] = $category_code;
         $params['tutor_name'] = $tutor_name;
         $params['course_language'] = $course_language;
-        $params['user_id'] = api_get_user_id();
+        $params['user_id'] = $sessionAdminId;
         $params['visibility'] = $visibility;
         $params['disk_quota'] = $diskQuota;
 
@@ -2954,7 +2954,7 @@ function WSCreateCourse($params)
             $params['unsubscribe'] = $unsubscribe;
         }
 
-        $course_info = CourseManager::create_course($params);
+        $course_info = CourseManager::create_course($params, $sessionAdminId);
 
         if (!empty($course_info)) {
             $course_code = $course_info['code'];
@@ -3098,7 +3098,7 @@ function WSCreateCourseByTitle($params)
     }
 
     $table_course = Database::get_main_table(TABLE_MAIN_COURSE);
-
+    $sessionAdminId = DEFAULT_ADMIN_USER_ID;
     $courses_params = $params['courses'];
     $results = array();
     $orig_course_id_value = array();
@@ -3153,20 +3153,7 @@ function WSCreateCourseByTitle($params)
             }
         }
 
-        // Set default values.
-        if (isset($_user['language']) && $_user['language'] != '') {
-            $values['course_language'] = $_user['language'];
-        } else {
-            $values['course_language'] = api_get_setting('platformLanguage');
-        }
-
-        $values['tutor_name'] = api_get_person_name(
-            $_user['firstName'],
-            $_user['lastName'],
-            null,
-            null,
-            $values['course_language']
-        );
+        $values['course_language'] = api_get_setting('platformLanguage');
 
         $keys = AddCourse::define_course_keys($wanted_code, '', $_configuration['db_prefix']);
 
@@ -3179,8 +3166,8 @@ function WSCreateCourseByTitle($params)
             $params['category_code'] = $category_code;
             $params['tutor_name'] = $tutor_name;
             $params['course_language'] = $course_language;
-            $params['user_id'] = api_get_user_id();
-            $course_info = CourseManager::create_course($params);
+            $params['user_id'] = $sessionAdminId;
+            $course_info = CourseManager::create_course($params, $sessionAdminId);
             if (!empty($course_info)) {
                 $course_code = $course_info['code'];
 
@@ -3928,7 +3915,7 @@ $server->register('WSCreateSession', // method name
 function WSCreateSession($params)
 {
     global $debug;
-    $sessionAdminId = 1;
+    $sessionAdminId = DEFAULT_ADMIN_USER_ID;
 
     if (!WSHelperVerifyKey($params)) {
         return returnError(WS_ERROR_SECRET_KEY);
@@ -4200,8 +4187,6 @@ $server->register('WSEditSession', // method name
 // define the method WSEditSession
 function WSEditSession($params)
 {
-    global $_user;
-
     if (!WSHelperVerifyKey($params)) {
         return returnError(WS_ERROR_SECRET_KEY);
     }
@@ -4295,7 +4280,7 @@ function WSEditSession($params)
                 $sessionInfo['show_description'],
                 $duration,
                 null,
-                $_user['user_id']
+                DEFAULT_ADMIN_USER_ID
             );
 
             if (is_array($extra_list) && count($extra_list) > 0) {
@@ -5799,6 +5784,8 @@ function WSUnsuscribeCoursesFromSession($params)
         return returnError(WS_ERROR_SECRET_KEY);
     }
 
+    $sessionAdminId = DEFAULT_ADMIN_USER_ID;
+
     // Initialisation
     $tbl_session_rel_course_rel_user = Database::get_main_table(TABLE_MAIN_SESSION_COURSE_USER);
     $tbl_session = Database::get_main_table(TABLE_MAIN_SESSION);
@@ -5809,7 +5796,6 @@ function WSUnsuscribeCoursesFromSession($params)
     $orig_session_id_value = array();
 
     foreach ($coursessessions_params as $coursesession_param) {
-
         $original_session_id_value = $coursesession_param['original_session_id_value'];
         $original_session_id_name = $coursesession_param['original_session_id_name'];
         $original_course_id_name = $coursesession_param['original_course_id_name'];
@@ -5867,7 +5853,7 @@ function WSUnsuscribeCoursesFromSession($params)
                 LOG_COURSE_ID,
                 $courseId,
                 api_get_utc_datetime(),
-                api_get_user_id(),
+                $sessionAdminId,
                 $courseId,
                 $id_session
             );
@@ -6254,7 +6240,6 @@ function WSUserSubscribedInCourse($params)
     return CourseManager::is_user_subscribed_in_course($userId, $courseCode);
 }
 
-
 /* Search session Web Service start */
 
 // Input params for WSSearchSession
@@ -6499,7 +6484,6 @@ $server->register(
 
 function WSCertificatesList($startingDate = '', $endingDate = '')
 {
-    global $_configuration;
     $certificatesCron = api_get_setting('add_gradebook_certificates_cron_task_enabled');
     if ($certificatesCron === 'true') {
         require_once api_get_path(SYS_CODE_PATH).'cron/add_gradebook_certificates.php';
@@ -6607,7 +6591,8 @@ $server->wsdl->addComplexType(
 );
 
 // Register the method to expose
-$server->register('WSUpdateGroup', // method name
+$server->register(
+    'WSUpdateGroup', // method name
     array('updateGroup' => 'tns:updateGroup'), // input parameters
     array('return' => 'xsd:string'), // output parameters
     'urn:WSRegistration', // namespace
@@ -6648,7 +6633,8 @@ $server->wsdl->addComplexType(
 );
 
 // Register the method to expose
-$server->register('WSDeleteGroup', // method name
+$server->register(
+    'WSDeleteGroup', // method name
     array('deleteGroup' => 'tns:deleteGroup'), // input parameters
     array('return' => 'xsd:string'), // output parameters
     'urn:WSRegistration', // namespace
@@ -6689,7 +6675,8 @@ $server->wsdl->addComplexType(
 );
 
 // Register the method to expose
-$server->register('GroupBindToParent', // method name
+$server->register(
+    'GroupBindToParent', // method name
     array('groupBindToParent' => 'tns:groupBindToParent'), // input parameters
     array('return' => 'xsd:string'), // output parameters
     'urn:WSRegistration', // namespace
@@ -6729,7 +6716,8 @@ $server->wsdl->addComplexType(
 );
 
 // Register the method to expose
-$server->register('GroupUnbindFromParent', // method name
+$server->register(
+    'GroupUnbindFromParent', // method name
     array('groupUnbindFromParent' => 'tns:groupUnbindFromParent'), // input parameters
     array('return' => 'xsd:string'), // output parameters
     'urn:WSRegistration', // namespace
@@ -6812,7 +6800,8 @@ $server->wsdl->addComplexType(
 );
 
 // Register the method to expose
-$server->register('WSUpdateUserRoleInGroup', // method name
+$server->register(
+    'WSUpdateUserRoleInGroup', // method name
     array('updateUserRoleInGroup' => 'tns:updateUserRoleInGroup'), // input parameters
     array('return' => 'xsd:string'), // output parameters
     'urn:WSRegistration', // namespace
@@ -6857,7 +6846,8 @@ $server->wsdl->addComplexType(
 );
 
 // Register the method to expose
-$server->register('WSDeleteUserFromGroup', // method name
+$server->register(
+    'WSDeleteUserFromGroup', // method name
     array('deleteUserFromGroup' => 'tns:deleteUserFromGroup'), // input parameters
     array('return' => 'xsd:string'), // output parameters
     'urn:WSRegistration', // namespace
@@ -6881,11 +6871,7 @@ function WSDeleteUserFromGroup($params)
     );
 }
 
-
 /* Delete user from group Web Service end */
-
-
-
 
 /** WSRegisterUserVisibilityToCourseCatalogue **/
 // Register the data structures used by the service
@@ -6898,8 +6884,8 @@ $server->wsdl->addComplexType(
     '',
     array(
         'course_id' => array('name' => 'course_id', 'type' => 'tns:course_id'),
-        'user_id'   => array('name' => 'user_id', 'type' => 'tns:user_id'),
-        'visible'   => array('name' => 'status', 'type' => 'xsd:int')
+        'user_id' => array('name' => 'user_id', 'type' => 'tns:user_id'),
+        'visible' => array('name' => 'status', 'type' => 'xsd:int'),
     )
 );
 
@@ -6923,11 +6909,10 @@ $server->wsdl->addComplexType(
     'all',
     '',
     array(
-        'userscourses'  => array('name' => 'userscourses', 'type' => 'tns:user_course_visibility_array'),
-        'secret_key'    => array('name' => 'secret_key', 'type' => 'xsd:string')
+        'userscourses' => array('name' => 'userscourses', 'type' => 'tns:user_course_visibility_array'),
+        'secret_key' => array('name' => 'secret_key', 'type' => 'xsd:string'),
     )
 );
-
 
 $server->wsdl->addComplexType(
     'registerUserToCourseCatalogue_return',
@@ -6936,10 +6921,10 @@ $server->wsdl->addComplexType(
     'all',
     '',
     array(
-        'original_user_id_value'    => array('name' => 'original_user_id_value', 'type' => 'xsd:string'),
-        'original_course_id_value'  => array('name' => 'original_course_id_value', 'type' => 'xsd:string'),
-        'visible'                   => array('name' => 'visible', 'type' => 'xsd:int'),
-        'result'                    => array('name' => 'result', 'type' => 'xsd:int')
+        'original_user_id_value' => array('name' => 'original_user_id_value', 'type' => 'xsd:string'),
+        'original_course_id_value' => array('name' => 'original_course_id_value', 'type' => 'xsd:string'),
+        'visible' => array('name' => 'visible', 'type' => 'xsd:int'),
+        'result' => array('name' => 'result', 'type' => 'xsd:int'),
     )
 );
 
@@ -6955,7 +6940,8 @@ $server->wsdl->addComplexType(
 );
 
 // Register the method to expose
-$server->register('WSAddUserVisibilityToCourseInCatalogue', // method name
+$server->register(
+    'WSAddUserVisibilityToCourseInCatalogue', // method name
     array('registerUserToCourseCatalogue' => 'tns:registerUserToCourseCatalogue_arg'), // input parameters
     array('return' => 'tns:registerUserToCourseCatalogue_return_global'),
     'urn:WSRegistration', // namespace
@@ -6966,7 +6952,8 @@ $server->register('WSAddUserVisibilityToCourseInCatalogue', // method name
 );
 
 // define the method WSRegisterUserVisibilityToCourseInCatalogue
-function WSAddUserVisibilityToCourseInCatalogue($params) {
+function WSAddUserVisibilityToCourseInCatalogue($params)
+{
     global $debug;
     if (!WSHelperVerifyKey($params)) {
         return returnError(WS_ERROR_SECRET_KEY);
@@ -7027,7 +7014,8 @@ function WSAddUserVisibilityToCourseInCatalogue($params) {
 }
 
 // Register the method to expose
-$server->register('WSRemoveUserVisibilityToCourseInCatalogue', // method name
+$server->register(
+    'WSRemoveUserVisibilityToCourseInCatalogue', // method name
     array('registerUserToCourseCatalogue' => 'tns:registerUserToCourseCatalogue_arg'), // input parameters
     array('return' => 'tns:registerUserToCourseCatalogue_return_global'),
     'urn:WSRegistration', // namespace
@@ -7038,7 +7026,8 @@ $server->register('WSRemoveUserVisibilityToCourseInCatalogue', // method name
 );
 
 // define the method WSRemoveUserVisibilityToCourseInCatalogue
-function WSRemoveUserVisibilityToCourseInCatalogue($params) {
+function WSRemoveUserVisibilityToCourseInCatalogue($params)
+{
     global $debug;
     if (!WSHelperVerifyKey($params)) {
         return returnError(WS_ERROR_SECRET_KEY);

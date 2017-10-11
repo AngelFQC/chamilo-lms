@@ -113,6 +113,8 @@ function get_users($from, $limit, $column, $direction)
         );
     }
 
+    $url = api_get_path(WEB_CODE_PATH).'mySpace/myStudents.php';
+
     $all_datas = array();
     foreach ($students as $student_data) {
         $student_id = $student_data['user_id'];
@@ -148,26 +150,29 @@ function get_users($from, $limit, $column, $direction)
             $avg_student_progress = null;
         }
 
+        $urlDetails = $url."?student=$student_id";
+        if (isset($_GET['id_coach']) && intval($_GET['id_coach']) != 0) {
+            $urlDetails = $url."?student=$student_id&id_coach=$coach_id&id_session=$sessionId";
+        }
+
         $row = array();
         if ($is_western_name_order) {
-            $row[] = $student_data['firstname'];
-            $row[] = $student_data['lastname'];
+            $row[] = Display::url($student_data['firstname'], $urlDetails);
+            $row[] = Display::url($student_data['lastname'], $urlDetails);
         } else {
-            $row[] = $student_data['lastname'];
-            $row[] = $student_data['firstname'];
+            $row[] = Display::url($student_data['lastname'], $urlDetails);
+            $row[] = Display::url($student_data['firstname'], $urlDetails);
         }
         $string_date = Tracking::get_last_connection_date($student_id, true);
         $first_date = Tracking::get_first_connection_date($student_id);
         $row[] = $first_date;
         $row[] = $string_date;
 
-        if (isset($_GET['id_coach']) && intval($_GET['id_coach']) != 0) {
-            $detailsLink = '<a href="myStudents.php?student='.$student_id.'&id_coach='.$coach_id.'&id_session='.$sessionId.'">
-				            '.Display::return_icon('2rightarrow.png').'</a>';
-        } else {
-            $detailsLink = '<a href="myStudents.php?student='.$student_id.'">
-				             '.Display::return_icon('2rightarrow.png').'</a>';
-        }
+        $detailsLink = Display::url(
+            Display::return_icon('2rightarrow.png', get_lang('Details').' '.$student_data['username']),
+            $urlDetails,
+            ['id' => 'details_'.$student_data['username']]
+        );
 
         $lostPasswordLink = '';
         if (api_is_drh() || api_is_platform_admin()) {

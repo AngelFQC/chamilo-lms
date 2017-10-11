@@ -248,8 +248,12 @@ class Database
     public static function escape_string($string)
     {
         $string = self::getManager()->getConnection()->quote($string);
-
-        return trim($string, "'");
+        // The quote method from PDO also adds quotes around the string, which
+        // is not how the legacy mysql_real_escape_string() was used in
+        // Chamilo, so we need to remove the quotes around. Using trim will
+        // remove more than one quote if they are sequenced, generating
+        // broken queries and SQL injection risks
+        return substr($string, 1, -1);
     }
 
     /**
@@ -428,7 +432,7 @@ class Database
      * @param array     $attributes
      * @param bool      $show_query
      *
-     * @return false|string
+     * @return false|int
      */
     public static function insert($table_name, $attributes, $show_query = false)
     {
@@ -451,7 +455,7 @@ class Database
             }
 
             if ($result) {
-                return self::getManager()->getConnection()->lastInsertId();
+                return (int) self::getManager()->getConnection()->lastInsertId();
             }
         }
 

@@ -371,6 +371,10 @@ class Notification extends Model
                 );
                 break;
             case self::NOTIFICATION_TYPE_MESSAGE:
+                $allow = api_get_configuration_value('messages_hide_mail_content');
+                if ($allow) {
+                    $content = '';
+                }
                 if (!empty($senderInfo)) {
                     $senderName = api_get_person_name(
                         $senderInfo['firstname'],
@@ -475,7 +479,6 @@ class Notification extends Model
         $content = html_entity_decode($content, ENT_QUOTES);
 
         $gcmRegistrationIds = [];
-
         foreach ($userIds as $userId) {
             $extraFieldValue = new ExtraFieldValue('user');
             $valueInfo = $extraFieldValue->get_values_by_handler_and_field_variable(

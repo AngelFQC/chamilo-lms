@@ -1,8 +1,9 @@
 <?php
 /* For licensing terms, see /license.txt */
-use Doctrine\Common\Collections\Criteria,
-    Chamilo\UserBundle\Entity\User,
-    Doctrine\ORM\Query\Expr\Join;
+
+use Doctrine\Common\Collections\Criteria;
+use Chamilo\UserBundle\Entity\User;
+use Doctrine\ORM\Query\Expr\Join;
 
 /**
  * Responses to AJAX calls
@@ -32,6 +33,7 @@ switch ($action) {
     case 'get_user_popup':
         $user_info = api_get_user_info($_REQUEST['user_id']);
         $ajax_url = api_get_path(WEB_AJAX_PATH).'message.ajax.php';
+        $isAnonymous = api_is_anonymous();
 
         echo '<div class="row">';
         echo '<div class="col-sm-5">';
@@ -39,19 +41,33 @@ switch ($action) {
         echo '<img src="'.$user_info['avatar'].'" /> ';
         echo '</div>';
         echo '</div>';
+
         echo '<div class="col-sm-7">';
+
         if (api_get_setting('show_email_addresses') == 'false') {
             $user_info['mail'] = ' ';
         } else {
             $user_info['mail'] = ' '.$user_info['mail'].' ';
         }
-        echo '<a href="'.api_get_path(WEB_CODE_PATH).'social/profile.php?u='.$user_info['user_id'].'">';
-        echo '<h3>'.$user_info['complete_name'].'</h3>'.$user_info['mail'].$user_info['official_code'];
-        echo '</a>';
+
+        if ($isAnonymous) {
+            $user_info['mail'] = ' ';
+        }
+
+        $userData = '<h3>'.$user_info['complete_name'].'</h3>'.$user_info['mail'].$user_info['official_code'];
+        if ($isAnonymous) {
+            echo $userData;
+        } else {
+            echo Display::url($userData,
+                api_get_path(WEB_CODE_PATH).'social/profile.php?u=' . $user_info['user_id']
+            );
+        }
         echo '</div>';
         echo '</div>';
 
-        if (api_get_setting('allow_message_tool') == 'true') {
+        if ($isAnonymous === false &&
+            api_get_setting('allow_message_tool') == 'true'
+        ) {
             echo '<script>';
             echo '
                 $("#send_message_link").on("click", function() {
@@ -130,7 +146,10 @@ switch ($action) {
         }
         break;
     case 'active_user':
-        if (api_is_platform_admin() && api_global_admin_can_edit_admin($_GET['user_id'])) {
+        $allow = api_get_configuration_value('allow_disable_user_for_session_admin');
+        if ((api_is_platform_admin() && api_global_admin_can_edit_admin($_GET['user_id'])) ||
+            ($allow && api_is_session_admin() && api_global_admin_can_edit_admin($_GET['user_id'], null, true))
+        ) {
             $user_id = intval($_GET['user_id']);
             $status  = intval($_GET['status']);
 

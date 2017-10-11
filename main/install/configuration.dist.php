@@ -338,6 +338,15 @@ $_configuration['tracking_columns'] = [
         'score' => true,
         'best_score' => true,
         'last_connection' => true,
+    ],
+    'my_progress_courses' => [
+        'course_title' => true,
+        'time_spent' => true,
+        'progress' => true,
+        'best_score_in_lp' => true,
+        'best_score_not_in_lp' => true,
+        'latest_login' => true,
+        'details' => true
     ]
 ];
 */
@@ -595,6 +604,7 @@ $_configuration['score_grade_model'] = [
 // Additional gradebook dependencies BT#13099
 // ALTER TABLE gradebook_category ADD COLUMN depends TEXT DEFAULT NULL;
 // ALTER TABLE gradebook_category ADD COLUMN minimum_to_validate INT DEFAULT NULL;
+// ALTER TABLE gradebook_category ADD COLUMN gradebooks_to_validate_in_dependence INT DEFAULT NULL;
 // $_configuration['gradebook_dependency'] = false;
 // Courses id list to check in the gradebook sidebar see BT#13099
 /*$_configuration['gradebook_dependency_mandatory_courses'] = [
@@ -617,6 +627,12 @@ $_configuration['gradebook_badge_sidebar'] = [
 // Hide base course announcements when entering a group.
 //$_configuration['hide_base_course_announcements_in_group'] = false;
 
+// Disable delete all announcements button
+//$_configuration['disable_delete_all_announcements'] = false;
+
+// Default glossary view "table" or "list"
+//$_configuration['default_glossary_view'] = 'table';
+
 // Allow or block user subcriptions to a lp/lp category
 /*$_configuration['lp_subscription_settings'] = [
     'options' => [
@@ -627,3 +643,22 @@ $_configuration['gradebook_badge_sidebar'] = [
 
 // Allow public courses access with no terms and conditions validation.
 //$_configuration['allow_public_course_with_no_terms_conditions'] = false;
+
+// Allow delete user for session admin
+//$_configuration['allow_delete_user_for_session_admin'] = false;
+// Allow enable/disable user accounts for session admin
+//$_configuration['allow_disable_user_for_session_admin'] = false;
+// Allow edit/delete agenda events for HRM users
+//$_configuration['allow_agenda_edit_for_hrm'] = false;
+// Allow double validation in registration page
+//$_configuration['allow_double_validation_in_registration'] = false;
+// Allow multiple anon users see BT#13324
+//$_configuration['max_anonymous_users'] = 0;
+
+// Send email notification to admin when a user is created
+//$_configuration['send_notification_when_user_added'] = ['admins' => [1] ];
+
+// Hide email content forcing using to click in a link to visit the portal to check the message
+//$_configuration['messages_hide_mail_content'] = false;
+// If you install plugin redirection you need to change to true
+//$_configuration['plugin_redirection_enabled'] = false;

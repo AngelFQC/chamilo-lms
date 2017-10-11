@@ -54,7 +54,9 @@ class Event
 
     /**
      * @author Sebastien Piraux <piraux_seb@hotmail.com> old code
-     * @author Julio Montoya 2013
+     * @author Julio Montoya
+     * @param int $userId
+     * @return bool
      * @desc Record information for login event when an user identifies himself with username & password
      */
     public static function eventLogin($userId)
@@ -88,6 +90,7 @@ class Event
                 }
             }
         }
+        return true;
     }
 
     /**
@@ -186,7 +189,11 @@ class Event
         // "what's new" notification
         $sql = "UPDATE $TABLETRACK_LASTACCESS
                 SET access_date = '$reallyNow'
-                WHERE access_user_id = ".$user_id." AND c_id = '".$courseId."' AND access_tool = '".$tool."' AND access_session_id=".$id_session;
+                WHERE 
+                    access_user_id = ".$user_id." AND 
+                    c_id = '".$courseId."' AND 
+                    access_tool = '".$tool."' AND 
+                    access_session_id=".$id_session;
         $result = Database::query($sql);
         if (Database::affected_rows($result) == 0) {
             $sql = "INSERT INTO $TABLETRACK_LASTACCESS (access_user_id, c_id, access_tool, access_date, access_session_id)
@@ -1462,13 +1469,15 @@ class Event
      * @param   int     $exercise_id
      * @param   int     $courseId
      * @param   int     $session_id
+     * @param int $userId
      * @return  array   with the results
      * @todo rename this function
      */
     public static function get_best_exercise_results_by_user(
         $exercise_id,
         $courseId,
-        $session_id = 0
+        $session_id = 0,
+        $userId = 0
     ) {
         $table_track_exercises = Database::get_main_table(TABLE_STATISTIC_TRACK_E_EXERCISES);
         $table_track_attempt = Database::get_main_table(TABLE_STATISTIC_TRACK_E_ATTEMPT);
@@ -1483,8 +1492,13 @@ class Event
                     exe_exo_id = '$exercise_id' AND
                     session_id = $session_id AND
                     orig_lp_id = 0 AND
-                    orig_lp_item_id = 0
-                ORDER BY exe_id";
+                    orig_lp_item_id = 0";
+
+        if (!empty($userId)) {
+            $userId = (int) $userId;
+            $sql .= " AND exe_user_id = $userId ";
+        }
+        $sql .= " ORDER BY exe_id";
 
         $res = Database::query($sql);
         $list = array();
@@ -1731,17 +1745,17 @@ class Event
     }
 
     /**
-     * @param int $exe_id
+     * @param int $exeId
      *
      * @return array
      */
-    public static function getAllExerciseEventByExeId($exe_id)
+    public static function getAllExerciseEventByExeId($exeId)
     {
         $table = Database::get_main_table(TABLE_STATISTIC_TRACK_E_ATTEMPT);
-        $exe_id = intval($exe_id);
+        $exeId = intval($exeId);
 
         $sql = "SELECT * FROM $table
-                WHERE exe_id = $exe_id
+                WHERE exe_id = $exeId
                 ORDER BY position";
         $res_question = Database::query($sql);
         $list = array();
@@ -1755,14 +1769,14 @@ class Event
 
     /**
      *
-     * @param int $exe_id
+     * @param int $exeId
      * @param int $user_id
      * @param int $courseId
      * @param int $session_id
      * @param int $question_id
      */
     public static function delete_attempt(
-        $exe_id,
+        $exeId,
         $user_id,
         $courseId,
         $session_id,
@@ -1770,7 +1784,7 @@ class Event
     ) {
         $table = Database::get_main_table(TABLE_STATISTIC_TRACK_E_ATTEMPT);
 
-        $exe_id = intval($exe_id);
+        $exeId = intval($exeId);
         $user_id = intval($user_id);
         $courseId = intval($courseId);
         $session_id = intval($session_id);
@@ -1778,7 +1792,7 @@ class Event
 
         $sql = "DELETE FROM $table
                 WHERE
-                    exe_id = $exe_id AND
+                    exe_id = $exeId AND
                     user_id = $user_id AND
                     c_id = $courseId AND
                     session_id = $session_id AND
@@ -1788,7 +1802,7 @@ class Event
         self::addEvent(
             LOG_QUESTION_RESULT_DELETE,
             LOG_EXERCISE_ATTEMPT_QUESTION_ID,
-            $exe_id.'-'.$question_id,
+            $exeId.'-'.$question_id,
             null,
             null,
             $courseId,
@@ -1797,14 +1811,14 @@ class Event
     }
 
     /**
-     * @param $exe_id
+     * @param $exeId
      * @param $user_id
      * @param int $courseId
      * @param $question_id
      * @param int $sessionId
      */
     public static function delete_attempt_hotspot(
-        $exe_id,
+        $exeId,
         $user_id,
         $courseId,
         $question_id,
@@ -1812,7 +1826,7 @@ class Event
     ) {
         $table = Database::get_main_table(TABLE_STATISTIC_TRACK_E_HOTSPOT);
 
-        $exe_id = intval($exe_id);
+        $exeId = intval($exeId);
         $user_id = intval($user_id);
         $courseId = intval($courseId);
         $question_id = intval($question_id);
@@ -1822,7 +1836,7 @@ class Event
 
         $sql = "DELETE FROM $table
                 WHERE   
-                    hotspot_exe_id = $exe_id AND
+                    hotspot_exe_id = $exeId AND
                     hotspot_user_id = $user_id AND
                     c_id = $courseId AND
                     hotspot_question_id = $question_id ";
@@ -1830,7 +1844,7 @@ class Event
         self::addEvent(
             LOG_QUESTION_RESULT_DELETE,
             LOG_EXERCISE_ATTEMPT_QUESTION_ID,
-            $exe_id.'-'.$question_id,
+            $exeId.'-'.$question_id,
             null,
             null,
             $courseId,
@@ -1921,13 +1935,16 @@ class Event
 
         // Save every 5 minutes by default
         $seconds = $minutes * 60;
+        $maxSeconds = 3600; // Only update if max diff is one hour
         if (Database::num_rows($result)) {
             $row = Database::fetch_array($result);
             $id = $row['course_access_id'];
             $logout = $row['logout_course_date'];
             $now = time();
             $logout = api_strtotime($logout, 'UTC');
-            if ($now - $logout > $seconds) {
+            if ($now - $logout > $seconds &&
+                $now - $logout < $maxSeconds
+            ) {
                 $now = api_get_utc_datetime();
                 $sql = "UPDATE $table SET 
                             logout_course_date = '$now', 
@@ -1955,9 +1972,9 @@ class Event
         }
 
         $sessionLifetime = api_get_configuration_value('session_lifetime');
-
         /*
-         * When $_configuration['session_lifetime'] is larger than ~100 hours (in order to let users take exercises with no problems)
+         * When $_configuration['session_lifetime'] is larger than ~100 hours
+         * (in order to let users take exercises with no problems)
          * the function Tracking::get_time_spent_on_the_course() returns larger values (200h) due the condition:
          * login_course_date > now() - INTERVAL $session_lifetime SECOND
          */
@@ -1974,8 +1991,9 @@ class Event
             }
             $currentDate = api_get_utc_datetime();
             // UTC time
-            $time  = api_get_utc_datetime(time() - $sessionLifetime);
-            $sql = "SELECT course_access_id
+            $diff = time() - $sessionLifetime;
+            $time = api_get_utc_datetime($diff);
+            $sql = "SELECT course_access_id, logout_course_date
                     FROM $tableCourseAccess
                     WHERE 
                         user_id = $userId AND
@@ -1985,14 +2003,26 @@ class Event
                     ORDER BY login_course_date DESC 
                     LIMIT 1";
             $result = Database::query($sql);
+            $insert = false;
             if (Database::num_rows($result) > 0) {
-                $courseAccessId = Database::result($result, 0, 0);
-                $sql = "UPDATE $tableCourseAccess SET 
-                            logout_course_date = '$currentDate', 
-                            counter = counter + 1
-                        WHERE course_access_id = $courseAccessId";
-                Database::query($sql);
+                $row = Database::fetch_array($result, 'ASSOC');
+                $courseAccessId = $row['course_access_id'];
+                /*$logout = $row['logout_course_date'];
+                $now = time();
+                $logout = api_strtotime($logout, 'UTC');
+                */
+                //if ($now - $logout < $sessionLifetime) {
+                    $sql = "UPDATE $tableCourseAccess SET 
+                                logout_course_date = '$currentDate', 
+                                counter = counter + 1
+                            WHERE course_access_id = $courseAccessId";
+                    Database::query($sql);
+                //}
             } else {
+                $insert = true;
+            }
+
+            if ($insert) {
                 $ip = api_get_real_ip();
                 $sql = "INSERT INTO $tableCourseAccess (c_id, user_ip, user_id, login_course_date, logout_course_date, counter, session_id)
                         VALUES ($courseId, '$ip', $userId, '$currentDate', '$currentDate', 1, $sessionId)";
@@ -2051,10 +2081,10 @@ class Event
         // hour. In this case it wouldn't be right to add a "fake" time record.
         if (Database::num_rows($result) > 0) {
             // Found the latest connection
-            $row = Database::fetch_row($result);
-            $courseAccessId = $row[0];
-            $courseAccessLoginDate = $row[3];
-            $counter = $row[5];
+            $row = Database::fetch_array($result);
+            $courseAccessId = $row['course_access_id'];
+            $courseAccessLoginDate = $row['login_course_date'];
+            $counter = $row['counter'];
             $counter = $counter ? $counter : 0;
             // Insert a new record, copy of the current one (except the logout
             // date that we update to the current time)

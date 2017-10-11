@@ -106,7 +106,6 @@ class ExtraFieldValue extends Model
 
         // Parse params.
         foreach ($extraFields as $fieldDetails) {
-
             $field_variable = $fieldDetails['variable'];
 
             // if the field is not visible to the user in the end, we need to apply special rules
@@ -386,6 +385,8 @@ class ExtraFieldValue extends Model
                 case ExtraField::FIELD_TYPE_TEXTAREA:
                     break;
                 case ExtraField::FIELD_TYPE_DOUBLE_SELECT:
+                    //no break
+                case ExtraField::FIELD_TYPE_SELECT_WITH_TEXT_FIELD:
                     if (is_array($value)) {
                         if (isset($value['extra_'.$extraFieldInfo['variable']]) &&
                             isset($value['extra_'.$extraFieldInfo['variable'].'_second'])
@@ -584,6 +585,31 @@ class ExtraFieldValue extends Model
                                 $result['value'] = $extra_field_option_result[0]['display_text'];
                             }
                             break;
+                        case ExtraField::FIELD_TYPE_SELECT_WITH_TEXT_FIELD:
+                            $options = explode('::', $result['value']);
+
+                            $field_option = new ExtraFieldOption($this->type);
+                            $result = $field_option->get($options[0]);
+
+                            if (!empty($result)) {
+                                $result['value'] = $result['display_text']
+                                    .'&rarr;'
+                                    .$options[1];
+                            }
+                            break;
+                        case ExtraField::FIELD_TYPE_TRIPLE_SELECT:
+                            $optionIds = explode(';', $result['value']);
+                            $optionValues = [];
+
+                            foreach ($optionIds as $optionId) {
+                                $objEfOption = new ExtraFieldOption('user');
+                                $optionInfo = $objEfOption->get($optionId);
+
+                                $optionValues[] = $optionInfo['display_text'];
+                            }
+
+                            $result['value'] = implode(' / ', $optionValues);
+                            break;
                     }
                 }
             }
@@ -680,6 +706,35 @@ class ExtraFieldValue extends Model
                             $result['value'] = $result['display_text'].' -> ';
                             $result['value'] .= $result_second['display_text'];
                         }
+                    }
+                }
+                if ($result['field_type'] == ExtraField::FIELD_TYPE_SELECT_WITH_TEXT_FIELD) {
+                    if (!empty($result['value'])) {
+                        $options = explode('::', $result['value']);
+
+                        $field_option = new ExtraFieldOption($this->type);
+                        $result = $field_option->get($options[0]);
+
+                        if (!empty($result)) {
+                            $result['value'] = $result['display_text']
+                                .'&rarr;'
+                                .$options[1];
+                        }
+                    }
+                }
+                if ($result['field_type'] == ExtraField::FIELD_TYPE_TRIPLE_SELECT) {
+                    if (!empty($result['value'])) {
+                        $optionIds = explode(';', $result['value']);
+                        $optionValues = [];
+
+                        foreach ($optionIds as $optionId) {
+                            $objEfOption = new ExtraFieldOption('user');
+                            $optionInfo = $objEfOption->get($optionId);
+
+                            $optionValues[] = $optionInfo['display_text'];
+                        }
+
+                        $result['value'] = implode(' / ', $optionValues);
                     }
                 }
             }
@@ -807,7 +862,8 @@ class ExtraFieldValue extends Model
         $itemId = intval($itemId);
         $extraFieldType = $this->getExtraField()->getExtraFieldType();
 
-        $sql = "SELECT s.value, sf.variable FROM {$this->table} s
+        $sql = "SELECT s.value, sf.variable, sf.field_type, sf.id 
+                FROM {$this->table} s
                 INNER JOIN {$this->table_handler_field} sf
                 ON (s.field_id = sf.id)
                 WHERE

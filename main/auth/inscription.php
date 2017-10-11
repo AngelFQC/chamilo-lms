@@ -59,6 +59,9 @@ $form = new FormValidator('registration');
 $user_already_registered_show_terms = false;
 if (api_get_setting('allow_terms_conditions') == 'true') {
     $user_already_registered_show_terms = isset($_SESSION['term_and_condition']['user_id']);
+    if (api_is_anonymous() === true) {
+        $user_already_registered_show_terms = false;
+    }
 }
 
 $sessionPremiumChecker = Session::read('SessionIsPremium');
@@ -398,6 +401,7 @@ $defaults['status'] = STUDENT;
 $defaults['extra_mail_notify_invitation'] = 1;
 $defaults['extra_mail_notify_message'] = 1;
 $defaults['extra_mail_notify_group_message'] = 1;
+
 $form->setDefaults($defaults);
 $content = null;
 
@@ -474,6 +478,8 @@ if (!CustomPages::enabled()) {
     }
 }
 
+$showTerms = false;
+
 // Terms and conditions
 if (api_get_setting('allow_terms_conditions') == 'true') {
     if (!api_is_platform_admin()) {
@@ -520,9 +526,39 @@ if (api_get_setting('allow_terms_conditions') == 'true') {
         $preview = LegalManager::show_last_condition($term_preview);
         $form->addElement('label', null, $preview);
     }
+    $showTerms = true;
 }
 
-$form->addButtonCreate(get_lang('RegisterUser'));
+$allow = api_get_configuration_value('allow_double_validation_in_registration');
+
+if ($allow && $showTerms == false) {
+    $htmlHeadXtra[] = '<script>
+        $(document).ready(function() {
+            $("#pre_validation").click(function() {
+                $(this).hide();
+                $("#final_button").show();
+            });
+        });
+    </script>';
+
+    $form->addLabel(
+        null,
+        Display::url(
+            get_lang('Ok'),
+            'javascript:void',
+            ['class' => 'btn btn-default', 'id' => 'pre_validation']
+        )
+    );
+    $form->addHtml('<div id="final_button" style="display: none">');
+    $form->addLabel(
+        null,
+        Display::return_message(get_lang('DoubleValidationMessage'), 'info', false)
+    );
+    $form->addButton('submit', get_lang('RegisterUser'), '', 'primary');
+    $form->addHtml('</div>');
+} else {
+    $form->addButtonNext(get_lang('RegisterUser'));
+}
 
 $course_code_redirect = Session::read('course_redirect');
 $sessionToRedirect = Session::read('session_redirect');
@@ -749,6 +785,26 @@ if ($form->validate()) {
 
                 Display::display_header($tool_name);
                 echo Display::page_header($tool_name);
+                echo $content;
+                Display::display_footer();
+                exit;
+            } else if (api_get_setting('allow_registration') === 'confirmation') {
+                $TABLE_USER = Database::get_main_table(TABLE_MAIN_USER);
+                // 1. set account inactive
+                $sql = "UPDATE $TABLE_USER SET active='0' WHERE user_id = ".$user_id;
+                Database::query($sql);
+
+                // 2. Send mail to the user
+                /** @var \Chamilo\UserBundle\Entity\User $thisUser */
+                $thisUser = Database::getManager()->getRepository('ChamiloUserBundle:User')->find($user_id);
+
+                UserManager::sendUserConfirmationMail($thisUser);
+
+                // 3. exit the page
+                unset($user_id);
+
+                Display::display_header(get_lang('ConfirmationForNewAccount', null, $values['language']));
+                echo Display::page_header(get_lang('YouNeedToConfirmYourAccountViaMailToAccessPlatform', null, $values['language']));
                 echo $content;
                 Display::display_footer();
                 exit;

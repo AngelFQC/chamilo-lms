@@ -343,6 +343,9 @@ class CourseManager
      */
     public static function unsubscribe_user($user_id, $course_code, $session_id = 0)
     {
+        if (empty($user_id)) {
+            return;
+        }
         if (!is_array($user_id)) {
             $user_id = array($user_id);
         }
@@ -2847,7 +2850,7 @@ class CourseManager
         if ($include_sessions === true) {
             $sql = "SELECT DISTINCT (c.code), 
                         c.id as real_id, 
-                        course.category_code AS category
+                        c.category_code AS category
                     FROM ".Database::get_main_table(TABLE_MAIN_SESSION_COURSE_USER)." s,
                     $tbl_course c
                     WHERE user_id = $user_id AND s.c_id = c.id";
@@ -5076,7 +5079,10 @@ class CourseManager
                 $my_course['price'] = $isThisCourseInSale['html'];
                 // set the Buy button instead register.
                 if ($isThisCourseInSale['verificator'] && !empty($my_course['register_button'])) {
-                    $my_course['register_button'] = $plugin->returnBuyCourseButton($course_info['real_id'], BuyCoursesPlugin::PRODUCT_TYPE_COURSE);
+                    $my_course['register_button'] = $plugin->returnBuyCourseButton(
+                        $course_info['real_id'],
+                        BuyCoursesPlugin::PRODUCT_TYPE_COURSE
+                    );
                 }
             }
             // end buycourse validation
@@ -5542,7 +5548,8 @@ class CourseManager
             'show_system_folders',
             'exercise_invisible_in_session',
             'enable_forum_auto_launch',
-            'show_course_in_user_language'
+            'show_course_in_user_language',
+            'email_to_teachers_on_new_work_feedback'
         );
 
         if (!empty(ExerciseLib::getScoreModels())) {
@@ -5822,7 +5829,8 @@ class CourseManager
     /**
      * Generates a course code from a course title
      * @todo Such a function might be useful in other places too. It might be moved in the CourseManager class.
-     * @todo the function might be upgraded for avoiding code duplications (currently, it might suggest a code that is already in use)
+     * @todo the function might be upgraded for avoiding code duplications (currently,
+     * it might suggest a code that is already in use)
      * @param string $title A course title
      * @return string A proposed course code
      * +
@@ -6324,7 +6332,13 @@ class CourseManager
             if ($loadDirs) {
                 $params['right_actions'] .= '<a id="document_preview_'.$course_info['real_id'].'_0" class="document_preview" href="javascript:void(0);">'.Display::return_icon('folder.png', get_lang('Documents'), array('align' => 'absmiddle'), ICON_SIZE_SMALL).'</a>';
                 $params['right_actions'] .= '<a href="'.api_get_path(WEB_CODE_PATH).'course_info/infocours.php?cidReq='.$course['code'].'">'.Display::return_icon('edit.png', get_lang('Edit'), array('align' => 'absmiddle'), ICON_SIZE_SMALL).'</a>';
-                $params['right_actions'] .= Display::div('', array('id' => 'document_result_'.$course_info['real_id'].'_0', 'class'=>'document_preview_container'));
+                $params['right_actions'] .= Display::div(
+                    '',
+                    array(
+                        'id' => 'document_result_'.$course_info['real_id'].'_0',
+                        'class' => 'document_preview_container',
+                    )
+                );
             } else {
                 $params['right_actions'] .= '<a class="btn btn-default btn-sm" title="'.get_lang('Edit').'" href="'.api_get_path(WEB_CODE_PATH).'course_info/infocours.php?cidReq='.$course['code'].'">'.Display::returnFontAwesomeIcon('pencil').'</a>';
             }
@@ -6336,7 +6350,13 @@ class CourseManager
             if ($course_info['visibility'] != COURSE_VISIBILITY_CLOSED) {
                 if ($loadDirs) {
                     $params['right_actions'] .= '<a id="document_preview_'.$course_info['real_id'].'_0" class="document_preview" href="javascript:void(0);">'.Display::return_icon('folder.png', get_lang('Documents'), array('align' => 'absmiddle'), ICON_SIZE_SMALL).'</a>';
-                    $params['right_actions'] .= Display::div('', array('id' => 'document_result_'.$course_info['real_id'].'_0', 'class'=>'document_preview_container'));
+                    $params['right_actions'] .= Display::div(
+                        '',
+                        array(
+                            'id' => 'document_result_'.$course_info['real_id'].'_0',
+                            'class' => 'document_preview_container',
+                        )
+                    );
                 } else {
                     if ($course_info['status'] == COURSEMANAGER) {
                         $params['right_actions'] .= '<a class="btn btn-default btn-sm" title="'.get_lang('Edit').'" href="'.api_get_path(WEB_CODE_PATH).'course_info/infocours.php?cidReq='.$course['code'].'">'.Display::returnFontAwesomeIcon('pencil').'</a>';
@@ -6350,7 +6370,11 @@ class CourseManager
             $course_title_url = api_get_path(WEB_COURSE_PATH).$course_info['path'].'/?id_session=0';
             $course_title = Display::url($course_info['title'], $course_title_url);
         } else {
-            $course_title = $course_info['title'].' '.Display::tag('span', get_lang('CourseClosed'), array('class'=>'item_closed'));
+            $course_title = $course_info['title'].' '.Display::tag(
+                'span',
+                get_lang('CourseClosed'),
+                array('class' => 'item_closed')
+            );
         }
 
         // Start displaying the course block itself

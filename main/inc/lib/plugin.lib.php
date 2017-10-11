@@ -102,7 +102,6 @@ class AppPlugin
     }
 
     /**
-     * @return array
      */
     public function setInstalledPluginListObject()
     {
@@ -411,7 +410,6 @@ class AppPlugin
     public function getPluginInfo($plugin_name, $forced = false)
     {
         $pluginData = Session::read('plugin_data');
-
         if (isset($pluginData[$plugin_name]) && $forced == false) {
             return $pluginData[$plugin_name];
         } else {
@@ -469,6 +467,7 @@ class AppPlugin
 
     /**
      * Remove all regions of an specific plugin
+     * @param string $plugin
      */
     public function remove_all_regions($plugin)
     {
@@ -476,7 +475,12 @@ class AppPlugin
         if (!empty($plugin)) {
             api_delete_settings_params(
                 array(
-                    'category = ? AND type = ? AND access_url = ? AND subkey = ? ' => array('Plugins', 'region', $access_url_id, $plugin)
+                    'category = ? AND type = ? AND access_url = ? AND subkey = ? ' => array(
+                        'Plugins',
+                        'region',
+                        $access_url_id,
+                        $plugin,
+                    ),
                 )
             );
         }
@@ -632,7 +636,6 @@ class AppPlugin
      * When saving the plugin values in the course settings, check whether
      * a callback method should be called and send it the updated settings
      * @param array $values The new settings the user just saved
-     * @return void
      */
     public function saveCourseSettingsHook($values)
     {

@@ -186,6 +186,7 @@ class ExerciseLib
                 );
                 $s .= $form->returnForm();
             } elseif ($answerType == ORAL_EXPRESSION) {
+
                 // Add nanog
                 if (api_get_setting('enable_record_audio') == 'true') {
                     //@todo pass this as a parameter
@@ -211,9 +212,10 @@ class ExerciseLib
                 }
 
                 $form = new FormValidator('free_choice_'.$questionId);
-                $config = array(
-                    'ToolbarSet' => 'TestFreeAnswer'
-                );
+                $config = ['ToolbarSet' => 'TestFreeAnswer'];
+
+                //$form->addButtonAdvancedSettings('hide_description_'.$questionId, get_lang('AddDescription'));
+                $form->addHtml('<div id="'.'hide_description_'.$questionId.'_options" style="display: none;">');
                 $form->addHtmlEditor(
                     "choice[".$questionId."]",
                     null,
@@ -221,6 +223,7 @@ class ExerciseLib
                     false,
                     $config
                 );
+                $form->addHtml('</div>');
                 $s .= $form->returnForm();
             }
 
@@ -2690,11 +2693,10 @@ EOT;
                 'order' => 'title'
             );
         } else {
-            if ($session_id == 0) {
+            if (empty($session_id)) {
                 $conditions = array(
                     'where' => array(
-                        $active_sql.' session_id = ? AND c_id = ? '.$needle_where.$time_conditions => array(
-                            $session_id,
+                        $active_sql.' (session_id = 0 OR session_id IS NULL) AND c_id = ? '.$needle_where.$time_conditions => array(
                             $course_id,
                             $needle
                         )
@@ -2716,7 +2718,6 @@ EOT;
         }
 
         $table = Database::get_course_table(TABLE_QUIZ_TEST);
-
         return Database::select('*', $table, $conditions);
     }
 
@@ -3180,6 +3181,36 @@ EOT;
                 $avg_score = float_format($avg_score / $user_count, 1) * 100;
             } else {
                 $avg_score = 0;
+            }
+        }
+
+        return $avg_score;
+    }
+
+    /**
+     * Get average score by score (NO Exercises in LPs )
+     * @param    int        exercise id
+     * @param    int $courseId
+     * @param    int        session id
+     * @return    float    Best average score
+     */
+    public static function getBestScoreByExercise(
+        $exercise_id,
+        $courseId,
+        $session_id
+    ) {
+        $user_results = Event::get_best_exercise_results_by_user(
+            $exercise_id,
+            $courseId,
+            $session_id
+        );
+        $avg_score = 0;
+        if (!empty($user_results)) {
+            foreach ($user_results as $result) {
+                if (!empty($result['exe_weighting']) && intval($result['exe_weighting']) != 0) {
+                    $score = $result['exe_result'] / $result['exe_weighting'];
+                    $avg_score += $score;
+                }
             }
         }
 
@@ -4097,8 +4128,9 @@ EOT;
                 if ($show_results) {
                     $question_content .= '</div>';
                 }
-                $exercise_content .= Display::panel($question_content);
-
+                if(!$show_only_score){
+                    $exercise_content .= Display::div(Display::panel($question_content),array('class' => 'question-panel'));
+                }
             } // end foreach() block that loops over all questions
         }
 
@@ -4128,9 +4160,7 @@ EOT;
         }
 
         if ($show_all_but_expected_answer) {
-            $exercise_content .= "<div class='normal-message'>".get_lang(
-                    "ExerciseWithFeedbackWithoutCorrectionComment"
-                )."</div>";
+            $exercise_content .= "<div class='normal-message'>".get_lang('ExerciseWithFeedbackWithoutCorrectionComment')."</div>";
         }
 
         // Remove audio auto play from questions on results page - refs BT#7939

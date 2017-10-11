@@ -660,22 +660,22 @@ if (!empty($_SESSION['_user']['user_id']) && !($login || $logout)) {
             $forceSsoRedirect = api_get_setting('sso_force_redirect');
             if ($forceSsoRedirect === 'true') {
                 // all users to be redirected unless they are connected (removed req on sso_cookie)
-                $redirectToMasterConditions = !isset($_GET['sso_referer']) && !isset($_GET['loginFailed']);
+                $redirectToMasterConditions = !isset($_REQUEST['sso_referer']) && !isset($_GET['loginFailed']);
             } else {
                 //  Users to still see the homepage without connecting
-                $redirectToMasterConditions = !isset($_GET['sso_referer']) && !isset($_GET['loginFailed']) && isset($_GET['sso_cookie']);
+                $redirectToMasterConditions = !isset($_REQUEST['sso_referer']) && !isset($_GET['loginFailed']) && isset($_GET['sso_cookie']);
             }
 
             if ($redirectToMasterConditions) {
                 // Redirect to master server
                 $osso->ask_master();
-            } elseif (isset($_GET['sso_cookie'])) {
+            } elseif (isset($_REQUEST['sso_cookie'])) {
 
                 // Here we are going to check the origin of
                 // what the call says should be used for
                 // authentication, and ensure  we know it
                 $matches_domain = false;
-                if (isset($_GET['sso_referer'])) {
+                if (isset($_REQUEST['sso_referer'])) {
                     $protocol = api_get_setting('sso_authentication_protocol');
                     // sso_authentication_domain can list
                     // several, comma-separated, domains
@@ -690,7 +690,7 @@ if (!empty($_SESSION['_user']['user_id']) && !($login || $logout)) {
                             //  then skip other possibilities
                             // Do NOT compare the whole referer, as this might cause confusing errors with friendly urls,
                             // like in Drupal /?q=user& vs /user?
-                            $referrer = substr($_GET['sso_referer'], 0, strrpos($_GET['sso_referer'], '/'));
+                            $referrer = substr($_REQUEST['sso_referer'], 0, strrpos($_REQUEST['sso_referer'], '/'));
                             if ($protocol.trim($mu) === $referrer) {
                                 $matches_domain = true;
                                 break;
@@ -816,12 +816,17 @@ if (!empty($_SESSION['_user']['user_id']) && !($login || $logout)) {
     //    $gidReset = true;
 } // end else
 
+$maxAnons = api_get_configuration_value('max_anonymous_users');
+
  // Now check for anonymous user mode
 if (isset($use_anonymous) && $use_anonymous) {
     //if anonymous mode is set, then try to set the current user as anonymous
     //if he doesn't have a login yet
-
-    api_set_anonymous();
+    $anonResult = api_set_anonymous();
+    if ($maxAnons >= 2 && $anonResult) {
+        $uidReset = true;
+        Event::eventLogin($_user['user_id']);
+    }
 } else {
     //if anonymous mode is not set, then check if this user is anonymous. If it
     //is, clean it from being anonymous (make him a nobody :-))
@@ -843,7 +848,12 @@ if (isset($uidReset) && $uidReset) {
     unset($_SESSION['_user']['uidReset']);
     $is_platformAdmin = false;
     $is_allowedCreateCourse = false;
-    if (isset($_user['user_id']) && $_user['user_id'] && !api_is_anonymous()) {
+    $isAnonymous = api_is_anonymous();
+    if ($maxAnons >= 2) {
+        $isAnonymous = false;
+    }
+
+    if (isset($_user['user_id']) && $_user['user_id'] && !$isAnonymous) {
         // a uid is given (log in succeeded)
         $_SESSION['loginFailed'] = false;
         unset($_SESSION['loginFailedCount']);
@@ -896,6 +906,7 @@ if (isset($uidReset) && $uidReset) {
     $is_allowedCreateCourse = isset($_SESSION['is_allowedCreateCourse']) ? $_SESSION['is_allowedCreateCourse'] : false;
 }
 
+$logoutCourseCalled = false;
 if (!isset($_SESSION['login_as'])) {
     $save_course_access = true;
     $_course = Session::read('_course');
@@ -905,6 +916,7 @@ if (!isset($_SESSION['login_as'])) {
         if (isset($_dont_save_user_course_access) && $_dont_save_user_course_access == true) {
             $save_course_access = false;
         } else {
+            $logoutCourseCalled = true;
             Event::courseLogout($logoutInfo);
         }
     }
@@ -970,7 +982,9 @@ if (isset($cidReset) && $cidReset) {
         }
     } else {
         // Leave a logout time in the track_e_course_access table if we were in a course
-        Event::courseLogout($logoutInfo);
+        if ($logoutCourseCalled == false) {
+            Event::courseLogout($logoutInfo);
+        }
         Session::erase('_cid');
         Session::erase('_real_cid');
         Session::erase('_course');

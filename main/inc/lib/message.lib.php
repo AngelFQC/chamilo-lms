@@ -67,6 +67,8 @@ class MessageManager
 
     /**
      * Gets the total number of messages, used for the inbox sortable table
+     * @param bool $unread
+     * @return int
      */
     public static function get_number_of_messages($unread = false)
     {
@@ -100,6 +102,7 @@ class MessageManager
      * Gets information about some messages, used for the inbox sortable table
      * @param int $from
      * @param int $number_of_items
+     * @param string $column
      * @param string $direction
      * @return array
      */
@@ -147,7 +150,6 @@ class MessageManager
                 LIMIT $from, $number_of_items";
 
         $sql_result = Database::query($sql);
-        $i = 0;
         $message_list = array();
 
         $newMessageLink = api_get_path(WEB_CODE_PATH).'messages/new_message.php';
@@ -161,27 +163,23 @@ class MessageManager
             } else {
                 $class = 'class = "read"';
             }
-            $link = '';
-            if (isset($_GET['f']) && $_GET['f'] == 'social') {
-                $link = '&f=social';
-            }
 
             $userInfo = api_get_user_info($result[1]);
-            $message[1] = '<a '.$class.' href="view_message.php?id='.$result[0].$link.'">'.$result[2].'</a><br />'.$userInfo['complete_name'];
+            $message[1] = '<a '.$class.' href="view_message.php?id='.$result[0].'">'.$result[2].'</a><br />'.$userInfo['complete_name_with_username'];
 
             $message[3] =
                 Display::url(
                     Display::returnFontAwesomeIcon('reply', 2),
-                    $newMessageLink.'?re_id='.$result[0].$link,
+                    $newMessageLink.'?re_id='.$result[0],
                     ['title' => get_lang('ReplyToMessage') ]
                 ).
                 '&nbsp;&nbsp;'.
                 Display::url(
                     Display::returnFontAwesomeIcon('share', 2),
-                    $newMessageLink.'?forward_id='.$result[0].$link,
+                    $newMessageLink.'?forward_id='.$result[0],
                     ['title' => get_lang('ForwardMessage') ]
                 ).
-                '&nbsp;&nbsp;<a title="'.addslashes(get_lang('DeleteMessage')).'" onclick="javascript:if(!confirm('."'".addslashes(api_htmlentities(get_lang('ConfirmDeleteMessage')))."'".')) return false;" href="inbox.php?action=deleteone&id='.$result[0].$link.'">'.
+                '&nbsp;&nbsp;<a title="'.addslashes(get_lang('DeleteMessage')).'" onclick="javascript:if(!confirm('."'".addslashes(api_htmlentities(get_lang('ConfirmDeleteMessage')))."'".')) return false;" href="inbox.php?action=deleteone&id='.$result[0].'">'.
                 Display::returnFontAwesomeIcon('trash', 2).'</a>';
 
             $message[2] = api_convert_and_format_date($result[3], DATE_TIME_FORMAT_LONG); //date stays the same
@@ -189,7 +187,6 @@ class MessageManager
                 $message[$key] = api_xml_http_response_encode($value);
             }
             $message_list[] = $message;
-            $i++;
         }
 
         return $message_list;
@@ -305,10 +302,10 @@ class MessageManager
             }
         }
 
-        if (empty($sender_id)) {
-            $user_sender_id = api_get_user_id();
-        } else {
-            $user_sender_id = intval($sender_id);
+        $user_sender_id = empty($sender_id) ? api_get_user_id() : (int) $sender_id;
+        if (empty($user_sender_id)) {
+            Display::addFlash(Display::return_message(get_lang('UserDoesNotExist')));
+            return false;
         }
 
         $total_filesize = 0;
@@ -1026,19 +1023,15 @@ class MessageManager
             $result[2] = Security::remove_XSS($result[2]);
             $userInfo = api_get_user_info($result[4]);
             if ($request === true) {
-                $message[1] = '<a onclick="show_sent_message('.$result[0].')" href="javascript:void(0)">'.$userInfo['complete_name'].'</a>';
+                $message[1] = '<a onclick="show_sent_message('.$result[0].')" href="javascript:void(0)">'.$userInfo['complete_name_with_username'].'</a>';
                 $message[2] = '<a onclick="show_sent_message('.$result[0].')" href="javascript:void(0)">'.str_replace("\\", "", $result[2]).'</a>';
                 $message[3] = api_convert_and_format_date($result[3], DATE_TIME_FORMAT_LONG); //date stays the same
                 $message[4] = '&nbsp;&nbsp;<a title="'.addslashes(get_lang('DeleteMessage')).'" onclick="delete_one_message_outbox('.$result[0].')" href="javascript:void(0)"  >'.
                     Display::returnFontAwesomeIcon('trash', 2).'</a>';
             } else {
-                $link = '';
-                if (isset($_GET['f']) && $_GET['f'] == 'social') {
-                    $link = '&f=social';
-                }
-                $message[1] = '<a '.$class.' onclick="show_sent_message ('.$result[0].')" href="../messages/view_message.php?id_send='.$result[0].$link.'">'.$result[2].'</a><br />'.$userInfo['complete_name'];
+                $message[1] = '<a '.$class.' onclick="show_sent_message('.$result[0].')" href="../messages/view_message.php?id_send='.$result[0].'">'.$result[2].'</a><br />'.$userInfo['complete_name_with_username'];
                 $message[2] = api_convert_and_format_date($result[3], DATE_TIME_FORMAT_LONG); //date stays the same
-                $message[3] = '<a title="'.addslashes(get_lang('DeleteMessage')).'" href="outbox.php?action=deleteone&id='.$result[0].'&'.$link.'"  onclick="javascript:if(!confirm('."'".addslashes(api_htmlentities(get_lang('ConfirmDeleteMessage')))."'".')) return false;" >'.
+                $message[3] = '<a title="'.addslashes(get_lang('DeleteMessage')).'" href="outbox.php?action=deleteone&id='.$result[0].'"  onclick="javascript:if(!confirm('."'".addslashes(api_htmlentities(get_lang('ConfirmDeleteMessage')))."'".')) return false;" >'.
                     Display::returnFontAwesomeIcon('trash', 2).'</a>';
             }
 
@@ -1130,9 +1123,8 @@ class MessageManager
 
         $title = Security::remove_XSS($row['title'], STUDENT, true);
         $content = Security::remove_XSS($row['content'], STUDENT, true);
-
         $from_user = api_get_user_info($user_sender_id);
-        $name = $from_user['complete_name'];
+        $name = $from_user['complete_name_with_username'];
         $message_content = Display::page_subheader(str_replace("\\", "", $title));
         $user_image = '';
         if (api_get_setting('allow_social_tool') == 'true') {
@@ -1154,7 +1146,7 @@ class MessageManager
                 $message_content .= '<ul class="list-message">';
                 $message_content .= '<li>'.$user_image.'</li>';
                 $message_content .= '<li><a href="'.api_get_path(WEB_PATH).'main/social/profile.php?u='.$user_sender_id.'">'.$name.'</a> ';
-                $message_content .= api_strtolower(get_lang('To')).'&nbsp;<b>'.$receiverUserInfo['complete_name'].'</b></li>';
+                $message_content .= api_strtolower(get_lang('To')).'&nbsp;<b>'.$receiverUserInfo['complete_name_with_username'].'</b></li>';
                 $message_content .= '<li>'.Display::dateToStringAgoAndLongDate($row['send_date']).'</li>';
                 $message_content .= '</ul>';
                 $message_content .= '</div>';
@@ -1232,6 +1224,7 @@ class MessageManager
      * Displays messages of a group with nested view
      *
      * @param int $group_id
+     * @return string
      */
     public static function display_messages_for_group($group_id)
     {
@@ -1297,7 +1290,11 @@ class MessageManager
                 if ($my_group_role == GROUP_USER_PERMISSION_ADMIN ||
                     $my_group_role == GROUP_USER_PERMISSION_MODERATOR
                 ) {
-                    $actions = '<br />'.Display::url(get_lang('Delete'), api_get_path(WEB_CODE_PATH).'social/group_topics.php?action=delete&id='.$group_id.'&topic_id='.$topic['id'], array('class' => 'btn btn-default'));
+                    $actions = '<br />'.Display::url(
+                        get_lang('Delete'),
+                        api_get_path(WEB_CODE_PATH).'social/group_topics.php?action=delete&id='.$group_id.'&topic_id='.$topic['id'],
+                        array('class' => 'btn btn-default')
+                    );
                 }
 
                 $date = '';
@@ -1456,10 +1453,16 @@ class MessageManager
         $date = '';
         if ($main_message['send_date'] != $main_message['update_date']) {
             if (!empty($main_message['update_date'])) {
-                $date = '<div class="date"> '.Display::returnFontAwesomeIcon('calendar').' '.get_lang('LastUpdate').' '.date_to_str_ago($main_message['update_date']).'</div>';
+                $date = '<div class="date"> '.
+                    Display::returnFontAwesomeIcon('calendar').' '.get_lang('LastUpdate').' '.
+                    date_to_str_ago($main_message['update_date']).
+                    '</div>';
             }
         } else {
-            $date = '<div class="date"> '.Display::returnFontAwesomeIcon('calendar').' '.get_lang('Created').' '.date_to_str_ago($main_message['send_date']).'</div>';
+            $date = '<div class="date"> '.
+                Display::returnFontAwesomeIcon('calendar').' '.get_lang('Created').' '.
+                date_to_str_ago($main_message['send_date']).
+                '</div>';
         }
         $attachment = '<div class="message-attach">'.(!empty($files_attachments) ? implode('<br />', $files_attachments) : '').'</div>';
         $main_content .= '<div class="col-md-10">';
@@ -1497,7 +1500,9 @@ class MessageManager
                 $name = $user_sender_info['complete_name'];
 
                 $links .= '<div class="btn-group btn-group-sm">';
-                if (($my_group_role == GROUP_USER_PERMISSION_ADMIN || $my_group_role == GROUP_USER_PERMISSION_MODERATOR) || $topic['user_sender_id'] == $current_user_id) {
+                if (($my_group_role == GROUP_USER_PERMISSION_ADMIN || $my_group_role == GROUP_USER_PERMISSION_MODERATOR) ||
+                    $topic['user_sender_id'] == $current_user_id
+                ) {
                     $links .= '<a href="'.api_get_path(WEB_CODE_PATH).'social/message_for_group_form.inc.php?height=400&width=800&&user_friend='.$current_user_id.'&group_id='.$group_id.'&message_id='.$topic['id'].'&action=edit_message_group&anchor_topic=topic_'.$topic_id.'&topics_page_nr='.$topic_page_nr.'&items_page_nr='.$items_page_nr.'&topic_id='.$topic_id.'" class="ajax btn btn-default" data-size="lg" data-title="'.get_lang('Edit').'" title="'.get_lang('Edit').'">'.
                         Display::returnFontAwesomeIcon('pencil').'</a>';
                 }
@@ -1516,10 +1521,14 @@ class MessageManager
                 $date = '';
                 if ($topic['send_date'] != $topic['update_date']) {
                     if (!empty($topic['update_date'])) {
-                        $date = '<div class="date"> '.Display::returnFontAwesomeIcon('calendar').' '.get_lang('LastUpdate').' '.date_to_str_ago($topic['update_date']).'</div>';
+                        $date = '<div class="date"> '.
+                            Display::returnFontAwesomeIcon('calendar').' '.get_lang('LastUpdate').' '.date_to_str_ago($topic['update_date']).
+                        '</div>';
                     }
                 } else {
-                    $date = '<div class="date"> '.Display::returnFontAwesomeIcon('calendar').get_lang('Created').' '.date_to_str_ago($topic['send_date']).'</div>';
+                    $date = '<div class="date"> '.
+                            Display::returnFontAwesomeIcon('calendar').get_lang('Created').' '.date_to_str_ago($topic['send_date']).
+                    '</div>';
                 }
                 $attachment = '<div class="message-attach">'.(!empty($files_attachments) ? implode('<br />', $files_attachments) : '').'</div>';
                 $html_items .= '<div class="col-md-10">';
@@ -1527,7 +1536,9 @@ class MessageManager
                 $html_items .= $links;
                 $html_items .= '<div class="username">'.$user_link.'</div>';
                 $html_items .= $date;
-                $html_items .= '<div class="message">'.Security::remove_XSS($topic['content'], STUDENT, true).'</div>'.$attachment.'</div>';
+                $html_items .= '<div class="message">'.
+                    Security::remove_XSS($topic['content'], STUDENT, true).
+                    '</div>'.$attachment.'</div>';
                 $html_items .= '</div>';
                 $html_items .= '</div>';
 
@@ -1825,19 +1836,14 @@ class MessageManager
 
     /**
      * @param string $keyword
-     * @return null|string
+     * @return string
      */
     public static function outbox_display($keyword = '')
     {
-        $social_link = false;
-        if (isset($_REQUEST['f']) && $_REQUEST['f'] == 'social') {
-            $social_link = 'f=social';
-        }
-
         Session::write('message_sent_search_keyword', $keyword);
-        $success = get_lang('SelectedMessagesDeleted').'&nbsp</b><br /><a href="outbox.php?'.$social_link.'">'.get_lang('BackToOutbox').'</a>';
+        $success = get_lang('SelectedMessagesDeleted').'&nbsp</b><br /><a href="outbox.php">'.get_lang('BackToOutbox').'</a>';
 
-        $html = null;
+        $html = '';
         if (isset($_REQUEST['action'])) {
             switch ($_REQUEST['action']) {
                 case 'delete':
@@ -1870,8 +1876,6 @@ class MessageManager
             'DESC'
         );
 
-        $parameters['f'] = isset($_GET['f']) && $_GET['f'] == 'social' ? 'social' : null;
-        $table->set_additional_parameters($parameters);
         $table->set_header(0, '', false, array('style' => 'width:15px;'));
         $table->set_header(1, get_lang('Messages'), false);
         $table->set_header(2, get_lang('Date'), true, array('style' => 'width:180px;'));
@@ -1933,7 +1937,7 @@ class MessageManager
         $lastId = intval($lastId);
 
         if (empty($userId)) {
-            return 0;
+            return [];
         }
 
         $messagesTable = Database::get_main_table(TABLE_MESSAGE);
@@ -2014,9 +2018,14 @@ class MessageManager
             FormValidator::LAYOUT_INLINE
         );
 
-        $form->addElement('text', 'keyword', false, array(
-            'aria-label' => get_lang('Search')
-        ));
+        $form->addElement(
+            'text',
+            'keyword',
+            false,
+            array(
+                'aria-label' => get_lang('Search'),
+            )
+        );
         $form->addButtonSearch(get_lang('Search'));
 
         return $form;

@@ -1104,7 +1104,7 @@ class GradebookUtils
         }
 
         $pdfParams = array(
-            'filename' => get_lang('FlatView').'_'.api_get_utc_datetime(),
+            'filename' => get_lang('FlatView').'_'.api_get_local_time(),
             'pdf_title' => $title,
             'course_code' => $course_code,
             'add_signatures' => ['Drh', 'Teacher', 'Date']
@@ -1159,20 +1159,22 @@ class GradebookUtils
 
         if (!empty($current_session)) {
             $sql = "SELECT user.user_id, user.username, lastname, firstname, official_code
-                    FROM $tbl_session_course_user as scru, $tbl_user as user
-                    WHERE
-                        scru.user_id = user.user_id AND
-                        scru.status=0  AND
+                    FROM $tbl_session_course_user as scru 
+                    INNER JOIN $tbl_user as user
+                    ON (scru.user_id = user.user_id)
+                    WHERE                        
+                        scru.status = 0 AND
                         scru.c_id='$courseId' AND
                         session_id ='$current_session'
                     $order_clause
                     ";
         } else {
             $sql = 'SELECT user.user_id, user.username, lastname, firstname, official_code
-                    FROM '.$tbl_course_user.' as course_rel_user, '.$tbl_user.' as user
+                    FROM '.$tbl_course_user.' as course_rel_user 
+                    INNER JOIN '.$tbl_user.' as user
+                    ON (course_rel_user.user_id=user.user_id)
                     WHERE
-                        course_rel_user.user_id=user.user_id AND
-                        course_rel_user.status='.STUDENT.' AND
+                        course_rel_user.status = '.STUDENT.' AND
                         course_rel_user.c_id = "'.$courseId.'" '.
                     $order_clause;
         }
@@ -1564,9 +1566,6 @@ class GradebookUtils
         $table = $gradebooktable->return_table();
         $graph = $gradebooktable->getGraph();
 
-        $sessionName = api_get_session_name(api_get_session_id());
-        $sessionName = !empty($sessionName) ? " - $sessionName" : '';
-
         $params = array(
             'pdf_title' => sprintf(get_lang('GradeFromX'), $courseInfo['name']),
             'session_info' => '',
@@ -1593,11 +1592,6 @@ class GradebookUtils
             '<br />'.get_lang('Feedback').'<br />
             <textarea rows="5" cols="100" ></textarea>';
 
-        /*$address = api_get_setting('institution_address');
-        $phone = api_get_setting('administratorTelephone');
-        $address = str_replace('\n', '<br />', $address);
-
-        $pdf->custom_header = array('html' => "<h5 align='right'>$address <br />$phone</h5>");*/
         $result = $pdf->html_to_pdf_with_template(
             $content,
             $saveToFile,

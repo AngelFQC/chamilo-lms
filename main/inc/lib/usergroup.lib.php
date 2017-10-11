@@ -473,8 +473,18 @@ class UserGroup extends Model
     {
         $relationCondition = '';
         if (!empty($relationList)) {
-            $relationListToString = implode("', '", $relationList);
-            $relationCondition = " AND relation_type IN('$relationListToString')";
+            $relationConditionArray = [];
+            foreach ($relationList as $relation) {
+                $relation = (int) $relation;
+                if (empty($relation)) {
+                    $relationConditionArray[] = " (relation_type = 0 OR relation_type IS NULL OR relation_type = '') ";
+                } else {
+                    $relationConditionArray[] = " relation_type = $relation ";
+                }
+            }
+            $relationCondition = " AND ( ";
+            $relationCondition .= implode("AND", $relationConditionArray);
+            $relationCondition .= " ) ";
         }
 
         if (empty($id)) {
@@ -482,6 +492,7 @@ class UserGroup extends Model
         } else {
             $conditions = array('where' => array("usergroup_id = ? $relationCondition "=> $id));
         }
+
         $results = Database::select(
             'user_id',
             $this->usergroup_rel_user_table,
@@ -493,18 +504,24 @@ class UserGroup extends Model
                 $array[] = $row['user_id'];
             }
         }
-
         return $array;
     }
 
     /**
      * Gets a list of user ids by user group
      * @param   int    $id user group id
+     * @param int $relation
      * @return  array   with a list of user ids
      */
-    public function getUsersByUsergroupAndRelation($id, $relation = '')
+    public function getUsersByUsergroupAndRelation($id, $relation = 0)
     {
-        $conditions = array('where' => array('usergroup_id = ? AND relation_type = ?' => [$id, $relation]));
+        $relation = (int) $relation;
+        if (empty($relation)) {
+            $conditions = array('where' => array('usergroup_id = ? AND (relation_type = 0 OR relation_type IS NULL OR relation_type = "") ' => [$id]));
+        } else {
+            $conditions = array('where' => array('usergroup_id = ? AND relation_type = ?' => [$id, $relation]));
+        }
+
         $results = Database::select(
             'user_id',
             $this->usergroup_rel_user_table,
@@ -726,26 +743,28 @@ class UserGroup extends Model
         // Deleting items.
         if (!empty($delete_items)) {
             $user_list = self::get_users_by_usergroup($usergroup_id);
-            if (!empty($user_list)) {
-                foreach ($delete_items as $course_id) {
-                    $course_info = api_get_course_info_by_id($course_id);
-                    if ($course_info) {
+
+            foreach ($delete_items as $course_id) {
+                $course_info = api_get_course_info_by_id($course_id);
+                if ($course_info) {
+                    if (!empty($user_list)) {
                         foreach ($user_list as $user_id) {
                             CourseManager::unsubscribe_user(
                                 $user_id,
                                 $course_info['code']
                             );
                         }
-                        Database::delete(
-                            $this->usergroup_rel_course_table,
-                            array(
-                                'usergroup_id = ? AND course_id = ?' => array(
-                                    $usergroup_id,
-                                    $course_id
-                                )
-                            )
-                        );
                     }
+
+                    Database::delete(
+                        $this->usergroup_rel_course_table,
+                        array(
+                            'usergroup_id = ? AND course_id = ?' => array(
+                                $usergroup_id,
+                                $course_id
+                            )
+                        )
+                    );
                 }
             }
         }
@@ -753,20 +772,21 @@ class UserGroup extends Model
 
     /**
      * Subscribe users to a group
-     * @param int     $usergroup_id usergroup id
-     * @param array   $list list of user ids     *
+     * @param int $usergroup_id usergroup id
+     * @param array $list list of user ids
      * @param bool $delete_users_not_present_in_list
-     * @param array $relationType
+     * @param int $relationType
      */
     public function subscribe_users_to_usergroup(
         $usergroup_id,
         $list,
         $delete_users_not_present_in_list = true,
-        $relationType = ''
+        $relationType = 0
     ) {
         $current_list = self::get_users_by_usergroup($usergroup_id);
         $course_list = self::get_courses_by_usergroup($usergroup_id);
         $session_list = self::get_sessions_by_usergroup($usergroup_id);
+        $relationType = (int) $relationType;
 
         $delete_items = array();
         $new_items = array();
@@ -803,10 +823,29 @@ class UserGroup extends Model
                         SessionManager::unsubscribe_user_from_session($session_id, $user_id);
                     }
                 }
-                Database::delete(
-                    $this->usergroup_rel_user_table,
-                    array('usergroup_id = ? AND user_id = ? AND relation_type = ?' => array($usergroup_id, $user_id, $relationType))
-                );
+
+                if (empty($relationType)) {
+                    Database::delete(
+                        $this->usergroup_rel_user_table,
+                        array(
+                            'usergroup_id = ? AND user_id = ? AND (relation_type = "0" OR relation_type IS NULL OR relation_type = "")' => array(
+                                $usergroup_id,
+                                $user_id,
+                            ),
+                        )
+                    );
+                } else {
+                    Database::delete(
+                        $this->usergroup_rel_user_table,
+                        array(
+                            'usergroup_id = ? AND user_id = ? AND relation_type = ?' => array(
+                                $usergroup_id,
+                                $user_id,
+                                $relationType,
+                            ),
+                        )
+                    );
+                }
             }
         }
 
@@ -827,7 +866,11 @@ class UserGroup extends Model
                         CourseManager::subscribe_user($user_id, $course_info['code']);
                     }
                 }
-                $params = array('user_id' => $user_id, 'usergroup_id' => $usergroup_id, 'relation_type' => $relationType);
+                $params = array(
+                    'user_id' => $user_id,
+                    'usergroup_id' => $usergroup_id,
+                    'relation_type' => $relationType,
+                );
                 Database::insert($this->usergroup_rel_user_table, $params);
             }
         }
