@@ -12,7 +12,7 @@ if ($activeDirectoryPlugin->get(AzureActiveDirectory::SETTING_ENABLE) === 'true'
     $signUp = $activeDirectoryPlugin->get(AzureActiveDirectory::SETTING_SIGNIN_POLICY);
     $signIn = $activeDirectoryPlugin->get(AzureActiveDirectory::SETTING_SIGNUP_POLICY);
     $signUnified = $activeDirectoryPlugin->get(AzureActiveDirectory::SETTING_SIGNUNIFIED_POLICY);
-    $samlSignIn = $activeDirectoryPlugin->get(AzureActiveDirectory::SETTING_SAML_SIGNIN);
+    $samlSignIn = $activeDirectoryPlugin->get(AzureActiveDirectory::SETTING_ALLOW_SAML) === 'true';
 
     $_template['block_title'] = $activeDirectoryPlugin->get(AzureActiveDirectory::SETTING_BLOCK_NAME);
 
