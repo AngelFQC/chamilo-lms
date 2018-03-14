@@ -924,6 +924,7 @@ class SocialManager extends UserManager
         $messagesIcon = Display::return_icon('sn-message.png', get_lang('Messages'), null, ICON_SIZE_SMALL);
         $sharedProfileIcon = Display::return_icon('sn-profile.png', get_lang('ViewMySharedProfile'));
         $searchIcon = Display::return_icon('sn-search.png', get_lang('Search'), null, ICON_SIZE_SMALL);
+        $portfolioIcon = Display::return_icon('wiki_task.png', get_lang('Portfolio'));
 
         $html = '';
         $active = null;
@@ -1002,6 +1003,13 @@ class SocialManager extends UserManager
                 $myFiles = '';
             }
             $links .= $myFiles;
+            $links .= '
+                <li class="portoflio-icon '.($show == 'portfolio' ? 'active' : '').'">
+                    <a href="'.api_get_path(WEB_CODE_PATH).'portfolio/index.php">
+                        '.$portfolioIcon.' '.get_lang('Portfolio').'
+                    </a>
+                </li>
+            ';
             $links .= '</ul>';
 
             $html .= Display::panelCollapse(
@@ -1081,6 +1089,13 @@ class SocialManager extends UserManager
                     $myFiles = '';
                 }
                 $links .= $myFiles;
+                $links .= '
+                    <li class="portoflio-icon '.($show == 'portfolio' ? 'active' : '').'">
+                        <a href="'.api_get_path(WEB_CODE_PATH).'portfolio/index.php">
+                            '.$portfolioIcon.' '.get_lang('Portfolio').'
+                        </a>
+                    </li>
+                ';
             }
 
             // My friend profile.
