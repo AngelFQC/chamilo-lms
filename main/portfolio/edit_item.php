@@ -1,13 +1,21 @@
 <?php
 /* For licensing terms, see /license.txt */
 
-$form = new FormValidator('edit_portfolio', 'post', "$baseUrl&action=edit_item&id={$item->getId()}");
+$categories = $em
+    ->getRepository('ChamiloCoreBundle:PortfolioCategory')
+    ->findBy([
+        'user' => $user
+    ]);
+
+$form = new FormValidator('edit_portfolio', 'post', $baseUrl."action=edit_item&id={$item->getId()}");
 $form->addText('title', get_lang('Title'));
 $form->addHtmlEditor('content', get_lang('Content'), true   , false, ['ToolbarSet' => 'NotebookStudent']);
+$form->addSelectFromCollection('category', get_lang('Category'), $categories, [], true, '__toString');
 $form->addButtonUpdate(get_lang('Update'));
 $form->setDefaults([
     'title' => $item->getTitle(),
-    'content' => $item->getContent()
+    'content' => $item->getContent(),
+    'category' => $item->getCategory() ? $item->getCategory()->getId() : ''
 ]);
 
 if ($form->validate()) {
@@ -17,7 +25,10 @@ if ($form->validate()) {
     $item
         ->setTitle($values['title'])
         ->setContent($values['content'])
-        ->setUpdateDate($currentTime);
+        ->setUpdateDate($currentTime)
+        ->setCategory(
+            $em->find('ChamiloCoreBundle:PortfolioCategory', $values['category'])
+        );
 
     $em->persist($item);
     $em->flush();

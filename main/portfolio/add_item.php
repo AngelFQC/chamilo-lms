@@ -3,9 +3,16 @@
 
 use Chamilo\CoreBundle\Entity\Portfolio;
 
-$form = new FormValidator('add_portfolio', 'post', "$baseUrl&action=add_item");
+$categories = $em
+    ->getRepository('ChamiloCoreBundle:PortfolioCategory')
+    ->findBy([
+        'user' => $user
+    ]);
+
+$form = new FormValidator('add_portfolio', 'post', $baseUrl.'action=add_item');
 $form->addText('title', get_lang('Title'));
-$form->addHtmlEditor('content', get_lang('Content'), true   , false, ['ToolbarSet' => 'NotebookStudent']);
+$form->addHtmlEditor('content', get_lang('Content'), true , false, ['ToolbarSet' => 'NotebookStudent']);
+$form->addSelectFromCollection('category', get_lang('Category'), $categories, [], true, '__toString');
 $form->addButtonCreate(get_lang('Create'));
 
 if ($form->validate()) {
@@ -22,6 +29,9 @@ if ($form->validate()) {
         ->setUser($user)
         ->setCourse($course)
         ->setSession($session)
+        ->setCategory(
+            $em->find('ChamiloCoreBundle:PortfolioCategory', $values['category'])
+        )
         ->setCreationDate($currentTime)
         ->setUpdateDate($currentTime);
 

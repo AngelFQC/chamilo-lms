@@ -14,7 +14,8 @@ use Doctrine\ORM\Mapping as ORM;
  *  indexes={
  *   @ORM\Index(name="user", columns={"user_id"}),
  *   @ORM\Index(name="course", columns={"c_id"}),
- *   @ORM\Index(name="session", columns={"session_id"})
+ *   @ORM\Index(name="session", columns={"session_id"}),
+ *   @ORM\Index(name="category", columns={"category_id"})
  *  }
  * )
  * @ORM\Entity()
@@ -80,6 +81,21 @@ class Portfolio
      * @ORM\Column(name="is_visible", type="boolean", options={"default": true})
      */
     private $isVisible = true;
+
+    /**
+     * @var \Chamilo\CoreBundle\Entity\PortfolioCategory
+     * @ORM\ManyToOne(targetEntity="Chamilo\CoreBundle\Entity\PortfolioCategory", inversedBy="items")
+     * @ORM\JoinColumn(name="category_id", referencedColumnName="id")
+     */
+    private $category;
+
+    /**
+     * Portfolio constructor.
+     */
+    public function __construct()
+    {
+        $this->category = new PortfolioCategory();
+    }
 
     /**
      * Set user
@@ -266,5 +282,24 @@ class Portfolio
     public function isVisible()
     {
         return $this->isVisible;
+    }
+
+    /**
+     * @return \Chamilo\CoreBundle\Entity\PortfolioCategory
+     */
+    public function getCategory()
+    {
+        return $this->category;
+    }
+
+    /**
+     * @param \Chamilo\CoreBundle\Entity\PortfolioCategory|null $category
+     * @return \Chamilo\CoreBundle\Entity\Portfolio
+     */
+    public function setCategory(PortfolioCategory $category = null)
+    {
+        $this->category = $category;
+
+        return $this;
     }
 }
