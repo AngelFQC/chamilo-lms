@@ -18,7 +18,8 @@ use Doctrine\ORM\Mapping as ORM;
  *   @ORM\Index(name="category", columns={"category_id"})
  *  }
  * )
- * @ORM\Entity()
+ * Add @ to the next line if api_get_configuration_value('allow_portfolio_tool') is true
+ * ORM\Entity()
  */
 class Portfolio
 {
