@@ -165,23 +165,30 @@ class PortfolioCategory
     /**
      * @param \Chamilo\CoreBundle\Entity\Course|null $course
      * @param \Chamilo\CoreBundle\Entity\Session|null $session
+     * @param bool $onlyVisibles
      * @return \Doctrine\Common\Collections\ArrayCollection
      */
-    public function getItems(Course $course = null, Session $session = null)
+    public function getItems(Course $course = null, Session $session = null, $onlyVisibles = false)
     {
+        $criteria = Criteria::create();
+
+        if ($onlyVisibles) {
+            $criteria->andWhere(
+                Criteria::expr()->eq('isVisible', true)
+            );
+        }
+
         if ($course) {
-            $criteria = Criteria::create()
-                ->where(
+            $criteria
+                ->andWhere(
                     Criteria::expr()->eq('course', $course)
                 )
                 ->andWhere(
                     Criteria::expr()->eq('session', $session)
                 );
-
-            return $this->items->matching($criteria);
         }
 
-        return $this->items;
+        return $this->items->matching($criteria);
     }
 
     /**

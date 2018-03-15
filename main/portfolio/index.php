@@ -29,6 +29,10 @@ $cidreq = api_get_cidreq();
 $baseUrl = api_get_self().'?'.($cidreq ? $cidreq.'&' : '');
 $allowEdit = $currentUserId == $user->getId();
 
+if (isset($_GET['preview'])) {
+    $allowEdit = false;
+}
+
 $toolName = get_lang('Portfolio');
 $actions = [];
 $content = '';
@@ -214,7 +218,7 @@ $actions = implode(PHP_EOL, $actions);
 
 Display::display_header($toolName);
 Display::display_introduction_section(TOOL_PORTFOLIO);
-echo Display::toolbarAction('portfolio-toolbar', [$actions]);
+echo $actions ? Display::toolbarAction('portfolio-toolbar', [$actions]) : '';
 echo Display::page_header($toolName);
 echo $content;
 Display::display_footer();

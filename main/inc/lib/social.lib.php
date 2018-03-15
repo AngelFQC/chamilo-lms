@@ -1003,13 +1003,15 @@ class SocialManager extends UserManager
                 $myFiles = '';
             }
             $links .= $myFiles;
-            $links .= '
-                <li class="portoflio-icon '.($show == 'portfolio' ? 'active' : '').'">
-                    <a href="'.api_get_path(WEB_CODE_PATH).'portfolio/index.php">
-                        '.$portfolioIcon.' '.get_lang('Portfolio').'
-                    </a>
-                </li>
-            ';
+            if (api_get_configuration_value('allow_portfolio_tool')) {
+                $links .= '
+                    <li class="portoflio-icon '.($show == 'portfolio' ? 'active' : '').'">
+                        <a href="'.api_get_path(WEB_CODE_PATH).'portfolio/index.php">
+                            '.$portfolioIcon.' '.get_lang('Portfolio').'
+                        </a>
+                    </li>
+                ';
+            }
             $links .= '</ul>';
 
             $html .= Display::panelCollapse(
@@ -1089,13 +1091,16 @@ class SocialManager extends UserManager
                     $myFiles = '';
                 }
                 $links .= $myFiles;
-                $links .= '
-                    <li class="portoflio-icon '.($show == 'portfolio' ? 'active' : '').'">
-                        <a href="'.api_get_path(WEB_CODE_PATH).'portfolio/index.php">
-                            '.$portfolioIcon.' '.get_lang('Portfolio').'
-                        </a>
-                    </li>
-                ';
+
+                if (api_get_configuration_value('allow_portfolio_tool')) {
+                    $links .= '
+                        <li class="portoflio-icon '.($show == 'portfolio' ? 'active' : '').'">
+                            <a href="'.api_get_path(WEB_CODE_PATH).'portfolio/index.php">
+                                '.$portfolioIcon.' '.get_lang('Portfolio').'
+                            </a>
+                        </li>
+                    ';
+                }
             }
 
             // My friend profile.
@@ -1121,6 +1126,16 @@ class SocialManager extends UserManager
                     ]
                 );
                 $links .= '</li>';
+
+                if (api_get_configuration_value('allow_portfolio_tool')) {
+                    $links .= '
+                        <li class="portoflio-icon '.($show == 'portfolio' ? 'active' : '').'">
+                            <a href="'.api_get_path(WEB_CODE_PATH).'portfolio/index.php?user='.$user_id.'">
+                                '.$portfolioIcon.' '.get_lang('Portfolio').'
+                            </a>
+                        </li>
+                    ';
+                }
             }
 
             // Check if I already sent an invitation message

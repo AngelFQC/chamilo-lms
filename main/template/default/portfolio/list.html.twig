@@ -6,12 +6,16 @@
 
 {% import template ~ '/portfolio/items.html.twig' as items %}
 
+{% if not allow_edit %}
+    <h3>{{ user.completeName }} <small>{{ user.username }}</small></h3>
+{% endif %}
+
 {{ items.display(uncategorized_items, 0, allow_edit, _c) }}
 
 {% for category in portfolio %}
     <div class="panel panel-info">
         <div class="panel-body">
-            <h3 class="page-header">
+            <h4 class="page-header">
                 <a href="#collapse-category-{{ category.id }}" role="button" data-toggle="collapse"
                    aria-expanded="false" aria-controls="collapse-category-{{ category.id }}">
                     {{ category.title }}
@@ -37,14 +41,14 @@
                         </a>
                     </div>
                 {% endif %}
-            </h3>
+            </h4>
 
             <div>
                 {{ category.description }}
             </div>
 
             <div class="collapse" id="collapse-category-{{ category.id }}">
-                {{ items.display(category.items(course, session), category.id, allow_edit, _c) }}
+                {{ items.display(category.items(course, session, not allow_edit), category.id, allow_edit, _c) }}
             </div>
         </div>
     </div>

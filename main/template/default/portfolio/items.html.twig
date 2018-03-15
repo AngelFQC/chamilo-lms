@@ -29,13 +29,13 @@
                             </a>
                         </div>
                     {% endif %}
-                    <h4 class="panel-title">
+                    <h5 class="panel-title">
                         <a href="#collapse-{{ item.id }}" class="collapsed" role="button"
                            data-parent="#accordion-list-{{ category_id }}"
                            data-toggle="collapse" aria-expanded="false" aria-controls="collapse-{{ item.id }}">
                             {{ item.title }}
                         </a>
-                    </h4>
+                    </h5>
                     {% if _c is empty %}
                         {% if item.session %}
                             <div class="clearfix">
