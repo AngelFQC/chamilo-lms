@@ -8,7 +8,9 @@ use Doctrine\ORM\Mapping as ORM;
 
 /**
  * Class Portfolio
+ *
  * @package Chamilo\CoreBundle\Entity
+ *
  * @ORM\Table(
  *  name="portfolio",
  *  indexes={
@@ -25,6 +27,7 @@ class Portfolio
 {
     /**
      * @var integer
+     *
      * @ORM\Column(name="id", type="integer")
      * @ORM\Id
      * @ORM\GeneratedValue
@@ -33,6 +36,7 @@ class Portfolio
 
     /**
      * @var string
+     *
      * @ORM\Column(name="title", type="string", length=255)
      */
     private $title;
@@ -45,6 +49,7 @@ class Portfolio
 
     /**
      * @var User
+     *
      * @ORM\ManyToOne(targetEntity="Chamilo\UserBundle\Entity\User")
      * @ORM\JoinColumn(name="user_id", referencedColumnName="id", nullable=false)
      */
@@ -60,6 +65,7 @@ class Portfolio
 
     /**
      * @var Session
+     *
      * @ORM\ManyToOne(targetEntity="Chamilo\CoreBundle\Entity\Session")
      * @ORM\JoinColumn(name="session_id", referencedColumnName="id")
      */
@@ -67,24 +73,28 @@ class Portfolio
 
     /**
      * @var \DateTime
+     *
      * @ORM\Column(name="creation_date", type="datetime")
      */
     private $creationDate;
 
     /**
      * @var \DateTime
+     *
      * @ORM\Column(name="update_date", type="datetime")
      */
     private $updateDate;
 
     /**
      * @var bool
+     *
      * @ORM\Column(name="is_visible", type="boolean", options={"default": true})
      */
     private $isVisible = true;
 
     /**
      * @var \Chamilo\CoreBundle\Entity\PortfolioCategory
+     *
      * @ORM\ManyToOne(targetEntity="Chamilo\CoreBundle\Entity\PortfolioCategory", inversedBy="items")
      * @ORM\JoinColumn(name="category_id", referencedColumnName="id")
      */
@@ -100,8 +110,10 @@ class Portfolio
 
     /**
      * Set user
-     * @param \Chamilo\UserBundle\Entity\User $user
-     * @return \Chamilo\CoreBundle\Entity\Portfolio
+     *
+     * @param User $user
+     *
+     * @return Portfolio
      */
     public function setUser(User $user)
     {
@@ -123,8 +135,9 @@ class Portfolio
     /**
      * Set course
      *
-     * @param \Chamilo\CoreBundle\Entity\Course|null $course
-     * @return \Chamilo\CoreBundle\Entity\Portfolio
+     * @param Course|null $course
+     *
+     * @return Portfolio
      */
     public function setCourse(Course $course = null)
     {
@@ -144,7 +157,9 @@ class Portfolio
     }
 
     /**
-     * @return \Chamilo\CoreBundle\Entity\Session
+     * Get session
+     *
+     * @return Session
      */
     public function getSession()
     {
@@ -152,8 +167,11 @@ class Portfolio
     }
 
     /**
-     * @param \Chamilo\CoreBundle\Entity\Session|null $session
-     * @return \Chamilo\CoreBundle\Entity\Portfolio
+     * Set session
+     *
+     * @param Session|null $session
+     *
+     * @return Portfolio
      */
     public function setSession(Session $session = null)
     {
@@ -166,7 +184,8 @@ class Portfolio
      * Set title
      *
      * @param string $title
-     * @return \Chamilo\CoreBundle\Entity\Portfolio
+     *
+     * @return Portfolio
      */
     public function setTitle($title)
     {
@@ -189,7 +208,8 @@ class Portfolio
      * Set content
      *
      * @param string $content
-     * @return \Chamilo\CoreBundle\Entity\Portfolio
+     *
+     * @return Portfolio
      */
     public function setContent($content)
     {
@@ -212,7 +232,8 @@ class Portfolio
      * Set creationDate
      *
      * @param \DateTime $creationDate
-     * @return \Chamilo\CoreBundle\Entity\Portfolio
+     *
+     * @return Portfolio
      */
     public function setCreationDate(\DateTime $creationDate)
     {
@@ -235,7 +256,8 @@ class Portfolio
      * Set updateDate
      *
      * @param \DateTime $updateDate
-     * @return \Chamilo\CoreBundle\Entity\Portfolio
+     *
+     * @return Portfolio
      */
     public function setUpdateDate(\DateTime $updateDate)
     {
@@ -256,6 +278,7 @@ class Portfolio
 
     /**
      * Get id
+     *
      * @return int
      */
     public function getId()
@@ -264,10 +287,11 @@ class Portfolio
     }
 
     /**
-     * Set isPublic
+     * Set isVisible
      *
      * @param bool $isVisible
-     * @return \Chamilo\CoreBundle\Entity\Portfolio
+     *
+     * @return Portfolio
      */
     public function setIsVisible($isVisible)
     {
@@ -277,7 +301,8 @@ class Portfolio
     }
 
     /**
-     * Get isPublic
+     * Get isVisible
+     *
      * @return bool
      */
     public function isVisible()
@@ -286,7 +311,9 @@ class Portfolio
     }
 
     /**
-     * @return \Chamilo\CoreBundle\Entity\PortfolioCategory
+     * Get category
+     *
+     * @return PortfolioCategory
      */
     public function getCategory()
     {
@@ -294,8 +321,11 @@ class Portfolio
     }
 
     /**
-     * @param \Chamilo\CoreBundle\Entity\PortfolioCategory|null $category
-     * @return \Chamilo\CoreBundle\Entity\Portfolio
+     * Set category
+     *
+     * @param PortfolioCategory|null $category
+     *
+     * @return Portfolio
      */
     public function setCategory(PortfolioCategory $category = null)
     {

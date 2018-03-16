@@ -3,13 +3,16 @@
 
 namespace Chamilo\CoreBundle\Entity;
 
+use Chamilo\UserBundle\Entity\User;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Criteria;
 use Doctrine\ORM\Mapping as ORM;
 
 /**
  * Class PortfolioCategory
+ *
  * @package Chamilo\CoreBundle\Entity
+ *
  * @ORM\Table(
  *  name="portfolio_category",
  *  indexes={
@@ -23,6 +26,7 @@ class PortfolioCategory
 {
     /**
      * @var integer
+     *
      * @ORM\Column(name="id", type="integer")
      * @ORM\Id
      * @ORM\GeneratedValue
@@ -31,18 +35,21 @@ class PortfolioCategory
 
     /**
      * @var string
+     *
      * @ORM\Column(name="title", type="string", length=255)
      */
     private $title;
 
     /**
      * @var null
+     *
      * @ORM\Column(name="description", type="text", nullable=true)
      */
     private $description = null;
 
     /**
      * @var User
+     *
      * @ORM\ManyToOne(targetEntity="Chamilo\UserBundle\Entity\User")
      * @ORM\JoinColumn(name="user_id", referencedColumnName="id", nullable=false)
      */
@@ -50,12 +57,14 @@ class PortfolioCategory
 
     /**
      * @var bool
+     *
      * @ORM\Column(name="is_visible", type="boolean", options={"default": true})
      */
     private $isVisible = true;
 
     /**
      * @var \Doctrine\Common\Collections\ArrayCollection
+     *
      * @ORM\OneToMany(targetEntity="Chamilo\CoreBundle\Entity\Portfolio", mappedBy="category")
      */
     private $items;
@@ -69,6 +78,8 @@ class PortfolioCategory
     }
 
     /**
+     * Get id
+     *
      * @return int
      */
     public function getId()
@@ -78,6 +89,7 @@ class PortfolioCategory
 
     /**
      * @param int $id
+     *
      * @return PortfolioCategory
      */
     public function setId($id)
@@ -88,6 +100,8 @@ class PortfolioCategory
     }
 
     /**
+     * Get title
+     *
      * @return string
      */
     public function getTitle()
@@ -96,7 +110,10 @@ class PortfolioCategory
     }
 
     /**
+     * Set title
+     *
      * @param string $title
+     *
      * @return PortfolioCategory
      */
     public function setTitle($title)
@@ -107,7 +124,9 @@ class PortfolioCategory
     }
 
     /**
-     * @return null
+     * Get description
+     *
+     * @return string|null
      */
     public function getDescription()
     {
@@ -115,7 +134,10 @@ class PortfolioCategory
     }
 
     /**
-     * @param null $description
+     * Set description
+     *
+     * @param string|null $description
+     *
      * @return PortfolioCategory
      */
     public function setDescription($description)
@@ -126,7 +148,9 @@ class PortfolioCategory
     }
 
     /**
-     * @return \Chamilo\CoreBundle\Entity\User
+     * Get user
+     *
+     * @return User
      */
     public function getUser()
     {
@@ -134,10 +158,13 @@ class PortfolioCategory
     }
 
     /**
-     * @param \Chamilo\CoreBundle\Entity\User $user
+     * Set user
+     *
+     * @param User $user
+     *
      * @return PortfolioCategory
      */
-    public function setUser($user)
+    public function setUser(User $user)
     {
         $this->user = $user;
 
@@ -145,6 +172,8 @@ class PortfolioCategory
     }
 
     /**
+     * Get isVisible
+     *
      * @return bool
      */
     public function isVisible()
@@ -153,7 +182,10 @@ class PortfolioCategory
     }
 
     /**
+     * Set isVisible
+     *
      * @param bool $isVisible
+     *
      * @return PortfolioCategory
      */
     public function setIsVisible($isVisible)
@@ -164,10 +196,13 @@ class PortfolioCategory
     }
 
     /**
-     * @param \Chamilo\CoreBundle\Entity\Course|null $course
-     * @param \Chamilo\CoreBundle\Entity\Session|null $session
+     * Get items
+     *
+     * @param Course|null $course
+     * @param Session|null $session
      * @param bool $onlyVisibles
-     * @return \Doctrine\Common\Collections\ArrayCollection
+     *
+     * @return ArrayCollection
      */
     public function getItems(Course $course = null, Session $session = null, $onlyVisibles = false)
     {
@@ -193,7 +228,10 @@ class PortfolioCategory
     }
 
     /**
-     * @param \Doctrine\Common\Collections\ArrayCollection $items
+     * Set items
+     *
+     * @param ArrayCollection $items
+     *
      * @return PortfolioCategory
      */
     public function setItems(ArrayCollection $items)

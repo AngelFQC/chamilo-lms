@@ -9,7 +9,7 @@ $categories = $em
 
 $form = new FormValidator('edit_portfolio', 'post', $baseUrl."action=edit_item&id={$item->getId()}");
 $form->addText('title', get_lang('Title'));
-$form->addHtmlEditor('content', get_lang('Content'), true   , false, ['ToolbarSet' => 'NotebookStudent']);
+$form->addHtmlEditor('content', get_lang('Content'), true, false, ['ToolbarSet' => 'NotebookStudent']);
 $form->addSelectFromCollection('category', get_lang('Category'), $categories, [], true, '__toString');
 $form->addButtonUpdate(get_lang('Update'));
 $form->setDefaults([
