@@ -20,7 +20,7 @@ if (false === api_get_configuration_value('allow_portfolio_tool')) {
 $em = Database::getManager();
 
 $currentUserId = api_get_user_id();
-$userId = isset($_GET['user']) ? intval($_GET['user']) : $currentUserId;
+$userId = isset($_GET['user']) ? (int) $_GET['user'] : $currentUserId;
 /** @var User $user */
 $user = api_get_user_entity($userId);
 /** @var Course $course */
@@ -73,7 +73,7 @@ switch ($action) {
         require 'add_category.php';
         break;
     case 'edit_category':
-        $id = isset($_GET['id']) ? intval($_GET['id']) : 0;
+        $id = isset($_GET['id']) ? (int) $_GET['id'] : 0;
 
         if (!$id) {
             break;
@@ -91,7 +91,7 @@ switch ($action) {
     case 'hide_category':
         //no break
     case 'show_category':
-        $id = isset($_GET['id']) ? intval($_GET['id']) : 0;
+        $id = isset($_GET['id']) ? (int) $_GET['id'] : 0;
 
         if (!$id) {
             break;
@@ -116,7 +116,7 @@ switch ($action) {
         header("Location: $baseUrl");
         exit;
     case 'delete_category':
-        $id = isset($_GET['id']) ? intval($_GET['id']) : 0;
+        $id = isset($_GET['id']) ? (int) $_GET['id'] : 0;
 
         if (!$id) {
             break;
@@ -142,7 +142,7 @@ switch ($action) {
         require 'add_item.php';
         break;
     case 'edit_item':
-        $id = isset($_GET['id']) ? intval($_GET['id']) : 0;
+        $id = isset($_GET['id']) ? (int) $_GET['id'] : 0;
 
         if (!$id) {
             break;
@@ -160,7 +160,7 @@ switch ($action) {
     case 'hide_item':
         //no break
     case 'show_item':
-        $id = isset($_GET['id']) ? intval($_GET['id']) : 0;
+        $id = isset($_GET['id']) ? (int) $_GET['id'] : 0;
 
         if (!$id) {
             break;
@@ -185,7 +185,7 @@ switch ($action) {
         header("Location: $baseUrl");
         exit;
     case 'delete_item':
-        $id = isset($_GET['id']) ? intval($_GET['id']) : 0;
+        $id = isset($_GET['id']) ? (int) $_GET['id'] : 0;
 
         if (!$id) {
             break;
