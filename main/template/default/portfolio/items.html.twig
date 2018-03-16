@@ -39,7 +39,7 @@
                     {% if _c is empty %}
                         {% if item.session %}
                             <div class="clearfix">
-                                {{ 'Course'|get_lang ~ ': ' ~ itme.session.name ~ ' (' ~ item.course.title ~ ')' }}
+                                {{ 'Course'|get_lang ~ ': ' ~ item.session.name ~ ' (' ~ item.course.title ~ ')' }}
                             </div>
                         {% elseif not item.session and item.course %}
                             <div class="clearfix">
