@@ -31,7 +31,7 @@ if ($form->validate()) {
 $toolName = get_lang('AddCategory');
 $interbreadcrumb[] = [
     'name' => get_lang('Portfolio'),
-    'url' => $baseUrl
+    'url' => $baseUrl,
 ];
 
 $actions[] = Display::url(

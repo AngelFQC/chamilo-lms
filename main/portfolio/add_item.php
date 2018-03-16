@@ -6,13 +6,13 @@ use Chamilo\CoreBundle\Entity\Portfolio;
 $categories = $em
     ->getRepository('ChamiloCoreBundle:PortfolioCategory')
     ->findBy([
-        'user' => $user
+        'user' => $user,
     ]);
 
 $form = new FormValidator('add_portfolio', 'post', $baseUrl.'action=add_item');
 $form->addText('title', get_lang('Title'));
 $form->addHtmlEditor('content', get_lang('Content'), true, false, ['ToolbarSet' => 'NotebookStudent']);
-$form->addSelectFromCollection('category', get_lang('Category'), $categories, [], true, '__toString');
+$form->addSelectFromCollection('category', get_lang('Category'), $categories, [], true);
 $form->addButtonCreate(get_lang('Create'));
 
 if ($form->validate()) {
@@ -49,7 +49,7 @@ if ($form->validate()) {
 $toolName = get_lang('AddPortfolioItem');
 $interbreadcrumb[] = [
     'name' => get_lang('Portfolio'),
-    'url' => $baseUrl
+    'url' => $baseUrl,
 ];
 
 $actions[] = Display::url(

@@ -7,7 +7,7 @@ use Chamilo\UserBundle\Entity\User;
 use Doctrine\ORM\Mapping as ORM;
 
 /**
- * Class Portfolio
+ * Class Portfolio.
  *
  * @package Chamilo\CoreBundle\Entity
  *
@@ -26,7 +26,7 @@ use Doctrine\ORM\Mapping as ORM;
 class Portfolio
 {
     /**
-     * @var integer
+     * @var int
      *
      * @ORM\Column(name="id", type="integer")
      * @ORM\Id
@@ -109,7 +109,7 @@ class Portfolio
     }
 
     /**
-     * Set user
+     * Set user.
      *
      * @param User $user
      *
@@ -123,7 +123,7 @@ class Portfolio
     }
 
     /**
-     * Get user
+     * Get user.
      *
      * @return User
      */
@@ -133,7 +133,7 @@ class Portfolio
     }
 
     /**
-     * Set course
+     * Set course.
      *
      * @param Course|null $course
      *
@@ -147,7 +147,7 @@ class Portfolio
     }
 
     /**
-     * Get course
+     * Get course.
      *
      * @return Course
      */
@@ -157,7 +157,7 @@ class Portfolio
     }
 
     /**
-     * Get session
+     * Get session.
      *
      * @return Session
      */
@@ -167,7 +167,7 @@ class Portfolio
     }
 
     /**
-     * Set session
+     * Set session.
      *
      * @param Session|null $session
      *
@@ -181,7 +181,7 @@ class Portfolio
     }
 
     /**
-     * Set title
+     * Set title.
      *
      * @param string $title
      *
@@ -195,7 +195,7 @@ class Portfolio
     }
 
     /**
-     * Get title
+     * Get title.
      *
      * @return string
      */
@@ -205,7 +205,7 @@ class Portfolio
     }
 
     /**
-     * Set content
+     * Set content.
      *
      * @param string $content
      *
@@ -219,7 +219,7 @@ class Portfolio
     }
 
     /**
-     * Get content
+     * Get content.
      *
      * @return string
      */
@@ -229,7 +229,7 @@ class Portfolio
     }
 
     /**
-     * Set creationDate
+     * Set creationDate.
      *
      * @param \DateTime $creationDate
      *
@@ -243,7 +243,7 @@ class Portfolio
     }
 
     /**
-     * Get creationDate
+     * Get creationDate.
      *
      * @return \DateTime
      */
@@ -253,7 +253,7 @@ class Portfolio
     }
 
     /**
-     * Set updateDate
+     * Set updateDate.
      *
      * @param \DateTime $updateDate
      *
@@ -267,7 +267,7 @@ class Portfolio
     }
 
     /**
-     * Get updateDate
+     * Get updateDate.
      *
      * @return \DateTime
      */
@@ -277,7 +277,7 @@ class Portfolio
     }
 
     /**
-     * Get id
+     * Get id.
      *
      * @return int
      */
@@ -287,7 +287,7 @@ class Portfolio
     }
 
     /**
-     * Set isVisible
+     * Set isVisible.
      *
      * @param bool $isVisible
      *
@@ -301,7 +301,7 @@ class Portfolio
     }
 
     /**
-     * Get isVisible
+     * Get isVisible.
      *
      * @return bool
      */
@@ -311,7 +311,7 @@ class Portfolio
     }
 
     /**
-     * Get category
+     * Get category.
      *
      * @return PortfolioCategory
      */
@@ -321,7 +321,7 @@ class Portfolio
     }
 
     /**
-     * Set category
+     * Set category.
      *
      * @param PortfolioCategory|null $category
      *

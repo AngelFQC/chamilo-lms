@@ -2,12 +2,11 @@
 /**
  * @license see /license.txt
  */
-
-use Chamilo\UserBundle\Entity\User;
 use Chamilo\CoreBundle\Entity\Course;
-use Chamilo\CoreBundle\Entity\Session;
 use Chamilo\CoreBundle\Entity\Portfolio;
 use Chamilo\CoreBundle\Entity\PortfolioCategory;
+use Chamilo\CoreBundle\Entity\Session;
+use Chamilo\UserBundle\Entity\User;
 
 require_once __DIR__.'/../inc/global.inc.php';
 
@@ -42,8 +41,10 @@ $actions = [];
 $content = '';
 
 /**
- * Check if the portfolio item or category is valid for the current user
+ * Check if the portfolio item or category is valid for the current user.
+ *
  * @param $item
+ *
  * @return bool
  */
 $isValid = function ($item) use ($user, $course, $session) {
@@ -89,7 +90,6 @@ switch ($action) {
         require 'edit_category.php';
         break;
     case 'hide_category':
-        //no break
     case 'show_category':
         $id = isset($_GET['id']) ? (int) $_GET['id'] : 0;
 
@@ -158,7 +158,6 @@ switch ($action) {
         require 'edit_item.php';
         break;
     case 'hide_item':
-        //no break
     case 'show_item':
         $id = isset($_GET['id']) ? (int) $_GET['id'] : 0;
 
@@ -208,7 +207,6 @@ switch ($action) {
         header("Location: $baseUrl");
         exit;
     case 'list':
-        //no break
     default:
         require 'list.php';
 }

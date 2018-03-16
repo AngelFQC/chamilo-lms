@@ -7,7 +7,7 @@ $form->addHtmlEditor('description', get_lang('Description'), false, false, ['Too
 $form->addButtonUpdate(get_lang('Update'));
 $form->setDefaults([
     'title' => $category->getTitle(),
-    'description' => $category->getDescription()
+    'description' => $category->getDescription(),
 ]);
 
 if ($form->validate()) {
@@ -31,7 +31,7 @@ if ($form->validate()) {
 $toolName = get_lang('EditCategory');
 $interbreadcrumb[] = [
     'name' => get_lang('Portfolio'),
-    'url' => $baseUrl
+    'url' => $baseUrl,
 ];
 $actions[] = Display::url(
     Display::return_icon('back.png', get_lang('Back'), [], ICON_SIZE_MEDIUM),

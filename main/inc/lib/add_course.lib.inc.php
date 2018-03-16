@@ -567,7 +567,7 @@ class AddCourse
                     'added_tool' => 0,
                     'target' => '_self',
                     'category' => 'interaction',
-                    'session_id' => 0
+                    'session_id' => 0,
                 ]
             );
             Database::update(

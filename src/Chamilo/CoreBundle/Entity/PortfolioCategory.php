@@ -9,7 +9,7 @@ use Doctrine\Common\Collections\Criteria;
 use Doctrine\ORM\Mapping as ORM;
 
 /**
- * Class PortfolioCategory
+ * Class PortfolioCategory.
  *
  * @package Chamilo\CoreBundle\Entity
  *
@@ -25,7 +25,7 @@ use Doctrine\ORM\Mapping as ORM;
 class PortfolioCategory
 {
     /**
-     * @var integer
+     * @var int
      *
      * @ORM\Column(name="id", type="integer")
      * @ORM\Id
@@ -78,7 +78,15 @@ class PortfolioCategory
     }
 
     /**
-     * Get id
+     * @return string
+     */
+    public function __toString()
+    {
+        return $this->title;
+    }
+
+    /**
+     * Get id.
      *
      * @return int
      */
@@ -100,7 +108,7 @@ class PortfolioCategory
     }
 
     /**
-     * Get title
+     * Get title.
      *
      * @return string
      */
@@ -110,7 +118,7 @@ class PortfolioCategory
     }
 
     /**
-     * Set title
+     * Set title.
      *
      * @param string $title
      *
@@ -124,7 +132,7 @@ class PortfolioCategory
     }
 
     /**
-     * Get description
+     * Get description.
      *
      * @return string|null
      */
@@ -134,7 +142,7 @@ class PortfolioCategory
     }
 
     /**
-     * Set description
+     * Set description.
      *
      * @param string|null $description
      *
@@ -148,7 +156,7 @@ class PortfolioCategory
     }
 
     /**
-     * Get user
+     * Get user.
      *
      * @return User
      */
@@ -158,7 +166,7 @@ class PortfolioCategory
     }
 
     /**
-     * Set user
+     * Set user.
      *
      * @param User $user
      *
@@ -172,7 +180,7 @@ class PortfolioCategory
     }
 
     /**
-     * Get isVisible
+     * Get isVisible.
      *
      * @return bool
      */
@@ -182,7 +190,7 @@ class PortfolioCategory
     }
 
     /**
-     * Set isVisible
+     * Set isVisible.
      *
      * @param bool $isVisible
      *
@@ -196,11 +204,11 @@ class PortfolioCategory
     }
 
     /**
-     * Get items
+     * Get items.
      *
-     * @param Course|null $course
+     * @param Course|null  $course
      * @param Session|null $session
-     * @param bool $onlyVisibles
+     * @param bool         $onlyVisibles
      *
      * @return ArrayCollection
      */
@@ -228,7 +236,7 @@ class PortfolioCategory
     }
 
     /**
-     * Set items
+     * Set items.
      *
      * @param ArrayCollection $items
      *
@@ -239,13 +247,5 @@ class PortfolioCategory
         $this->items = $items;
 
         return $this;
-    }
-
-    /**
-     * @return string
-     */
-    public function __toString()
-    {
-        return $this->title;
     }
 }

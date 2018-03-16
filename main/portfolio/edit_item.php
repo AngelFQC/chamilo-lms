@@ -4,7 +4,7 @@
 $categories = $em
     ->getRepository('ChamiloCoreBundle:PortfolioCategory')
     ->findBy([
-        'user' => $user
+        'user' => $user,
     ]);
 
 $form = new FormValidator('edit_portfolio', 'post', $baseUrl."action=edit_item&id={$item->getId()}");
@@ -15,7 +15,7 @@ $form->addButtonUpdate(get_lang('Update'));
 $form->setDefaults([
     'title' => $item->getTitle(),
     'content' => $item->getContent(),
-    'category' => $item->getCategory() ? $item->getCategory()->getId() : ''
+    'category' => $item->getCategory() ? $item->getCategory()->getId() : '',
 ]);
 
 if ($form->validate()) {
@@ -44,7 +44,7 @@ if ($form->validate()) {
 $toolName = get_lang('EditPortfolioItem');
 $interbreadcrumb[] = [
     'name' => get_lang('Portfolio'),
-    'url' => $baseUrl
+    'url' => $baseUrl,
 ];
 $actions[] = Display::url(
     Display::return_icon('back.png', get_lang('Back'), [], ICON_SIZE_MEDIUM),
