@@ -3,7 +3,13 @@
 
 namespace Chamilo\GraphQLBundle\Type\Root;
 
+use Chamilo\GraphQLBundle\Auth;
+use Chamilo\GraphQLBundle\Context;
+use Chamilo\GraphQLBundle\Types;
+use GraphQL\Error\Error;
 use GraphQL\Type\Definition\ObjectType;
+use GraphQL\Type\Definition\ResolveInfo;
+use GraphQL\Type\Definition\Type;
 
 /**
  * Class Mutation
@@ -18,17 +24,53 @@ class Mutation extends ObjectType
     public function __construct()
     {
         $config = [
-            'description' => 'Chamilo GraphQL mutations',
-            'fields' => [],
+            'description' => 'GraphQL mutations',
+            'fields' => [
+                'authenticate' => [
+                    'description' => 'Authenticate user',
+                    'type' => Types::auth(),
+                    'args' => [
+                        'username' => Type::nonNull(
+                            Type::string()
+                        ),
+                        'password' => Type::nonNull(
+                            Type::string()
+                        ),
+                    ],
+                ],
+            ],
             'resolveField' => function ($val, array $args, Context $context, ResolveInfo $info) {
-                try {
-                    return $this->{$info->fieldName}($val, $args, $context, $info);
-                } catch (\Exception $e) {
-                    throw new Error($e->getMessage());
-                }
+                $method = 'resolve'.ucfirst($info->fieldName);
+
+                return $this->$method($val, $args, $context, $info);
             },
         ];
 
         parent::__construct($config);
+    }
+
+    /**
+     * Authenticate user by username and password.
+     *
+     * @param string      $value
+     * @param array       $args
+     * @param Context     $context
+     * @param ResolveInfo $info
+     *
+     * @return array
+     * @throws Error
+     */
+    public function resolveAuthenticate($value, array $args, Context $context, ResolveInfo $info)
+    {
+        $username = $args['username'];
+        $password = $args['password'];
+
+        try {
+            $token = Auth::validateUser($username, $password);
+
+            return ['token' => $token];
+        } catch (\Exception $e) {
+            throw new Error($e->getMessage());
+        }
     }
 }

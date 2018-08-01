@@ -3,6 +3,7 @@
 
 namespace Chamilo\GraphQLBundle;
 
+use Chamilo\GraphQLBundle\Type\AuthType;
 use Chamilo\GraphQLBundle\Type\Root\Mutation;
 use Chamilo\GraphQLBundle\Type\Root\Query;
 
@@ -17,6 +18,11 @@ class Types
      * @var Mutation
      */
     private static $mutation;
+
+    /**
+     * @var AuthType
+     */
+    private static $auth;
 
     /**
      * @return Query
@@ -40,5 +46,17 @@ class Types
         }
 
         return self::$mutation;
+    }
+
+    /**
+     * @return AuthType
+     */
+    public static function auth()
+    {
+        if (!self::$auth) {
+            self::$auth = new AuthType();
+        }
+
+        return self::$auth;
     }
 }
