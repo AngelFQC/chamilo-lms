@@ -4,8 +4,11 @@
 namespace Chamilo\GraphQLBundle;
 
 use Chamilo\GraphQLBundle\Type\AuthType;
+use Chamilo\GraphQLBundle\Type\Enum\ImageSizeEnum;
+use Chamilo\GraphQLBundle\Type\Enum\UserStatusEnum;
 use Chamilo\GraphQLBundle\Type\Root\Mutation;
 use Chamilo\GraphQLBundle\Type\Root\Query;
+use Chamilo\GraphQLBundle\Type\UserType;
 
 class Types
 {
@@ -23,6 +26,21 @@ class Types
      * @var AuthType
      */
     private static $auth;
+
+    /**
+     * @var UserType
+     */
+    private static $user;
+
+    /**
+     * @var UserStatusEnum
+     */
+    private static $userStatusEnum;
+
+    /**
+     * @var ImageSizeEnum
+     */
+    private static $imageSizeEnum;
 
     /**
      * @return Query
@@ -58,5 +76,41 @@ class Types
         }
 
         return self::$auth;
+    }
+
+    /**
+     * @return UserType
+     */
+    public static function user()
+    {
+        if (!self::$user) {
+            self::$user = new UserType();
+        }
+
+        return self::$user;
+    }
+
+    /**
+     * @return UserStatusEnum
+     */
+    public static function userStatusEnum()
+    {
+        if (!self::$userStatusEnum) {
+            self::$userStatusEnum = new UserStatusEnum();
+        }
+
+        return self::$userStatusEnum;
+    }
+
+    /**
+     * @return ImageSizeEnum
+     */
+    public static function imageSizeEnum()
+    {
+        if (!self::$imageSizeEnum) {
+            self::$imageSizeEnum = new ImageSizeEnum();
+        }
+
+        return self::$imageSizeEnum;
     }
 }
