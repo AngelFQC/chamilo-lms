@@ -6,8 +6,10 @@ namespace Chamilo\GraphQLBundle;
 use Chamilo\GraphQLBundle\Type\AuthType;
 use Chamilo\GraphQLBundle\Type\Enum\ImageSizeEnum;
 use Chamilo\GraphQLBundle\Type\Enum\UserStatusEnum;
+use Chamilo\GraphQLBundle\Type\MessageType;
 use Chamilo\GraphQLBundle\Type\Root\Mutation;
 use Chamilo\GraphQLBundle\Type\Root\Query;
+use Chamilo\GraphQLBundle\Type\Scalar\DateTimeType;
 use Chamilo\GraphQLBundle\Type\UserType;
 
 class Types
@@ -41,6 +43,16 @@ class Types
      * @var ImageSizeEnum
      */
     private static $imageSizeEnum;
+
+    /**
+     * @var MessageType
+     */
+    private static $message;
+
+    /**
+     * @var DateTimeType
+     */
+    private static $dateTime;
 
     /**
      * @return Query
@@ -112,5 +124,29 @@ class Types
         }
 
         return self::$imageSizeEnum;
+    }
+
+    /**
+     * @return MessageType
+     */
+    public static function message()
+    {
+        if (!self::$message) {
+            self::$message = new MessageType();
+        }
+
+        return self::$message;
+    }
+
+    /**
+     * @return DateTimeType
+     */
+    public static function dateTime()
+    {
+        if (!self::$dateTime) {
+            self::$dateTime = new DateTimeType();
+        }
+
+        return self::$dateTime;
     }
 }

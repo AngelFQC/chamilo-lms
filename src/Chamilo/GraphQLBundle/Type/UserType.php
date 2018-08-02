@@ -7,6 +7,7 @@ use Chamilo\GraphQLBundle\Context;
 use Chamilo\GraphQLBundle\Type\Enum\ImageSizeEnum;
 use Chamilo\GraphQLBundle\Types;
 use Chamilo\UserBundle\Entity\User;
+use GraphQL\Error\Error;
 use GraphQL\Type\Definition\ObjectType;
 use GraphQL\Type\Definition\ResolveInfo;
 use GraphQL\Type\Definition\Type;
@@ -47,9 +48,24 @@ class UserType extends ObjectType
                         ],
                     ],
                 ],
+                'messages' => [
+                    'description' => 'Received messages for the user.',
+                    'type' => Type::listOf(
+                        Types::message()
+                    ),
+                    'args' => [
+                        'lastId' => [
+                            'description' => 'Last received by the app message ID.',
+                            'type' => Type::int(),
+                            'default' => 1,
+                        ],
+                    ],
+                ],
             ],
             'resolveField' => function ($userId, array $args, Context $context, ResolveInfo $info) {
-                if (!$this->user) {
+                if (!$this->user ||
+                    ($this->user && $this->user->getId() != $userId)
+                ) {
                     $this->user = \Database::getManager()->find('ChamiloUserBundle:User', $userId);
                 }
 
@@ -93,5 +109,48 @@ class UserType extends ObjectType
         );
 
         return $pictureInfo;
+    }
+
+    /**
+     * @param int         $userId
+     * @param array       $args
+     * @param Context     $context
+     * @param ResolveInfo $info
+     *
+     * @return array
+     * @throws Error
+     */
+    private function resolveMessages($userId, array $args, Context $context, ResolveInfo $info)
+    {
+        $user = $context->getUser();
+
+        if ($userId != $user->getId()) {
+            throw new Error(get_lang('UserInfoDoesNotMatch'));
+        }
+
+        $args = array_merge(
+            ['lastId' => 0],
+            $args
+        );
+
+        $messagesInfo = \MessageManager::getMessagesFromLastReceivedMessage(
+            $userId,
+            $args['lastId']
+        );
+
+        $result = [];
+
+        foreach ($messagesInfo as $messageInfo) {
+            $result[] = [
+                'id' => $messageInfo['id'],
+                'title' => $messageInfo['title'],
+                'content' => $messageInfo['content'],
+                'sender' => $messageInfo['user_sender_id'],
+                'sendDate' => $messageInfo['send_date'],
+                'hasAttachments' => \MessageManager::hasAttachments($messageInfo['id']),
+            ];
+        }
+
+        return $result;
     }
 }
