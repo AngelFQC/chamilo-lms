@@ -34,7 +34,7 @@ class ImageSizeEnum extends EnumType
                 'SIZE_BIG' => [
                     'value' => self::SIZE_BIG,
                     'description' => 'Image in small size: 128px',
-                ]
+                ],
             ],
         ];
 

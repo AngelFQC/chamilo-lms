@@ -44,7 +44,7 @@ class UserType extends ObjectType
                     'args' => [
                         'size' => [
                             'type' => Types::imageSizeEnum(),
-                            'default' =>  ImageSizeEnum::SIZE_MEDIUM
+                            'default' => ImageSizeEnum::SIZE_MEDIUM,
                         ],
                     ],
                 ],
