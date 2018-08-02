@@ -44,7 +44,7 @@ class UserType extends ObjectType
                     'args' => [
                         'size' => [
                             'type' => Types::imageSizeEnum(),
-                            'default' => ImageSizeEnum::SIZE_MEDIUM,
+                            'defaultValue' => ImageSizeEnum::SIZE_MEDIUM,
                         ],
                     ],
                 ],
@@ -57,7 +57,7 @@ class UserType extends ObjectType
                         'lastId' => [
                             'description' => 'Last received by the app message ID.',
                             'type' => Type::int(),
-                            'default' => 1,
+                            'defaultValue' => 0,
                         ],
                     ],
                 ],
@@ -98,11 +98,6 @@ class UserType extends ObjectType
      */
     private function resolvePicture($userId, array $args, Context $context, ResolveInfo $info)
     {
-        $args = array_merge(
-            ['size' => ImageSizeEnum::SIZE_MEDIUM],
-            $args
-        );
-
         $pictureInfo = \UserManager::getUserPicture(
             $this->user->getId(),
             $args['size']
@@ -127,11 +122,6 @@ class UserType extends ObjectType
         if ($userId != $user->getId()) {
             throw new Error(get_lang('UserInfoDoesNotMatch'));
         }
-
-        $args = array_merge(
-            ['lastId' => 0],
-            $args
-        );
 
         $messagesInfo = \MessageManager::getMessagesFromLastReceivedMessage(
             $userId,

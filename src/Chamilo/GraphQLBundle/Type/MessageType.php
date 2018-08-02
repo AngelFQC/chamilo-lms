@@ -39,7 +39,7 @@ class MessageType extends ObjectType
                                 'description' => 'The approximate desired length. '
                                     .self::EXCERPT_LENGTH.' chars by default.',
                                 'type' => Type::int(),
-                                'default' => self::EXCERPT_LENGTH,
+                                'defaultValue' => self::EXCERPT_LENGTH,
                             ],
                         ],
                     ],
@@ -83,11 +83,6 @@ class MessageType extends ObjectType
      */
     private function resolveExcerpt($value, array $args, Context $context, ResolveInfo $info)
     {
-        $args = array_merge(
-            ['length' => self::EXCERPT_LENGTH],
-            $args
-        );
-
         $cleanContent = strip_tags($value['content']);
         $cleanContent = str_replace(["\r\n", "\n"], ' ', $cleanContent);
         $cleanContent = trim($cleanContent);
