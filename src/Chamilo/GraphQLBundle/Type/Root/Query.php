@@ -5,6 +5,7 @@ namespace Chamilo\GraphQLBundle\Type\Root;
 
 use Chamilo\GraphQLBundle\Context;
 use Chamilo\GraphQLBundle\Types;
+use Chamilo\UserBundle\Entity\User;
 use GraphQL\Error\Error;
 use GraphQL\Type\Definition\ObjectType;
 use GraphQL\Type\Definition\ResolveInfo;
@@ -28,6 +29,20 @@ class Query extends ObjectType
                 'viewer' => [
                     'description' => 'Get information from current user',
                     'type' => Types::user(),
+                ],
+                'messageContacts' => [
+                    'description' => 'Get potential users to send a message for the current user.',
+                    'type' => Type::listOf(
+                        Types::user()
+                    ),
+                    'args' => [
+                        'text' => [
+                            'description' => 'The search text to filter the user list.',
+                            'type' => Type::nonNull(
+                                Type::string()
+                            ),
+                        ],
+                    ],
                 ],
                 'course' => [
                     'description' => 'Get information about a course '
@@ -96,5 +111,41 @@ class Query extends ObjectType
         }
 
         return $courseId;
+    }
+
+    /**
+     * @param mixed       $value
+     * @param array       $args
+     * @param Context     $context
+     * @param ResolveInfo $info
+     *
+     * @return array
+     * @throws Error
+     */
+    protected function resolveMessageContacts($value, array $args, Context $context, ResolveInfo $info)
+    {
+        try {
+            $context->requireAuthorization();
+        } catch (\Exception $e) {
+            throw new Error($e->getMessage());
+        }
+
+        $text = $args['text'];
+
+        if (strlen($text) <= 1) {
+            return [];
+        }
+
+        $users = \UserManager::getRepository()
+            ->findUsersToSendMessage($context->getUser()->getId(), $text);
+
+        $list = [];
+
+        /** @var User $user */
+        foreach ($users as $user) {
+            $list[] = $user->getId();
+        }
+
+        return $list;
     }
 }
