@@ -8,6 +8,7 @@ use Chamilo\GraphQLBundle\Types;
 use GraphQL\Error\Error;
 use GraphQL\Type\Definition\ObjectType;
 use GraphQL\Type\Definition\ResolveInfo;
+use GraphQL\Type\Definition\Type;
 
 /**
  * Class Query
@@ -27,6 +28,18 @@ class Query extends ObjectType
                 'viewer' => [
                     'description' => 'Get information from current user',
                     'type' => Types::user(),
+                ],
+                'course' => [
+                    'description' => 'Get information about a course '
+                        .'(only for platform admins or user subscribed to course).',
+                    'type' => Types::course(),
+                    'args' => [
+                        'id' => [
+                            'type' => Type::nonNull(
+                                Type::int()
+                            ),
+                        ],
+                    ],
                 ],
             ],
             'resolveField' => function ($val, array $args, Context $context, ResolveInfo $info) {
@@ -57,5 +70,31 @@ class Query extends ObjectType
         }
 
         return $context->getUser()->getId();
+    }
+
+    /**
+     * @param mixed       $value
+     * @param array       $args
+     * @param Context     $context
+     * @param ResolveInfo $info
+     *
+     * @return int
+     * @throws Error
+     */
+    public function resolveCourse($value, array $args, Context $context, ResolveInfo $info)
+    {
+        try {
+            $context->requireAuthorization();
+        } catch (\Exception $e) {
+            throw new Error($e->getMessage());
+        }
+
+        $courseId = (int) $args['id'];
+
+        if (!$context->userIsAllowedToCourse($courseId)) {
+            throw new Error(get_lang('NotAllowed'));
+        }
+
+        return $courseId;
     }
 }

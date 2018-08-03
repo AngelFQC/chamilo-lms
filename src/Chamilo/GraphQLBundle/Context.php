@@ -4,6 +4,7 @@
 namespace Chamilo\GraphQLBundle;
 
 use Chamilo\CoreBundle\Entity\Course;
+use Chamilo\CoreBundle\Entity\CourseRelUser;
 use Chamilo\UserBundle\Entity\User;
 
 /**
@@ -83,5 +84,26 @@ class Context
         if (!$this->user) {
             throw new \Exception(get_lang('NotAllowed'));
         }
+    }
+
+    /**
+     * @param int $courseId
+     *
+     * @return bool
+     */
+    public function userIsAllowedToCourse($courseId)
+    {
+        if (api_is_platform_admin_by_id($this->user->getId())) {
+            return true;
+        }
+
+        /** @var CourseRelUser $subscription */
+        foreach ($this->user->getCourses() as $subscription) {
+            if ($subscription->getCourse()->getId() === $courseId) {
+                return true;
+            }
+        }
+
+        return false;
     }
 }
