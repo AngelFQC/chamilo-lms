@@ -61,6 +61,12 @@ class UserType extends ObjectType
                         ],
                     ],
                 ],
+                'courses' => [
+                    'description' => 'Course list for the current user.',
+                    'type' => Type::listOf(
+                        Types::course()
+                    ),
+                ],
             ],
             'resolveField' => function ($userId, array $args, Context $context, ResolveInfo $info) {
                 if (!$this->user ||
@@ -142,5 +148,27 @@ class UserType extends ObjectType
         }
 
         return $result;
+    }
+
+    /**
+     * @param int         $userId
+     * @param array       $args
+     * @param Context     $context
+     * @param ResolveInfo $info
+     *
+     * @return array
+     * @throws Error
+     */
+    private function resolveCourses($userId, array $args, Context $context, ResolveInfo $info)
+    {
+        if ($userId != $context->getUser()->getId()) {
+            throw new Error(get_lang('UserInfoDoesNotMatch'));
+        }
+
+        $coursesInfo = \CourseManager::get_courses_list_by_user_id($this->user->getId());
+
+        $ids = array_column($coursesInfo, 'real_id');
+
+        return array_map('intval', $ids);
     }
 }

@@ -4,6 +4,7 @@
 namespace Chamilo\GraphQLBundle;
 
 use Chamilo\GraphQLBundle\Type\AuthType;
+use Chamilo\GraphQLBundle\Type\CourseType;
 use Chamilo\GraphQLBundle\Type\Enum\ImageSizeEnum;
 use Chamilo\GraphQLBundle\Type\Enum\UserStatusEnum;
 use Chamilo\GraphQLBundle\Type\MessageType;
@@ -53,6 +54,11 @@ class Types
      * @var DateTimeType
      */
     private static $dateTime;
+
+    /**
+     * @var CourseType
+     */
+    private static $course;
 
     /**
      * @return Query
@@ -148,5 +154,17 @@ class Types
         }
 
         return self::$dateTime;
+    }
+
+    /**
+     * @return CourseType
+     */
+    public static function course()
+    {
+        if (!self::$course) {
+            self::$course = new CourseType();
+        }
+
+        return self::$course;
     }
 }
