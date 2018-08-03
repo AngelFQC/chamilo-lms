@@ -28,7 +28,7 @@ class Auth
         $user = \UserManager::getManager()->findUserByUsername($username);
 
         if (!$user) {
-            throw new \Exception(get_lang('NoUser'));
+            throw new \Exception(get_lang('InvalideUserDetected'));
         }
 
         $isValid = \UserManager::isPasswordValid(

@@ -38,6 +38,15 @@ class Mutation extends ObjectType
                         ),
                     ],
                 ],
+                'saveGCMId' => [
+                    'description' => 'Save client ID for push notifications.',
+                    'type' => Type::boolean(),
+                    'args' => [
+                        'registrationId' => Type::nonNull(
+                            Type::string()
+                        ),
+                    ],
+                ],
             ],
             'resolveField' => function ($val, array $args, Context $context, ResolveInfo $info) {
                 $method = 'resolve'.ucfirst($info->fieldName);
@@ -68,9 +77,40 @@ class Mutation extends ObjectType
         try {
             $token = Auth::validateUser($username, $password);
 
-            return ['token' => $token];
+            return $token;
         } catch (\Exception $e) {
             throw new Error($e->getMessage());
         }
+    }
+
+    /**
+     * @param mixed       $value
+     * @param array       $args
+     * @param Context     $context
+     * @param ResolveInfo $info
+     *
+     * @return mixed
+     * @throws Error
+     */
+    public function resolveSaveGCMId($value, array $args, Context $context, ResolveInfo $info)
+    {
+        try {
+            $context->requireAuthorization();
+        } catch (\Exception $e) {
+            throw new Error($e->getMessage());
+        }
+
+        $registrationId = \Security::remove_XSS($args['registrationId']);
+        $extraFieldValue = new \ExtraFieldValue('user');
+
+        $saved = $extraFieldValue->save(
+            [
+                'variable' => \Rest::EXTRA_FIELD_GCM_REGISTRATION,
+                'value' => $registrationId,
+                'item_id' => $context->getUser()->getId(),
+            ]
+        );
+
+        return (bool) $saved;
     }
 }
