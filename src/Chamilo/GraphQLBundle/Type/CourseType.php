@@ -35,6 +35,7 @@ class CourseType extends ObjectType
                     'title' => Type::string(),
                     'code' => Type::string(),
                     'categoryCode' => Type::string(),
+                    'directory' => Type::string(),
                     'picture' => [
                         'type' => Type::string(),
                         'args' => [
