@@ -76,7 +76,7 @@ class Query extends ObjectType
      * @return int
      * @throws \Exception
      */
-    public function resolveViewer($value, array $args, Context $context, ResolveInfo $info)
+    protected function resolveViewer($value, array $args, Context $context, ResolveInfo $info)
     {
         try {
             $context->requireAuthorization();
@@ -96,7 +96,7 @@ class Query extends ObjectType
      * @return int
      * @throws Error
      */
-    public function resolveCourse($value, array $args, Context $context, ResolveInfo $info)
+    protected function resolveCourse($value, array $args, Context $context, ResolveInfo $info)
     {
         try {
             $context->requireAuthorization();

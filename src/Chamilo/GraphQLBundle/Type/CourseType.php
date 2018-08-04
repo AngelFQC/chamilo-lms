@@ -92,7 +92,7 @@ class CourseType extends ObjectType
      *
      * @return array
      */
-    public function resolveTeachers($courseId, array $args, Context $context, ResolveInfo $info)
+    protected function resolveTeachers($courseId, array $args, Context $context, ResolveInfo $info)
     {
         $teachersInfo = \CourseManager::get_teacher_list_from_course_code($this->course->getCode());
 
@@ -109,7 +109,7 @@ class CourseType extends ObjectType
      *
      * @return null|string
      */
-    private function resolvePicture($courseId, array $args, Context $context, ResolveInfo $info)
+    protected function resolvePicture($courseId, array $args, Context $context, ResolveInfo $info)
     {
         return $this
             ->course

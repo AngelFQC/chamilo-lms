@@ -68,7 +68,7 @@ class MessageType extends ObjectType
      *
      * @return string
      */
-    private function resolveContent($value, array $args, Context $context, ResolveInfo $info)
+    protected function resolveContent($value, array $args, Context $context, ResolveInfo $info)
     {
         return $value['content'];
     }
@@ -81,7 +81,7 @@ class MessageType extends ObjectType
      *
      * @return string
      */
-    private function resolveExcerpt($value, array $args, Context $context, ResolveInfo $info)
+    protected function resolveExcerpt($value, array $args, Context $context, ResolveInfo $info)
     {
         $cleanContent = strip_tags($value['content']);
         $cleanContent = str_replace(["\r\n", "\n"], ' ', $cleanContent);

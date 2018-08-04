@@ -90,7 +90,7 @@ class Mutation extends ObjectType
      * @return array
      * @throws Error
      */
-    public function resolveAuthenticate($value, array $args, Context $context, ResolveInfo $info)
+    protected function resolveAuthenticate($value, array $args, Context $context, ResolveInfo $info)
     {
         $username = $args['username'];
         $password = $args['password'];
@@ -113,7 +113,7 @@ class Mutation extends ObjectType
      * @return mixed
      * @throws Error
      */
-    public function resolveSaveGCMId($value, array $args, Context $context, ResolveInfo $info)
+    protected function resolveSaveGCMId($value, array $args, Context $context, ResolveInfo $info)
     {
         try {
             $context->requireAuthorization();

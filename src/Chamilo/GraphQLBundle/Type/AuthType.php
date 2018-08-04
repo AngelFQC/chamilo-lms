@@ -52,7 +52,7 @@ class AuthType extends ObjectType
      *
      * @return string
      */
-    private function resolveToken($token, array $args, Context $context, ResolveInfo $info)
+    protected function resolveToken($token, array $args, Context $context, ResolveInfo $info)
     {
         return $token;
     }
@@ -65,7 +65,7 @@ class AuthType extends ObjectType
      *
      * @return string
      */
-    private function resolveGcmSenderId($token, array $args, Context $context, ResolveInfo $info)
+    protected function resolveGcmSenderId($token, array $args, Context $context, ResolveInfo $info)
     {
         return api_get_setting('messaging_gdc_project_number');
     }

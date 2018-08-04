@@ -122,7 +122,7 @@ class UserType extends ObjectType
      *
      * @return string
      */
-    private function resolvePicture($userId, array $args, Context $context, ResolveInfo $info)
+    protected function resolvePicture($userId, array $args, Context $context, ResolveInfo $info)
     {
         $pictureInfo = \UserManager::getUserPicture(
             $this->user->getId(),
@@ -141,7 +141,7 @@ class UserType extends ObjectType
      * @return array
      * @throws Error
      */
-    private function resolveMessages($userId, array $args, Context $context, ResolveInfo $info)
+    protected function resolveMessages($userId, array $args, Context $context, ResolveInfo $info)
     {
         $user = $context->getUser();
 
@@ -179,7 +179,7 @@ class UserType extends ObjectType
      * @return array
      * @throws Error
      */
-    private function resolveCourses($userId, array $args, Context $context, ResolveInfo $info)
+    protected function resolveCourses($userId, array $args, Context $context, ResolveInfo $info)
     {
         if ($userId != $context->getUser()->getId()) {
             throw new Error(get_lang('UserInfoDoesNotMatch'));
