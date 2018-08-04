@@ -102,6 +102,26 @@ class UserType extends ObjectType
      *
      * @return string
      */
+    protected function resolveEmail($userId, array $args, Context $context, ResolveInfo $info)
+    {
+        $showEmail = $this->user->getId() === $context->getUser()->getId() ||
+            api_get_setting('show_email_addresses') === 'true';
+
+        if ($showEmail) {
+            return $this->user->getEmail();
+        }
+
+        return '';
+    }
+
+    /**
+     * @param int         $userId
+     * @param array       $args
+     * @param Context     $context
+     * @param ResolveInfo $info
+     *
+     * @return string
+     */
     private function resolvePicture($userId, array $args, Context $context, ResolveInfo $info)
     {
         $pictureInfo = \UserManager::getUserPicture(
