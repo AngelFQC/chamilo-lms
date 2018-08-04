@@ -50,6 +50,12 @@ class CourseType extends ObjectType
                             Types::user()
                         ),
                     ],
+                    'tools' => [
+                        'description' => 'List of names from available tools for student view.',
+                        'type' => Type::listOf(
+                            Type::string()
+                        ),
+                    ],
                 ];
             },
             'resolveField' => function ($courseId, array $args, Context $context, ResolveInfo $info) {
@@ -116,5 +122,23 @@ class CourseType extends ObjectType
             ->getPicturePath(
                 (boolean) $args['fullSize']
             );
+    }
+
+    /**
+     * @param int         $courseId
+     * @param array       $args
+     * @param Context     $context
+     * @param ResolveInfo $info
+     *
+     * @return array
+     */
+    protected function resolveTools($courseId, array $args, Context $context, ResolveInfo $info)
+    {
+        $tools = \CourseHome::get_tools_category(
+            TOOL_STUDENT_VIEW,
+            $this->course->getId()
+        );
+
+        return array_column($tools, 'name');
     }
 }
