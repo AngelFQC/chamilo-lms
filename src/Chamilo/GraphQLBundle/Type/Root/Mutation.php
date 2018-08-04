@@ -47,6 +47,27 @@ class Mutation extends ObjectType
                         ),
                     ],
                 ],
+                'sendMessage' => [
+                    'type' => Type::listOf(
+                        Type::boolean()
+                    ),
+                    'args' => [
+                        'receivers' => [
+                            'description' => 'IDs of users who will receive the message.',
+                            'type' => Type::nonNull(
+                                Type::listOf(
+                                    Type::int()
+                                )
+                            ),
+                        ],
+                        'subject' => Type::nonNull(
+                            Type::string()
+                        ),
+                        'text' => Type::nonNull(
+                            Type::string()
+                        ),
+                    ],
+                ],
             ],
             'resolveField' => function ($val, array $args, Context $context, ResolveInfo $info) {
                 $method = 'resolve'.ucfirst($info->fieldName);
@@ -112,5 +133,46 @@ class Mutation extends ObjectType
         );
 
         return (bool) $saved;
+    }
+
+    /**
+     * @param mixed       $value
+     * @param array       $args
+     * @param Context     $context
+     * @param ResolveInfo $info
+     *
+     * @return array
+     * @throws Error
+     */
+    protected function resolveSendMessage($value, array $args, Context $context, ResolveInfo $info)
+    {
+        try {
+            $context->requireAuthorization();
+        } catch (\Exception $e) {
+            throw new Error($e->getMessage());
+        }
+
+        $receivers = $args['receivers'];
+        $subject = $args['subject'];
+        $text = $args['text'];
+
+        $list = [];
+
+        foreach ($receivers as $userId) {
+            $list[] = (bool) \MessageManager::send_message(
+                $userId,
+                $subject,
+                $text,
+                [],
+                [],
+                [],
+                0,
+                0,
+                0,
+                $context->getUser()->getId()
+            );
+        }
+
+        return $list;
     }
 }
