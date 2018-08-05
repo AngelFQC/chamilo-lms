@@ -5,6 +5,7 @@ namespace Chamilo\GraphQLBundle;
 
 use Chamilo\CoreBundle\Entity\Course;
 use Chamilo\CoreBundle\Entity\CourseRelUser;
+use Chamilo\CoreBundle\Entity\Session;
 use Chamilo\UserBundle\Entity\User;
 
 /**
@@ -23,6 +24,11 @@ class Context
      * @var Course
      */
     private $course;
+
+    /**
+     * @var Session
+     */
+    private $session;
 
     /**
      * @return User
@@ -60,6 +66,26 @@ class Context
     public function setCourse($course)
     {
         $this->course = $course;
+
+        return $this;
+    }
+
+    /**
+     * @return Session
+     */
+    public function getSession()
+    {
+        return $this->session;
+    }
+
+    /**
+     * @param Session $session
+     *
+     * @return Context
+     */
+    public function setSession($session)
+    {
+        $this->session = $session;
 
         return $this;
     }

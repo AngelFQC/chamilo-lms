@@ -11,6 +11,8 @@ use Chamilo\GraphQLBundle\Type\MessageType;
 use Chamilo\GraphQLBundle\Type\Root\Mutation;
 use Chamilo\GraphQLBundle\Type\Root\Query;
 use Chamilo\GraphQLBundle\Type\Scalar\DateTimeType;
+use Chamilo\GraphQLBundle\Type\SessionCategoryType;
+use Chamilo\GraphQLBundle\Type\SessionType;
 use Chamilo\GraphQLBundle\Type\UserType;
 
 class Types
@@ -59,6 +61,16 @@ class Types
      * @var CourseType
      */
     private static $course;
+
+    /**
+     * @var SessionType
+     */
+    private static $session;
+
+    /**
+     * @var SessionCategoryType
+     */
+    private static $sessionCategory;
 
     /**
      * @return Query
@@ -166,5 +178,29 @@ class Types
         }
 
         return self::$course;
+    }
+
+    /**
+     * @return SessionType
+     */
+    public static function session()
+    {
+        if (!self::$session) {
+            self::$session = new SessionType();
+        }
+
+        return self::$session;
+    }
+
+    /**
+     * @return SessionCategoryType
+     */
+    public static function sessionCategory()
+    {
+        if (!self::$sessionCategory) {
+            self::$sessionCategory = new SessionCategoryType();
+        }
+
+        return self::$sessionCategory;
     }
 }
