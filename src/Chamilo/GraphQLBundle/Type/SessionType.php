@@ -62,9 +62,9 @@ class SessionType extends ObjectType
                     if (!$this->session) {
                         throw new Error(get_lang('NoSession'));
                     }
-
-                    $context->setSession($this->session);
                 }
+
+                $context->setSession($this->session);
 
                 $method = 'resolve'.ucfirst($info->fieldName);
 

@@ -4,6 +4,8 @@
 namespace Chamilo\GraphQLBundle\Type;
 
 use Chamilo\CoreBundle\Entity\Course;
+use Chamilo\CoreBundle\Entity\Session;
+use Chamilo\CoreBundle\Entity\SessionRelCourseRelUser;
 use Chamilo\GraphQLBundle\Context;
 use Chamilo\GraphQLBundle\Types;
 use GraphQL\Type\Definition\ObjectType;
@@ -46,7 +48,7 @@ class CourseType extends ObjectType
                         ],
                     ],
                     'teachers' => [
-                        'description' => 'Teachers list in base course.',
+                        'description' => 'Teachers list in base course. Or tutors list from course in session.',
                         'type' => Type::listOf(
                             Types::user()
                         ),
@@ -68,9 +70,9 @@ class CourseType extends ObjectType
                     if (!$this->course) {
                         throw new Error(get_lang('NoCourse'));
                     }
-
-                    $context->setCourse($this->course);
                 }
+
+                $context->setCourse($this->course);
 
                 $method = 'resolve'.ucfirst($info->fieldName);
 
@@ -101,6 +103,20 @@ class CourseType extends ObjectType
      */
     protected function resolveTeachers($courseId, array $args, Context $context, ResolveInfo $info)
     {
+        $session = $context->getSession();
+
+        if ($session) {
+            $result = [];
+            $coachSubscriptions = $session->getUserCourseSubscriptionsByStatus($this->course, Session::COACH);
+
+            /** @var SessionRelCourseRelUser $coachSubscription */
+            foreach ($coachSubscriptions as $coachSubscription) {
+                $result[] = $coachSubscription->getUser()->getId();
+            }
+
+            return $result;
+        }
+
         $teachersInfo = \CourseManager::get_teacher_list_from_course_code($this->course->getCode());
 
         $ids = array_column($teachersInfo, 'user_id');
