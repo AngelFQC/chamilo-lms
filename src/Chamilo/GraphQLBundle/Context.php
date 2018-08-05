@@ -107,6 +107,8 @@ class Context
         $tokenData = Auth::getTokenData($token);
 
         $this->user = \UserManager::getManager()->find($tokenData['user']);
+        $this->course = null;
+        $this->session = null;
 
         if (!$this->user) {
             throw new \Exception(get_lang('NotAllowed'));
