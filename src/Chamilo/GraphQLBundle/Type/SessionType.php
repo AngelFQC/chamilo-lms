@@ -4,6 +4,7 @@
 namespace Chamilo\GraphQLBundle\Type;
 
 use Chamilo\CoreBundle\Entity\Session;
+use Chamilo\CoreBundle\Entity\SessionRelCourseRelUser;
 use Chamilo\GraphQLBundle\Context;
 use Chamilo\GraphQLBundle\Types;
 use GraphQL\Error\Error;
@@ -47,6 +48,9 @@ class SessionType extends ObjectType
                     'coachAccessStartDate' => Types::dateTime(),
                     'coachAccessEndDate' => Types::dateTime(),
                     'generalCoach' => Types::user(),
+                    'courses' => Type::listOf(
+                        Types::course()
+                    ),
                 ];
             },
             'resolveField' => function ($sessionId, array $args, Context $context, ResolveInfo $info) {
@@ -131,5 +135,27 @@ class SessionType extends ObjectType
     protected function resolveGeneralCoach($sessionId, array $args, Context $context, ResolveInfo $info)
     {
         return $this->session->getGeneralCoach()->getId();
+    }
+
+    /**
+     * @param int         $sessionId
+     * @param array       $args
+     * @param Context     $context
+     * @param ResolveInfo $info
+     *
+     * @return array
+     */
+    protected function resolveCourses($sessionId, array $args, Context $context, ResolveInfo $info)
+    {
+        if (api_is_platform_admin_by_id($context->getUser()->getId())) {
+            return \SessionManager::getCoursesInSession($this->session->getId());
+        }
+
+        $courseList = \UserManager::get_courses_list_by_session(
+            $context->getUser()->getId(),
+            $this->session->getId()
+        );
+
+        return array_column($courseList, 'real_id');
     }
 }
