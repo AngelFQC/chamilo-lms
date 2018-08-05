@@ -6,6 +6,7 @@ namespace Chamilo\GraphQLBundle;
 use Chamilo\CoreBundle\Entity\Course;
 use Chamilo\CoreBundle\Entity\CourseRelUser;
 use Chamilo\CoreBundle\Entity\Session;
+use Chamilo\CoreBundle\Entity\SessionRelCourseRelUser;
 use Chamilo\UserBundle\Entity\User;
 
 /**
@@ -126,6 +127,34 @@ class Context
         /** @var CourseRelUser $subscription */
         foreach ($this->user->getCourses() as $subscription) {
             if ($subscription->getCourse()->getId() === $courseId) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * @param int $sessionId
+     *
+     * @return bool
+     */
+    public function userIsAllowedToSession($sessionId)
+    {
+        if (api_is_platform_admin_by_id($this->user->getId())) {
+            return true;
+        }
+
+        /** @var SessionRelCourseRelUser $subscription */
+        foreach ($this->user->getSessionCourseSubscriptions() as $subscription) {
+            if ($subscription->getSession()->getId() === $sessionId) {
+                return true;
+            }
+        }
+
+        /** @var Session $session */
+        foreach ($this->user->getSessionAsGeneralCoach() as $session) {
+            if ($session->getId() === $sessionId) {
                 return true;
             }
         }

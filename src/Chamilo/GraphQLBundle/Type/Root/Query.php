@@ -56,6 +56,17 @@ class Query extends ObjectType
                         ],
                     ],
                 ],
+                'session' => [
+                    'description' => 'Get session data (only for platform admins or user subscribed to session).',
+                    'type' => Types::session(),
+                    'args' => [
+                        'id' => [
+                            'type' => Type::nonNull(
+                                Type::int()
+                            ),
+                        ],
+                    ],
+                ],
             ],
             'resolveField' => function ($val, array $args, Context $context, ResolveInfo $info) {
                 $method = 'resolve'.ucfirst($info->fieldName);
@@ -147,5 +158,31 @@ class Query extends ObjectType
         }
 
         return $list;
+    }
+
+    /**
+     * @param mixed       $value
+     * @param array       $args
+     * @param Context     $context
+     * @param ResolveInfo $info
+     *
+     * @return int
+     * @throws Error
+     */
+    protected function resolveSession($value, array $args, Context $context, ResolveInfo $info)
+    {
+        try {
+            $context->requireAuthorization();
+        } catch (\Exception $e) {
+            throw new Error($e->getMessage());
+        }
+
+        $id = (int) $args['id'];
+
+        if (!$context->userIsAllowedToSession($id)) {
+            throw new Error(get_lang('NotAllowed'));
+        }
+
+        return $id;
     }
 }

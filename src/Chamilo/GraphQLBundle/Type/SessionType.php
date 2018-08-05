@@ -32,7 +32,7 @@ class SessionType extends ObjectType
             'description' => 'Session.',
             'fields' => function () {
                 return [
-                    'id' => Type::id(),
+                    'id' => Type::int(),
                     'name' => Type::string(),
                     'category' => Types::sessionCategory(),
                     'description' => Type::string(),
