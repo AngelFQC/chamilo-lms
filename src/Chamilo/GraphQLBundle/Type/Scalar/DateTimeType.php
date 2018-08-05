@@ -17,9 +17,14 @@ class DateTimeType extends ScalarType
 {
 
     /**
+     * @var string
+     */
+    public $description = 'Date and time in UTC.';
+
+    /**
      * Serializes an internal value to include in a response.
      *
-     * @param mixed $value
+     * @param string|\DateTime $value
      *
      * @return mixed
      * @throws Error
@@ -28,6 +33,10 @@ class DateTimeType extends ScalarType
     {
         if (!($value instanceof \DateTime)) {
             $value = $this->parseValue($value);
+        } else {
+            if ($value->getTimezone()->getName() !== 'UTC') {
+                $value->setTimezone(new \DateTimeZone('UTC'));
+            }
         }
 
         return $value->format(\DateTime::ATOM);
@@ -40,7 +49,7 @@ class DateTimeType extends ScalarType
      *
      * @param mixed $value
      *
-     * @return mixed
+     * @return \DateTime
      * @throws Error
      */
     public function parseValue($value)
