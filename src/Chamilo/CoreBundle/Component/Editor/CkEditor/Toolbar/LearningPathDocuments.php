@@ -62,6 +62,7 @@ class LearningPathDocuments extends Basic
             ['Bold', 'Italic', 'Underline', 'Strike', '-', 'Subscript', 'Superscript', '-', 'TextColor', 'BGColor'],
             [api_get_setting('allow_spellcheck') === 'true' ? 'Scayt' : ''],
             ['Styles', 'Format', 'Font', 'FontSize'],
+            ['CodeSnippet'],
             ['PageBreak', 'ShowBlocks', 'Source'],
             ['Toolbarswitch'],
         ];
@@ -103,7 +104,7 @@ class LearningPathDocuments extends Basic
             ],
             '/',
             ['Styles', 'Format', 'Font', 'FontSize'],
-            ['Bold', 'Italic', 'Underline', '-', 'Source'],
+            ['Bold', 'Italic', 'Underline', '-', 'CodeSnippet', '-', 'Source'],
         ];
     }
 
@@ -122,6 +123,7 @@ class LearningPathDocuments extends Basic
             ['JustifyLeft', 'JustifyCenter', 'JustifyRight', 'JustifyBlock'],
             ['Toolbarswitch'],
             ['Styles', 'Format', 'Font', 'FontSize', 'Bold', 'Italic', 'Underline', 'TextColor', 'BGColor'],
+            ['CodeSnippet'],
             ['ShowBlocks', 'Source'],
         ];
     }
