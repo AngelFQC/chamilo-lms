@@ -114,6 +114,7 @@ CKEDITOR.editorConfig = function (config) {
         '{{ font_awesome_css }}',
         '{{ css_editor }}',
     ];
+    config.codeSnippetGeshi_url = '{{ _p.web_lib ~ 'ckeditor/geshi_colorize.php' }}';
 };
 
 // Sets default target to "_blank" in link plugin
