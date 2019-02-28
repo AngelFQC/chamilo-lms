@@ -3,6 +3,12 @@
 
 require_once __DIR__.'/../../global.inc.php';
 
+$userId = api_get_user_id();
+
+if (empty($userId)) {
+    api_not_allowed(false);
+}
+
 $jsonString = file_get_contents('php://input');
 $jsonObject = json_decode($jsonString);
 
