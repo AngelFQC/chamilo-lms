@@ -9521,3 +9521,41 @@ function api_get_language_translate_html()
             });
     ';
 }
+
+/**
+ * Download a file from a URL passed.
+ * On success returns the number of bytes that were written to the file. Otherwise return false.
+ *
+ * @param string $source
+ * @param string $destination
+ *
+ * @return bool|int
+ */
+function api_download_file_from_url($source, $destination)
+{
+    $source = str_replace(' ', '%20', $source);
+    $ch = curl_init($source);
+    curl_setopt($ch, CURLOPT_HEADER, 0);
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+    curl_setopt($ch, CURLOPT_BINARYTRANSFER, 1);
+
+    $rawData = curl_exec($ch);
+
+    if (curl_errno($ch)) {
+        return false;
+    }
+
+    $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+
+    if ($httpCode != 200) {
+        return false;
+    }
+
+    curl_close($ch);
+
+    if (file_exists($destination)) {
+        unlink($destination);
+    }
+
+    return file_put_contents($destination, $rawData);
+}
