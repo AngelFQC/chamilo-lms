@@ -15,3 +15,7 @@ echo '----'.PHP_EOL;
 echo 'Migrating courses:'.PHP_EOL;
 $migrate->migrateCourses();
 echo '----'.PHP_EOL;
+
+echo 'Migrating quizzes: '.PHP_EOL;
+$migrate->migrateQuizzes();
+echo '----'.PHP_EOL;

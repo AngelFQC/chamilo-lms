@@ -20,7 +20,19 @@ class BgoMigration
     /**
      * @var array
      */
-    private $categories = [];
+    private $courseCategories = [];
+    /**
+     * @var array
+     */
+    private $courses = [];
+    /**
+     * @var array
+     */
+    private $quizzes = [];
+    /**
+     * @var array 
+     */
+    private $quizQuestions = [];
 
     /**
      * @var PDO
@@ -77,7 +89,7 @@ class BgoMigration
 
             if ($id) {
                 $category = CourseCategory::getCategoryById($id);
-                $this->categories[$row['linea_id']] = $category['code'];
+                $this->courseCategories[$row['linea_id']] = $category['code'];
 
                 echo 'Course category created: '.$category['name'].PHP_EOL;
             }
@@ -147,11 +159,11 @@ class BgoMigration
         $row = $stmt->fetch(PDO::FETCH_ASSOC);
         $oldId = $row['linea_id'];
 
-        if (!array_key_exists($oldId, $this->categories)) {
+        if (!array_key_exists($oldId, $this->courseCategories)) {
             return null;
         }
 
-        return $this->categories[$oldId];
+        return $this->courseCategories[$oldId];
     }
 
     /**
@@ -323,5 +335,127 @@ class BgoMigration
         );
 
         return $documentPath;
+    }
+
+    public function migrateQuizzes()
+    {
+        $courseInfo = CourseManager::create_course(
+            ['title' => 'Evaluaciones'],
+            $this->adminId
+        );
+
+        if (empty($courseInfo)) {
+            return;
+        }
+
+        $stmt = $this->db->prepare('SELECT * FROM evaluacion');
+        $stmt->execute();
+
+        while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+            $exercise = new Exercise($courseInfo['real_id']);
+            $exercise->updateTitle(
+                Exercise::format_title_variable($row['evaluacion_titulo'])
+            );
+            $exercise->updateDescription($row['evaluacion_comentario']);
+            $exercise->start_time = $row['evaluacion_fecini'] ? api_get_utc_datetime($row['evaluacion_fecini']) : null;
+            $exercise->end_time = $row['evaluacion_fecfin'] ? api_get_utc_datetime($row['evaluacion_fecfin']) : null;
+
+            $exercise->save();
+
+            if (empty($exercise->id)) {
+                continue;
+            }
+
+            echo "\t\tExercise created: {$exercise->id} -- {$exercise->title}".PHP_EOL;
+
+            $this->quizzes[$row['evaluacion_id']] = $exercise->id;
+
+            $this->migrateQuizQuestions($row['evaluacion_id'], $exercise);
+        }
+    }
+
+    /**
+     * @param int      $oldExerciseId
+     * @param Exercise $exercise
+     */
+    public function migrateQuizQuestions($oldExerciseId, Exercise $exercise)
+    {
+        $types = ['S' => 1, 'M' => 2];
+
+        $stmt = $this->db->prepare('SELECT * FROM pregunta WHERE evaluacion_id = ?');
+        $stmt->execute([$oldExerciseId]);
+
+        while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+            if (!isset($types[$row['pregunta_tipo']])) {
+                continue;
+            }
+
+            $type = $types[$row['pregunta_tipo']];
+
+            $question = Question::getInstance($type);
+            $question->course = $exercise->course;
+            $question->updateTitle($row['pregunta_texto']);
+            $question->save($exercise);
+            $exercise->addToList($question->id);
+            $exercise->update_question_positions();
+            
+            if (empty($question->id)) {
+                continue;
+            }
+
+            $this->quizQuestions[$row['pregunta_id']] = $question->id;
+
+            $this->migrationQuizQuestionOption($row['pregunta_id'], $question, $exercise, $stmt->rowCount());
+        }
+
+        echo "\t\t\tQuestions created: {$exercise->selectNbrQuestions()}".PHP_EOL;
+    }
+
+    /**
+     * @param int      $oldQuestionId
+     * @param Question $question
+     * @param Exercise $exercise
+     * @param int      $nbrQuestions
+     */
+    public function migrationQuizQuestionOption($oldQuestionId, Question $question, Exercise $exercise, $nbrQuestions)
+    {
+        $stmt = $this->db->prepare('SELECT * FROM opcion WHERE pregunta_id = ?');
+        $stmt->execute([$oldQuestionId]);
+
+        $questionWeighting = number_format(20 / $nbrQuestions, 2);
+        $questionWeighting = (float) $questionWeighting;
+        $optionWeighting = $questionWeighting;
+
+        if ($question->selectType() == MULTIPLE_ANSWER) {
+            $stmt2 = $this->db->prepare('SELECT COUNT(1) c FROM opcion WHERE pregunta_id = ? AND opcion_correcta = ?');
+            $stmt2->execute([$oldQuestionId, '1']);
+            $row2 = $stmt2->fetchAll(PDO::FETCH_ASSOC);
+
+            $goodAnswersCount = (int) $row2[0]['c'];
+            $optionWeighting = number_format($questionWeighting / $goodAnswersCount, 2);
+            $optionWeighting = (float) $optionWeighting;
+        }
+
+        $answer = new Answer($question->id, $question->course['real_id'], $exercise, false);
+
+        $position = 0;
+
+        while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+            ++$position;
+
+            $goodAnswer = !!$row['opcion_correcta'];
+
+            $answer->createAnswer(
+                $row['opcion_texto'],
+                $goodAnswer,
+                '',
+                $goodAnswer ? $optionWeighting : 0,
+                $position
+            );
+        }
+
+        $answer->save();
+        $question->updateWeighting($questionWeighting);
+        $question->save($exercise);
     }
 }
