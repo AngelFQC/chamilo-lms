@@ -300,6 +300,12 @@ class BgoMigration
      */
     private function putFileOnCourse($source, $destinationFolder, array $courseInfo)
     {
+        if (!file_exists($this->oldPortalPath.$source)) {
+            echo "\t\tDocument $source doesn't exists in source directory".PHP_EOL;
+
+            return false;
+        }
+
         $sysCachePath = api_get_path(SYS_ARCHIVE_PATH);
         $sysCoursePath = api_get_path(SYS_COURSE_PATH);
         $courseDir = $courseInfo['path'].'/document';
