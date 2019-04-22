@@ -221,8 +221,9 @@ class BgoMigration
                 continue;
             }
 
+            echo "\tCourse description assigned: {$titles[$type]}".PHP_EOL;
+
             $content = $this->processFilesInHtml($content, $courseId);
-            //$content = $this->processImagesHtml($content, $courseId);
 
             $description = new CourseDescription();
             $description->set_course_id($courseId);
@@ -231,8 +232,6 @@ class BgoMigration
             $description->set_title($titles[$type]);
             $description->set_content($content);
             $description->insert();
-
-            echo "\tCourse description assigned: {$titles[$type]}".PHP_EOL;
         }
     }
 
@@ -269,22 +268,36 @@ class BgoMigration
                 $uploadPath = '/imported/images';
             }
 
-            if (empty($source) || strpos($source, '/UserFilesBago/') !== 0) {
+            if (empty($source)) {
                 continue;
             }
 
-            $documentPath = $this->putFileOnCourse($source, $uploadPath, $courseInfo);
+            if (strpos($source, '/UserFilesBago/') === 0) {
+                $documentPath = $this->putFileOnCourse($source, $uploadPath, $courseInfo);
 
-            if (false === $documentPath) {
-                continue;
+                if (false === $documentPath) {
+                    echo "\t\tDocument $source doesn't exists in source directory".PHP_EOL;
+
+                    continue;
+                }
+
+                echo "\t\tDocument created: ".$documentPath.PHP_EOL;
+
+                $toReplace[$source] = $relCoursePath.$courseDir.$documentPath;
+            } elseif (strpos($source, 'https://drive.google.com') === 0) {
+                $linkId = DocumentManager::addCloudLink($courseInfo, $uploadPath, $source, $source);
+
+                if (empty($linkId)) {
+                    echo "\t\tLink $source not added".PHP_EOL;
+
+                    continue;
+                }
+
+                echo "\t\tLink $source added in documents.".PHP_EOL;
             }
-
-            $toReplace[$source] = $relCoursePath.$courseDir.$documentPath;
         }
 
         foreach ($toReplace as $search => $replace) {
-            echo "\t\tDocument created: ".$replace.PHP_EOL;
-
             $html = str_replace($search, $replace, $html);
         }
 
@@ -301,8 +314,6 @@ class BgoMigration
     private function putFileOnCourse($source, $destinationFolder, array $courseInfo)
     {
         if (!file_exists($this->oldPortalPath.$source)) {
-            echo "\t\tDocument $source doesn't exists in source directory".PHP_EOL;
-
             return false;
         }
 
