@@ -1,0 +1,43 @@
+<?php
+/* For licensing terms, see /license.txt */
+
+use Chamilo\CoreBundle\Framework\Container;
+use Chamilo\UserBundle\Entity\User;
+
+/**
+ * Class UsersLoader.
+ */
+class UsersLoader implements LoaderInterface
+{
+    /**
+     * @param array $incomingData
+     */
+    public function load(array $incomingData): void
+    {
+        $manager = Container::getUserManager();
+
+        /** @var User $user */
+        $user = $manager->createUser();
+        $user
+            ->setLastname($incomingData['lastname'])
+            ->setFirstname($incomingData['firstname'])
+            ->setUsername($incomingData['username'])
+            ->setStatus($incomingData['status'])
+            ->setPlainPassword($incomingData['plain_password'])
+            ->setEmail($incomingData['email'])
+            ->setOfficialCode('')
+            ->setPictureUri('')
+            ->setCreatorId(1)
+            ->setAuthSource($incomingData['auth_source'])
+            ->setPhone($incomingData['phone'])
+            ->setAddress($incomingData['address'])
+            ->setLanguage($incomingData['language'])
+            ->setRegistrationDate($incomingData['registration_date'])
+            ->setHrDeptId(0)
+            ->setActive(false)
+            ->setEnabled(false)
+        ;
+
+        $manager->updateUser($user);
+    }
+}
