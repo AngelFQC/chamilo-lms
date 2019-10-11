@@ -23,7 +23,7 @@ class UsersLoader implements LoaderInterface
             ->setFirstname($incomingData['firstname'])
             ->setUsername($incomingData['username'])
             ->setStatus($incomingData['status'])
-            ->setPlainPassword($incomingData['plain_password'])
+            ->setPlainPassword(md5(time()))
             ->setEmail($incomingData['email'])
             ->setOfficialCode('')
             ->setPictureUri('')
@@ -39,5 +39,7 @@ class UsersLoader implements LoaderInterface
         ;
 
         $manager->updateUser($user);
+
+        UserManager::update_extra_field_value($user->getId(), 'moodle_password', $incomingData['plain_password']);
     }
 }

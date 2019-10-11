@@ -35,9 +35,9 @@ class MigrationMoodlePlugin extends Plugin
     }
 
     /**
-     * @return Connection
-     *
      * @throws \Doctrine\DBAL\DBALException
+     *
+     * @return Connection
      */
     public function getConnection(): Connection
     {
@@ -52,5 +52,24 @@ class MigrationMoodlePlugin extends Plugin
         $connection = DriverManager::getConnection($params, new Configuration());
 
         return $connection;
+    }
+
+    /**
+     * Perform actions after configure the plugin.
+     *
+     * Add user extra field.
+     *
+     * @return MigrationMoodlePlugin
+     */
+    public function performActionsAfterConfigure()
+    {
+        UserManager::create_extra_field(
+            'moodle_password',
+            ExtraField::FIELD_TYPE_TEXT,
+            $this->get_lang('MoodlePassword'),
+            ''
+        );
+
+        return $this;
     }
 }

@@ -19,7 +19,7 @@ class UsersTransformer extends BaseTransformer implements TransformerInterface
             'firstname' => 'firstname',
             'email' => 'email',
             'username' => 'username',
-            'plain_password' => 'username',
+            'plain_password' => 'password',
             'language' => 'lang',
             'phone' => 'phone1',
             'address' => 'address',
