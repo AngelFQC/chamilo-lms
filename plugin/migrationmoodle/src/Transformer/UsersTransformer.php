@@ -56,6 +56,8 @@ class UsersTransformer extends BaseTransformer implements TransformerInterface
     }
 
     /**
+     * @todo Add more detail in roles conversion.
+     *
      * @param int $id
      *
      * @throws \Doctrine\DBAL\DBALException
@@ -76,6 +78,8 @@ class UsersTransformer extends BaseTransformer implements TransformerInterface
             [$id]
         );
         $result = $statement->fetch(FetchMode::ASSOCIATIVE);
+
+        $connection->close();
 
         return (int) $result['c'] !== 0 ? User::TEACHER : User::STUDENT;
     }
