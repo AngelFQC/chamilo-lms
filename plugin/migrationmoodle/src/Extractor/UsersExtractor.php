@@ -23,9 +23,9 @@ class UsersExtractor extends BaseExtractor
     }
 
     /**
-     * @return iterable
-     *
      * @throws Exception
+     *
+     * @return iterable
      */
     public function extract(): iterable
     {

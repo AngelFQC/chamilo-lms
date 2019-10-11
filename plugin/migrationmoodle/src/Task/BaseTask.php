@@ -37,7 +37,7 @@ abstract class BaseTask implements TaskInterface
     }
 
     /**
-     * Allow execute the ETL task.
+     * @throws Exception
      */
     public function execute(): void
     {
@@ -49,6 +49,8 @@ abstract class BaseTask implements TaskInterface
     }
 
     /**
+     * @throws Exception
+     *
      * @return iterable
      */
     protected function extractFiltered(): iterable
@@ -62,6 +64,11 @@ abstract class BaseTask implements TaskInterface
         }
     }
 
+    /**
+     * @param array $sourceRow
+     *
+     * @return mixed
+     */
     /**
      * @param array $sourceRow
      *

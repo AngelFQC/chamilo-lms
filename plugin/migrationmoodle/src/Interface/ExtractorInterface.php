@@ -14,9 +14,9 @@ interface ExtractorInterface
     public function filter(array $sourceData): bool;
 
     /**
-     * @return iterable
-     *
      * @throws Exception
+     *
+     * @return iterable
      */
     public function extract(): iterable;
 }

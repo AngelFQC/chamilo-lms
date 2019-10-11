@@ -9,8 +9,9 @@ abstract class BaseTransformer implements TransformerInterface
     /**
      * @param array $sourceData
      *
-     * @return array
      * @throws Exception
+     *
+     * @return array
      */
     public function transform(array $sourceData): array
     {

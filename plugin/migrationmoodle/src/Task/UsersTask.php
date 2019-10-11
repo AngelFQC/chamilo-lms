@@ -6,6 +6,9 @@
  */
 class UsersTask extends BaseTask
 {
+    /**
+     * UsersTask constructor.
+     */
     public function __construct()
     {
         $extractor = new UsersExtractor();
