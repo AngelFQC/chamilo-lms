@@ -1,6 +1,8 @@
 <?php
 /* For licensing terms, see /license.txt */
 
+use Chamilo\CoreBundle\Framework\Container;
+use Chamilo\CoreBundle\Hook\CheckLoginCredentialsHook;
 use Doctrine\DBAL\Configuration;
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\DriverManager;
@@ -19,7 +21,13 @@ class MigrationMoodlePlugin extends Plugin
     {
         $version = '0.0.1';
         $author = 'Angel Fernando Quiroz Campos';
-        $settings = [];
+        $settings = [
+            'active' => 'boolean',
+            'host' => 'text',
+            'user' => 'text',
+            'password' => 'text',
+            'dbname' => 'moodle',
+        ];
 
         parent::__construct($version, $author, $settings);
     }
@@ -69,6 +77,15 @@ class MigrationMoodlePlugin extends Plugin
             $this->get_lang('MoodlePassword'),
             ''
         );
+
+        $hook = Container::$container->get('chamilo_core.hook_factory')->build(CheckLoginCredentialsHook::class);
+        $hookObserver = MigrationMoodleCheckLoginCredentialsHook::create();
+
+        if ('true' === $this->get('active')) {
+            $hook->attach($hookObserver);
+        } else {
+            $hook->detach($hookObserver);
+        }
 
         return $this;
     }
