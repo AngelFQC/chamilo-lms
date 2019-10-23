@@ -7,6 +7,8 @@ $plugin = MigrationMoodlePlugin::create();
 
 try {
     removeExtraField();
+
+    $plugin->uninstallHook();
 } catch (Exception $exception) {
     $message = sprintf(
         $plugin->get_lang('UninstallError'),

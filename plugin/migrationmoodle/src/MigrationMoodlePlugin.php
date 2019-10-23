@@ -3,6 +3,7 @@
 
 use Chamilo\CoreBundle\Framework\Container;
 use Chamilo\CoreBundle\Hook\CheckLoginCredentialsHook;
+use Chamilo\CoreBundle\Hook\Interfaces\HookPluginInterface;
 use Doctrine\DBAL\Configuration;
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\DriverManager;
@@ -10,7 +11,7 @@ use Doctrine\DBAL\DriverManager;
 /**
  * Class MigrationMoodlePlugin.
  */
-class MigrationMoodlePlugin extends Plugin
+class MigrationMoodlePlugin extends Plugin implements HookPluginInterface
 {
     public $isAdminPlugin = true;
 
@@ -67,6 +68,8 @@ class MigrationMoodlePlugin extends Plugin
      *
      * Add user extra field.
      *
+     * @throws Exception
+     *
      * @return MigrationMoodlePlugin
      */
     public function performActionsAfterConfigure()
@@ -78,15 +81,46 @@ class MigrationMoodlePlugin extends Plugin
             ''
         );
 
-        $hook = Container::$container->get('chamilo_core.hook_factory')->build(CheckLoginCredentialsHook::class);
-        $hookObserver = MigrationMoodleCheckLoginCredentialsHook::create();
-
         if ('true' === $this->get('active')) {
-            $hook->attach($hookObserver);
+            $this->installHook();
         } else {
-            $hook->detach($hookObserver);
+            $this->uninstallHook();
         }
 
         return $this;
+    }
+
+    /**
+     * This method will call the Hook management insertHook to add Hook observer from this plugin.
+     *
+     * @throws Exception
+     *
+     * @return void
+     */
+    public function installHook()
+    {
+        $hookObserver = MigrationMoodleCheckLoginCredentialsHook::create();
+
+        Container::$container
+            ->get('chamilo_core.hook_factory')
+            ->build(CheckLoginCredentialsHook::class)
+            ->attach($hookObserver);
+    }
+
+    /**
+     * This method will call the Hook management deleteHook to disable Hook observer from this plugin.
+     *
+     * @throws Exception
+     *
+     * @return void
+     */
+    public function uninstallHook()
+    {
+        $hookObserver = MigrationMoodleCheckLoginCredentialsHook::create();
+
+        Container::$container
+            ->get('chamilo_core.hook_factory')
+            ->build(CheckLoginCredentialsHook::class)
+            ->attach($hookObserver);
     }
 }
