@@ -101,10 +101,7 @@ class MigrationMoodlePlugin extends Plugin implements HookPluginInterface
     {
         $hookObserver = MigrationMoodleCheckLoginCredentialsHook::create();
 
-        Container::$container
-            ->get('chamilo_core.hook_factory')
-            ->build(CheckLoginCredentialsHook::class)
-            ->attach($hookObserver);
+        Container::instantiateHook(CheckLoginCredentialsHook::class)->attach($hookObserver);
     }
 
     /**
@@ -118,9 +115,6 @@ class MigrationMoodlePlugin extends Plugin implements HookPluginInterface
     {
         $hookObserver = MigrationMoodleCheckLoginCredentialsHook::create();
 
-        Container::$container
-            ->get('chamilo_core.hook_factory')
-            ->build(CheckLoginCredentialsHook::class)
-            ->attach($hookObserver);
+        Container::instantiateHook(CheckLoginCredentialsHook::class)->attach($hookObserver);
     }
 }
