@@ -34,8 +34,8 @@ class UsersLoader implements LoaderInterface
             ->setLanguage($incomingData['language'])
             ->setRegistrationDate($incomingData['registration_date'])
             ->setHrDeptId(0)
-            ->setActive(false)
-            ->setEnabled(false)
+            ->setActive($incomingData['active'])
+            ->setEnabled($incomingData['enabled'])
         ;
 
         $manager->updateUser($user);

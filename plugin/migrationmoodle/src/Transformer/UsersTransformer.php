@@ -26,6 +26,8 @@ class UsersTransformer extends BaseTransformer implements TransformerInterface
             'auth_source' => 'auth',
             'registration_date' => 'timecreated',
             'status' => ['id', 'generateStatus'],
+            'active' => 'suspended',
+            'enabled' => 'suspended',
         ];
     }
 
@@ -82,5 +84,15 @@ class UsersTransformer extends BaseTransformer implements TransformerInterface
         $connection->close();
 
         return (int) $result['c'] !== 0 ? User::TEACHER : User::STUDENT;
+    }
+
+    /**
+     * @param bool $isSuspended
+     *
+     * @return bool
+     */
+    protected function transformSuspended(bool $isSuspended)
+    {
+        return !$isSuspended;
     }
 }
