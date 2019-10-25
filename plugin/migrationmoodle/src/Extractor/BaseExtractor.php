@@ -1,25 +1,64 @@
 <?php
 /* For licensing terms, see /license.txt */
 
+namespace Chamilo\PluginBundle\MigrationMoodle\Extractor;
+
+use Chamilo\PluginBundle\MigrationMoodle\Interfaces\ExtractorInterface;
+use Doctrine\DBAL\DBALException;
+use Doctrine\DBAL\FetchMode;
+
 /**
- * Class BaseExtractor.
+ * Class Extractor.
  */
 abstract class BaseExtractor implements ExtractorInterface
 {
+    /**
+     * @var mixed
+     */
+    private $query;
+
+    /**
+     * Extractor constructor.
+     *
+     * @param array $configuration
+     */
+    public function __construct(array $configuration)
+    {
+        $this->query = $configuration['query'];
+    }
+
     /**
      * @param array $sourceData
      *
      * @return bool
      */
-    public function filter(array $sourceData): bool
-    {
-        return false;
-    }
+    abstract public function filter(array $sourceData): bool;
 
     /**
-     * @return iterable
+     * @throws \Exception
      *
-     * @throws Exception
+     * @return iterable
      */
-    abstract public function extract(): iterable;
+    public function extract(): iterable
+    {
+        $plugin = \MigrationMoodlePlugin::create();
+
+        try {
+            $connection = $plugin->getConnection();
+        } catch (DBALException $e) {
+            throw new \Exception('Unable to start connection.', 0, $e);
+        }
+
+        try {
+            $statement = $connection->executeQuery($this->query);
+        } catch (DBALException $e) {
+            throw new \Exception("Unable to execute query \"{$this->query}\".", 0, $e);
+        }
+
+        while ($sourceRow = $statement->fetch(FetchMode::ASSOCIATIVE)) {
+            yield $sourceRow;
+        }
+
+        $connection->close();
+    }
 }

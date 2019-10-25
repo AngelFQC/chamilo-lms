@@ -1,7 +1,10 @@
 <?php
 /* For licensing terms, see /license.txt */
 
+namespace Chamilo\PluginBundle\MigrationMoodle\Loader;
+
 use Chamilo\CoreBundle\Framework\Container;
+use Chamilo\PluginBundle\MigrationMoodle\Interfaces\LoaderInterface;
 use Chamilo\UserBundle\Entity\User;
 
 /**
@@ -40,6 +43,6 @@ class UsersLoader implements LoaderInterface
 
         $manager->updateUser($user);
 
-        UserManager::update_extra_field_value($user->getId(), 'moodle_password', $incomingData['plain_password']);
+        \UserManager::update_extra_field_value($user->getId(), 'moodle_password', $incomingData['plain_password']);
     }
 }

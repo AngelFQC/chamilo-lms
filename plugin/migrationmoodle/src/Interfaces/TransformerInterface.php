@@ -1,16 +1,13 @@
 <?php
 /* For licensing terms, see /license.txt */
 
+namespace Chamilo\PluginBundle\MigrationMoodle\Interfaces;
+
 /**
  * Interface TransformerInterface.
  */
 interface TransformerInterface
 {
-    /**
-     * @return array
-     */
-    public function mapProperties(): array;
-
     /**
      * @param array $sourceData
      *

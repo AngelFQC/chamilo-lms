@@ -1,10 +1,16 @@
 <?php
 /* For licensing terms, see /license.txt */
 
+namespace Chamilo\PluginBundle\MigrationMoodle\Task;
+
+use Chamilo\PluginBundle\MigrationMoodle\Interfaces\ExtractorInterface;
+use Chamilo\PluginBundle\MigrationMoodle\Interfaces\LoaderInterface;
+use Chamilo\PluginBundle\MigrationMoodle\Interfaces\TransformerInterface;
+
 /**
  * Class BaseTask.
  */
-abstract class BaseTask implements TaskInterface
+abstract class BaseTask
 {
     /**
      * @var ExtractorInterface
@@ -21,69 +27,86 @@ abstract class BaseTask implements TaskInterface
 
     /**
      * BaseTask constructor.
-     *
-     * @param ExtractorInterface   $extractor
-     * @param TransformerInterface $transformer
-     * @param LoaderInterface      $loader
      */
-    public function __construct(
-        ExtractorInterface $extractor,
-        TransformerInterface $transformer,
-        LoaderInterface $loader
-    ) {
-        $this->extractor = $extractor;
-        $this->transformer = $transformer;
-        $this->loader = $loader;
+    public function __construct()
+    {
+        $this->extractor = $this->getExtractor();
+
+        $this->transformer = $this->getTransformer();
+
+        $this->loader = $this->getLoader();
     }
 
     /**
-     * @throws Exception
+     * @return array
+     */
+    abstract public function getExtractConfiguration(): array;
+
+    /**
+     * @return array
+     */
+    abstract public function getTransformConfiguration(): array;
+
+    /**
+     * @return array
+     */
+    abstract public function getLoadConfiguration(): array;
+
+    /**
+     *
      */
     public function execute(): void
     {
-        foreach ($this->extractFiltered() as $sourceRow) {
-            $incomingRow = $this->transform($sourceRow);
-
-            $this->load($incomingRow);
-        }
-    }
-
-    /**
-     * @throws Exception
-     *
-     * @return iterable
-     */
-    protected function extractFiltered(): iterable
-    {
-        foreach ($this->extractor->extract() as $extracted) {
-            if ($this->extractor->filter($extracted)) {
+        foreach ($this->extractor->extract() as $extractedData) {
+            if ($this->extractor->filter($extractedData)) {
                 continue;
             }
 
-            yield $extracted;
+            $incomingData = $this->transformer->transform($extractedData);
+
+            $this->loader->load($incomingData);
         }
     }
 
     /**
-     * @param array $sourceRow
-     *
-     * @return mixed
+     * @return ExtractorInterface
      */
-    /**
-     * @param array $sourceRow
-     *
-     * @return mixed
-     */
-    protected function transform(array $sourceRow)
+    private function getExtractor()
     {
-        return $this->transformer->transform($sourceRow);
+        $configuration = $this->getExtractConfiguration();
+
+        $extractorClass = $configuration['class'];
+        /** @var ExtractorInterface $extractor */
+        $extractor = new $extractorClass($configuration);
+
+        return $extractor;
     }
 
     /**
-     * @param array $incomingRow
+     * @return TransformerInterface
      */
-    protected function load(array $incomingRow)
+    private function getTransformer()
     {
-        return $this->loader->load($incomingRow);
+        $configuration = $this->getTransformConfiguration();
+
+        $transformerClass = $configuration['class'];
+        /** @var TransformerInterface $extractor */
+        $extractor = new $transformerClass($configuration);
+
+        return $extractor;
+    }
+
+    /**
+     * @return LoaderInterface
+     */
+    private function getLoader()
+    {
+        $configuration = $this->getLoadConfiguration();
+
+        $loaderClass = $configuration['class'];
+        /** @var LoaderInterface $extractor */
+        $extractor = new $loaderClass($configuration);
+
+        return $extractor;
     }
 }

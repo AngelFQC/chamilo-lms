@@ -1,15 +1,30 @@
 <?php
 /* For licensing terms, see /license.txt */
 
-/**
- * Class BaseTransformer.
- */
-abstract class BaseTransformer implements TransformerInterface
+namespace Chamilo\PluginBundle\MigrationMoodle\Transformer;
+
+use Chamilo\PluginBundle\MigrationMoodle\Interfaces\TransformerInterface;
+use Chamilo\PluginBundle\MigrationMoodle\Transformer\Property\Copy;
+
+class BaseTransformer implements TransformerInterface
 {
     /**
-     * @param array $sourceData
+     * @var array
+     */
+    private $map;
+
+    /**
+     * BaseTransformer constructor.
      *
-     * @throws Exception
+     * @param array $configuration
+     */
+    public function __construct(array $configuration)
+    {
+        $this->map = $configuration['map'];
+    }
+
+    /**
+     * @param array $sourceData
      *
      * @return array
      */
@@ -17,41 +32,26 @@ abstract class BaseTransformer implements TransformerInterface
     {
         $incomingResult = [];
 
-        $mapping = $this->mapProperties();
-
-        foreach ($mapping as $incomingProperty => $sourceProperty) {
+        foreach ($this->map as $incomingProperty => $sourceProperty) {
             if (is_array($sourceProperty)) {
-                list($propertyName, $filterMethod) = $sourceProperty;
-
-                if (!method_exists($this, $filterMethod)) {
-                    throw new Exception('Filter method "'.$filterMethod.'" not found.');
-                }
-
-                $incomingResult[$incomingProperty] = $this->$filterMethod($sourceData[$propertyName]);
-
-                continue;
+                $transformerClass = $sourceProperty['class'];
+                /** @var TransformerInterface $transformer */
+                $transformer = new $transformerClass();
+                $sourceProperties = $sourceProperty['properties'];
+            } else {
+                $transformer = new Copy();
+                $sourceProperties = [$sourceProperty];
             }
 
-            $filterMethod = 'transform'.underScoreToCamelCase($sourceProperty);
+            $data = [];
 
-            if (method_exists($this, $filterMethod)) {
-                $incomingResult[$incomingProperty] = $this->$filterMethod($sourceData[$sourceProperty]);
-
-                continue;
+            foreach ($sourceProperties as $sourcePropertyName) {
+                $data[$sourcePropertyName] = $sourceData[$sourcePropertyName];
             }
 
-            if (!array_key_exists($sourceProperty, $sourceData)) {
-                throw new Exception("Source property \"$sourceProperty\" not found-");
-            }
-
-            $incomingResult[$incomingProperty] = $sourceData[$sourceProperty];
+            $incomingResult[$incomingProperty] = $transformer->transform($data);
         }
 
         return $incomingResult;
     }
-
-    /**
-     * @return array
-     */
-    abstract public function mapProperties(): array;
 }
