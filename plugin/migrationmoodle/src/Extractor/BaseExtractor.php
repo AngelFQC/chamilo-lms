@@ -10,7 +10,7 @@ use Doctrine\DBAL\FetchMode;
 /**
  * Class Extractor.
  */
-abstract class BaseExtractor implements ExtractorInterface
+class BaseExtractor implements ExtractorInterface
 {
     /**
      * @var mixed
@@ -32,7 +32,10 @@ abstract class BaseExtractor implements ExtractorInterface
      *
      * @return bool
      */
-    abstract public function filter(array $sourceData): bool;
+    public function filter(array $sourceData): bool
+    {
+        return false;
+    }
 
     /**
      * @throws \Exception
