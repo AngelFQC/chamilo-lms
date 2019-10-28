@@ -49,8 +49,8 @@ class UserStatusLookup implements TransformPropertyInterface
 
         $connection->close();
 
-        foreach ($userRoles as $userRole) {
-            foreach (self::ROLES as $chamiloRole => $moodleRoles) {
+        foreach (self::ROLES as $chamiloRole => $moodleRoles) {
+            foreach ($userRoles as $userRole) {
                 if (in_array($userRole, $moodleRoles)) {
                     return $chamiloRole;
                 }
