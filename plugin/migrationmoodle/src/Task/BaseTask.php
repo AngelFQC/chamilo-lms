@@ -62,9 +62,16 @@ abstract class BaseTask
                 continue;
             }
 
-            $incomingData = $this->transformer->transform($extractedData);
+            try {
+                $incomingData = $this->transformer->transform($extractedData);
 
-            $this->loader->load($incomingData);
+                $this->loader->load($incomingData);
+            } catch (\Exception $exception) {
+                echo 'Error while executing transform or load for: ';
+                print_r($extractedData);
+                echo PHP_EOL;
+                echo 'Message: '.$exception->getMessage().PHP_EOL;
+            }
         }
     }
 
