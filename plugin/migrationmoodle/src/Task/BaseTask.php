@@ -57,24 +57,41 @@ abstract class BaseTask
 
     public function execute(): void
     {
-        foreach ($this->extractor->extract() as $extractedData) {
-            if ($this->extractor->filter($extractedData)) {
+        foreach ($this->extractFiltered() as $extractedData) {
+            try {
+                $incomingData = $this->transformer->transform($extractedData);
+            } catch (\Exception $exception) {
+                $this->showMessage('Error while transforming extracted data.', $exception->getMessage(), $extractedData);
+
                 continue;
             }
 
             try {
-                $incomingData = $this->transformer->transform($extractedData);
-
                 $loadedId = $this->loader->load($incomingData);
-
-                $this->saveMapLog($extractedData['id'], $loadedId);
             } catch (\Exception $exception) {
-                echo 'Error while executing transform or load for: ';
-                print_r($extractedData);
-                echo PHP_EOL;
-                echo 'Message: '.$exception->getMessage().PHP_EOL;
+                $this->showMessage('Error while loading transformed data.', $exception->getMessage(), $incomingData);
+
+                continue;
             }
+
+            $hash = $this->saveMapLog($extractedData['id'], $loadedId);
+
+            $this->showMessage('Data migrated.', "{$extractedData['id']} -> $loadedId", $hash);
         }
+    }
+
+    /**
+     * @param string $first
+     * @param string $second
+     * @param string $data
+     */
+    private function showMessage($first, $second, $data)
+    {
+        echo '<p>'
+            ."$first "
+            ."<em>$second</em><br>"
+            .'<code>'.print_r($data, true).'</code>'
+            .'</p>';
     }
 
     /**
@@ -88,6 +105,25 @@ abstract class BaseTask
         $fileSystem = new Filesystem();
         $fileSystem->mkdir($dirPath);
         $fileSystem->touch($filePath);
+    }
+
+    /**
+     * @return iterable
+     */
+    private function extractFiltered(): iterable
+    {
+        try {
+            foreach ($this->extractor->extract() as $extractedData) {
+                if ($this->extractor->filter($extractedData)) {
+                    continue;
+                }
+
+                yield $extractedData;
+            }
+        } catch (\Exception $exception) {
+            echo 'Error while extracting data. ';
+            echo $exception->getMessage();
+        }
     }
 
     /**
@@ -115,22 +151,24 @@ abstract class BaseTask
     /**
      * @param int $extractedId
      * @param int $loadedId
+     *
+     * @return string
      */
     private function saveMapLog(int $extractedId, int $loadedId)
     {
+        $hash = md5("$extractedId@@$loadedId");
+
         $filePath = $this->getMapFilePath();
 
         $contents = file_get_contents($filePath);
         /** @var array $mapLog */
         $mapLog = json_decode($contents, true);
-        $mapLog[] = [
-            'hash' => md5("$extractedId@@$loadedId"),
-            'extracted' => $extractedId,
-            'loaded' => $loadedId,
-        ];
+        $mapLog[] = ['hash' => $hash, 'extracted' => $extractedId, 'loaded' => $loadedId];
 
         $fileSystem = new Filesystem();
         $fileSystem->dumpFile($filePath, json_encode($mapLog));
+
+        return $hash;
     }
 
     /**
