@@ -14,8 +14,10 @@ class UsersLoader implements LoaderInterface
 {
     /**
      * @param array $incomingData
+     *
+     * @return int
      */
-    public function load(array $incomingData): void
+    public function load(array $incomingData): int
     {
         $manager = Container::getUserManager();
 
@@ -44,5 +46,7 @@ class UsersLoader implements LoaderInterface
         $manager->updateUser($user);
 
         \UserManager::update_extra_field_value($user->getId(), 'moodle_password', $incomingData['plain_password']);
+
+        return $user->getId();
     }
 }

@@ -9,7 +9,11 @@ namespace Chamilo\PluginBundle\MigrationMoodle\Interfaces;
 interface LoaderInterface
 {
     /**
+     * Load the data and return the ID inserted.
+     *
      * @param array $incomingData
+     *
+     * @return int
      */
-    public function load(array $incomingData): void;
+    public function load(array $incomingData): int;
 }
