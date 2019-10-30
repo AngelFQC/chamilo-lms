@@ -6,6 +6,7 @@ namespace Chamilo\PluginBundle\MigrationMoodle\Task;
 use Chamilo\PluginBundle\MigrationMoodle\Interfaces\ExtractorInterface;
 use Chamilo\PluginBundle\MigrationMoodle\Interfaces\LoaderInterface;
 use Chamilo\PluginBundle\MigrationMoodle\Interfaces\TransformerInterface;
+use Chamilo\PluginBundle\MigrationMoodle\Traits\MapTrait\MapTrait;
 use Symfony\Component\Filesystem\Filesystem;
 
 /**
@@ -13,6 +14,8 @@ use Symfony\Component\Filesystem\Filesystem;
  */
 abstract class BaseTask
 {
+    use MapTrait;
+
     /**
      * @var ExtractorInterface
      */
@@ -36,6 +39,8 @@ abstract class BaseTask
         $this->transformer = $this->getTransformer();
 
         $this->loader = $this->getLoader();
+
+        $this->calledClass = get_called_class();
 
         $this->initMapLog();
     }
@@ -127,30 +132,10 @@ abstract class BaseTask
     }
 
     /**
-     * @return string
-     */
-    private function getMapFileName()
-    {
-        $name = str_replace(__NAMESPACE__.'\\', '', get_called_class());
-
-        return  api_camel_case_to_underscore($name);
-    }
-
-    /**
-     * @return string
-     */
-    private function getMapFilePath()
-    {
-        $name = $this->getMapFileName();
-
-        $dirPath = __DIR__.'/../../map';
-
-        return "$dirPath/$name.json";
-    }
-
-    /**
      * @param int $extractedId
      * @param int $loadedId
+     *
+     * @throws \Exception
      *
      * @return string
      */
@@ -160,9 +145,7 @@ abstract class BaseTask
 
         $filePath = $this->getMapFilePath();
 
-        $contents = file_get_contents($filePath);
-        /** @var array $mapLog */
-        $mapLog = json_decode($contents, true);
+        $mapLog = $this->parseMapFile();
         $mapLog[] = ['hash' => $hash, 'extracted' => $extractedId, 'loaded' => $loadedId];
 
         $fileSystem = new Filesystem();
