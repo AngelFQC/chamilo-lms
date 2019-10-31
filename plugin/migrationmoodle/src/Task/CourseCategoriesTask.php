@@ -7,7 +7,7 @@ use Chamilo\PluginBundle\MigrationMoodle\Extractor\BaseExtractor;
 use Chamilo\PluginBundle\MigrationMoodle\Loader\CourseCategoriesLoader;
 use Chamilo\PluginBundle\MigrationMoodle\Transformer\BaseTransformer;
 use Chamilo\PluginBundle\MigrationMoodle\Transformer\Property\CodeLookup;
-use Chamilo\PluginBundle\MigrationMoodle\Transformer\Property\CourseCategoryParentLookup;
+use Chamilo\PluginBundle\MigrationMoodle\Transformer\Property\CourseCategoryLookup;
 
 /**
  * Class CourseCategoriesTask.
@@ -42,7 +42,7 @@ class CourseCategoriesTask extends BaseTask
                 ],
                 'description' => 'description',
                 'parent_id' => [
-                    'class' => CourseCategoryParentLookup::class,
+                    'class' => CourseCategoryLookup::class,
                     'properties' => ['parent'],
                 ],
             ],

@@ -2,6 +2,7 @@
 /* For licensing terms, see /license.txt */
 
 use Chamilo\PluginBundle\MigrationMoodle\Task\CourseCategoriesTask;
+use Chamilo\PluginBundle\MigrationMoodle\Task\CoursesTask;
 use Chamilo\PluginBundle\MigrationMoodle\Task\UsersTask;
 
 require_once __DIR__.'/../../main/inc/global.inc.php';
@@ -13,6 +14,7 @@ $selfUrl = api_get_self();
 $actionNames = [
     'users' => 'Users',
     'course_categories' => 'Course categories',
+    'courses' => 'Courses',
 ];
 
 foreach ($actionNames as $actionName => $actionTitle) {
@@ -32,6 +34,10 @@ if (!empty($action)) {
         case 'course_categories':
             $courseCategoriesMigration = new CourseCategoriesTask();
             $courseCategoriesMigration->execute();
+            break;
+        case 'courses':
+            $coursesMigration = new CoursesTask();
+            $coursesMigration->execute();
             break;
     }
 }

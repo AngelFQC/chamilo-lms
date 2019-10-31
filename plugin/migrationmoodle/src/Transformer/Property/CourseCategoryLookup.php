@@ -10,7 +10,7 @@ use Chamilo\PluginBundle\MigrationMoodle\Task\CourseCategoriesTask;
  *
  * @package Chamilo\PluginBundle\MigrationMoodle\Transformer\Property
  */
-class CourseCategoryParentLookup extends LoadedKeyLookup
+class CourseCategoryLookup extends LoadedKeyLookup
 {
     /**
      * CourseCategoryParentLookup constructor.
