@@ -51,7 +51,7 @@ class UserStatusLookup implements TransformPropertyInterface
 
         foreach (self::ROLES as $chamiloRole => $moodleRoles) {
             foreach ($userRoles as $userRole) {
-                if (in_array($userRole, $moodleRoles)) {
+                if (in_array($userRole['archetype'], $moodleRoles)) {
                     return $chamiloRole;
                 }
             }
