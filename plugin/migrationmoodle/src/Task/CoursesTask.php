@@ -39,7 +39,7 @@ class CoursesTask extends BaseTask
             'map' => [
                 'title' => 'fullname',
                 'visual_code' => 'shortname',
-                'category_code' => [
+                'category_id' => [
                     'class' => CourseCategoryLookup::class,
                     'properties' => ['category'],
                 ],
