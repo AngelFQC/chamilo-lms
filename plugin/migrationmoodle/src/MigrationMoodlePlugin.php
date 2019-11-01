@@ -24,10 +24,10 @@ class MigrationMoodlePlugin extends Plugin implements HookPluginInterface
         $author = 'Angel Fernando Quiroz Campos';
         $settings = [
             'active' => 'boolean',
-            'host' => 'text',
-            'user' => 'text',
-            'password' => 'text',
-            'dbname' => 'moodle',
+            'db_host' => 'text',
+            'db_user' => 'text',
+            'db_password' => 'text',
+            'db_name' => 'text',
         ];
 
         parent::__construct($version, $author, $settings);
@@ -51,10 +51,10 @@ class MigrationMoodlePlugin extends Plugin implements HookPluginInterface
     public function getConnection(): Connection
     {
         $params = [
-            'host' => 'localhost', //$this->get('db_host'),
-            'user' => 'moodle', // $this->get('db_user'),
-            'password' => 'moodle', // $this->get('db_password'),
-            'dbname' => 'moodle', // $this->get('db_name'),
+            'host' => $this->get('db_host'),
+            'user' => $this->get('db_user'),
+            'password' => $this->get('db_password'),
+            'dbname' => $this->get('db_name'),
             'driver' => 'pdo_mysql',
         ];
 
