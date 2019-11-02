@@ -15,35 +15,45 @@ class UsersLoader implements LoaderInterface
     /**
      * @param array $incomingData
      *
+     * @throws \Doctrine\ORM\ORMException
+     * @throws \Doctrine\ORM\OptimisticLockException
+     *
      * @return int
      */
     public function load(array $incomingData): int
     {
-        $manager = Container::getUserManager();
+        $userId = \UserManager::create_user(
+            $incomingData['firstname'],
+            $incomingData['lastname'],
+            $incomingData['status'],
+            $incomingData['email'],
+            $incomingData['username'],
+            md5(time()),
+            '',
+            $incomingData['language'],
+            $incomingData['phone'],
+            null,
+            $incomingData['auth_source'],
+            null,
+            $incomingData['active'],
+            0,
+            [],
+            null,
+            false,
+            false,
+            $incomingData['address'],
+            false,
+            null,
+            0,
+            []
+        );
 
         /** @var User $user */
-        $user = $manager->createUser();
-        $user
-            ->setLastname($incomingData['lastname'])
-            ->setFirstname($incomingData['firstname'])
-            ->setUsername($incomingData['username'])
-            ->setStatus($incomingData['status'])
-            ->setPlainPassword(md5(time()))
-            ->setEmail($incomingData['email'])
-            ->setOfficialCode('')
-            ->setPictureUri('')
-            ->setCreatorId(1)
-            ->setAuthSource($incomingData['auth_source'])
-            ->setPhone($incomingData['phone'])
-            ->setAddress($incomingData['address'])
-            ->setLanguage($incomingData['language'])
-            ->setRegistrationDate($incomingData['registration_date'])
-            ->setHrDeptId(0)
-            ->setActive($incomingData['active'])
-            ->setEnabled($incomingData['enabled'])
-        ;
+        $user = Container::getUserManager()->find($userId);
+        $user->setRegistrationDate($incomingData['registration_date']);
 
-        $manager->updateUser($user);
+        Container::getEntityManager()->persist($user);
+        Container::getEntityManager()->flush();
 
         \UserManager::update_extra_field_value($user->getId(), 'moodle_password', $incomingData['plain_password']);
 
