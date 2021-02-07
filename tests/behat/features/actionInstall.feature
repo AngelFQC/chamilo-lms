@@ -29,5 +29,5 @@ Feature: Install portal
     Then wait the page to be loaded when ready
     Then wait the page to be loaded when ready
     Then I should see "Step7"
-    Then I should see "Go to your newly created portal"
+    Then I should see "Go to your newly created portal."
 
