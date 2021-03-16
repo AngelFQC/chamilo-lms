@@ -817,7 +817,7 @@ class Tracking
                                             question_id, marks, ponderation
                                         FROM $tbl_stats_attempts as at
                                         INNER JOIN $tbl_quiz_questions as q
-                                        ON (q.id = at.question_id AND q.c_id = $course_id)
+                                        ON q.iid = at.question_id
                                         WHERE exe_id ='$id_last_attempt'
                                     ) as t";
 
@@ -3002,10 +3002,10 @@ class Tracking
                                             ponderation
                                         FROM $tbl_stats_attempts AS at
                                         INNER JOIN $tbl_quiz_questions AS q
-                                        ON (q.id = at.question_id AND q.c_id = q.c_id)
+                                        ON q.iid = at.question_id
                                         WHERE
                                             exe_id ='$id_last_attempt' AND
-                                            q.c_id = $course_id
+                                            at.c_id = $course_id
                                     )
                                     AS t";
 
@@ -6494,8 +6494,7 @@ class Tracking
                 ON rq.exercice_id = q.iid AND rq.c_id = q.c_id
                 INNER JOIN $tquiz_question qq
                 ON
-                    qq.id = rq.question_id AND
-                    qq.c_id = rq.c_id AND
+                    qq.iid = rq.question_id AND
                     qq.position = rq.question_order AND
                     ta.question_id = rq.question_id
                 WHERE
@@ -6520,12 +6519,11 @@ class Tracking
                 }
             }
             // Now fill questions data. Query all questions and answers for this test to avoid
-            $sqlQuestions = "SELECT tq.c_id, tq.id as question_id, tq.question, tqa.id_auto,
+            $sqlQuestions = "SELECT tq.c_id, tq.iid as question_id, tq.question, tqa.id_auto,
                             tqa.answer, tqa.correct, tq.position, tqa.id_auto as answer_id
                             FROM $tquiz_question tq, $tquiz_answer tqa
                             WHERE
-                                tqa.question_id = tq.id AND
-                                tqa.c_id = tq.c_id AND
+                                tqa.question_id = tq.iid AND
                                 tq.c_id = $courseIdx AND
                                 tq.id IN (".implode(',', $questionIds).")";
 
