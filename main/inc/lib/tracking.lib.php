@@ -388,8 +388,7 @@ class Tracking
                         $sql = "SELECT results_disabled
                                 FROM $TBL_QUIZ
                                 WHERE
-                                    c_id = $course_id AND
-                                    id ='".$my_path."'";
+                                    iid ='".$my_path."'";
                         $res_result_disabled = Database::query($sql);
                         $row_result_disabled = Database::fetch_row($res_result_disabled);
 
@@ -694,7 +693,7 @@ class Tracking
                         $my_path = Database::escape_string($my_path);
                         $sql = "SELECT results_disabled
                                 FROM $TBL_QUIZ
-                                WHERE c_id = $course_id AND id = '$my_path' ";
+                                WHERE iid = '$my_path' ";
                         $res_result_disabled = Database::query($sql);
                         $row_result_disabled = Database::fetch_row($res_result_disabled);
 
@@ -2305,7 +2304,7 @@ class Tracking
                 $select_lp_id = ', orig_lp_id as lp_id ';
             }
 
-            $sql = "SELECT count(id)
+            $sql = "SELECT count(iid)
     		        FROM $tbl_course_quiz
     				WHERE c_id = {$course_info['real_id']} $condition_active $condition_quiz ";
             $count_quiz = 0;
@@ -2324,14 +2323,14 @@ class Tracking
                 }
 
                 if (empty($exercise_id)) {
-                    $sql = "SELECT id FROM $tbl_course_quiz
+                    $sql = "SELECT iid FROM $tbl_course_quiz
                             WHERE c_id = {$course_info['real_id']} $condition_active $condition_quiz";
                     $result = Database::query($sql);
                     $exercise_list = [];
                     $exercise_id = null;
                     if (!empty($result) && Database::num_rows($result)) {
                         while ($row = Database::fetch_array($result)) {
-                            $exercise_list[] = $row['id'];
+                            $exercise_list[] = $row['iid'];
                         }
                     }
                     if (!empty($exercise_list)) {
@@ -2528,7 +2527,7 @@ class Tracking
         $result = 0;
         if (!empty($exercise_list)) {
             foreach ($exercise_list as $exercise_data) {
-                $exercise_id = $exercise_data['id'];
+                $exercise_id = $exercise_data['iid'];
                 $best_attempt = Event::get_best_attempt_exercise_results_per_user(
                     $user_id,
                     $exercise_id,
@@ -4920,7 +4919,7 @@ class Tracking
                     if (!empty($exerciseList)) {
                         foreach ($exerciseList as $exerciseData) {
                             $results = Event::get_best_exercise_results_by_user(
-                                $exerciseData['id'],
+                                $exerciseData['iid'],
                                 $courseInfo['real_id'],
                                 0,
                                 $user_id
@@ -5041,13 +5040,13 @@ class Tracking
 
                     foreach ($exercise_list as $exercise_data) {
                         $exercise_obj = new Exercise($course_data['real_id']);
-                        $exercise_obj->read($exercise_data['id']);
+                        $exercise_obj->read($exercise_data['iid']);
                         // Exercise is not necessary to be visible to show results check the result_disable configuration instead
                         //$visible_return = $exercise_obj->is_visible();
                         if ($exercise_data['results_disabled'] == 0 || $exercise_data['results_disabled'] == 2) {
                             $best_average = (int)
                                 ExerciseLib::get_best_average_score_by_exercise(
-                                    $exercise_data['id'],
+                                    $exercise_data['iid'],
                                     $course_data['real_id'],
                                     $my_session_id,
                                     $user_count
@@ -5059,7 +5058,7 @@ class Tracking
 
                             $user_result_data = ExerciseLib::get_best_attempt_by_user(
                                 api_get_user_id(),
-                                $exercise_data['id'],
+                                $exercise_data['iid'],
                                 $course_data['real_id'],
                                 $my_session_id
                             );
@@ -5170,7 +5169,7 @@ class Tracking
                         foreach ($exercises as $exercise_item) {
                             $attempts = Event::count_exercise_attempts_by_user(
                                 api_get_user_id(),
-                                $exercise_item['id'],
+                                $exercise_item['iid'],
                                 $courseInfo['real_id'],
                                 $my_session_id
                             );
@@ -5328,7 +5327,7 @@ class Tracking
                     foreach ($exercises as $exercise_item) {
                         $attempts = Event::count_exercise_attempts_by_user(
                             api_get_user_id(),
-                            $exercise_item['id'],
+                            $exercise_item['iid'],
                             $courseId,
                             $session_id_from_get
                         );
@@ -5560,20 +5559,20 @@ class Tracking
                 $score = $weighting = $exe_id = 0;
                 foreach ($exercise_list as $exercices) {
                     $exercise_obj = new Exercise($course_info['real_id']);
-                    $exercise_obj->read($exercices['id']);
+                    $exercise_obj->read($exercices['iid']);
                     $visible_return = $exercise_obj->is_visible();
                     $score = $weighting = $attempts = 0;
 
                     // Getting count of attempts by user
                     $attempts = Event::count_exercise_attempts_by_user(
                         api_get_user_id(),
-                        $exercices['id'],
+                        $exercices['iid'],
                         $course_info['real_id'],
                         $session_id
                     );
 
                     $html .= '<tr class="row_even">';
-                    $url = api_get_path(WEB_CODE_PATH)."exercise/overview.php?cidReq={$course_info['code']}&id_session=$session_id&exerciseId={$exercices['id']}";
+                    $url = api_get_path(WEB_CODE_PATH)."exercise/overview.php?cidReq={$course_info['code']}&id_session=$session_id&exerciseId={$exercices['iid']}";
 
                     if ($visible_return['value'] == true) {
                         $exercices['title'] = Display::url(
@@ -5591,12 +5590,12 @@ class Tracking
                     if ($exercices['results_disabled'] == 0 || $exercices['results_disabled'] == 2) {
                         //For graphics
                         $best_exercise_stats = Event::get_best_exercise_results_by_user(
-                            $exercices['id'],
+                            $exercices['iid'],
                             $course_info['real_id'],
                             $session_id
                         );
 
-                        $to_graph_exercise_result[$exercices['id']] = [
+                        $to_graph_exercise_result[$exercices['iid']] = [
                             'title' => $exercices['title'],
                             'data' => $best_exercise_stats,
                         ];
@@ -5607,7 +5606,7 @@ class Tracking
 
                         // Getting best results
                         $best_score_data = ExerciseLib::get_best_attempt_in_course(
-                            $exercices['id'],
+                            $exercices['iid'],
                             $course_info['real_id'],
                             $session_id
                         );
@@ -5623,7 +5622,7 @@ class Tracking
                         if ($attempts > 0) {
                             $exercise_stat = ExerciseLib::get_best_attempt_by_user(
                                 api_get_user_id(),
-                                $exercices['id'],
+                                $exercices['iid'],
                                 $course_info['real_id'],
                                 $session_id
                             );
@@ -5649,24 +5648,24 @@ class Tracking
                                 $position = ExerciseLib::get_exercise_result_ranking(
                                     $my_score,
                                     $exe_id,
-                                    $exercices['id'],
+                                    $exercices['iid'],
                                     $course_info['code'],
                                     $session_id,
                                     $user_list
                                 );
 
                                 $graph = self::generate_exercise_result_thumbnail_graph(
-                                    $to_graph_exercise_result[$exercices['id']]
+                                    $to_graph_exercise_result[$exercices['iid']]
                                 );
                                 $normal_graph = self::generate_exercise_result_graph(
-                                    $to_graph_exercise_result[$exercices['id']]
+                                    $to_graph_exercise_result[$exercices['iid']]
                                 );
                             }
                         }
                         $html .= Display::div(
                             $normal_graph,
                             [
-                                'id' => 'main_graph_'.$exercices['id'],
+                                'id' => 'main_graph_'.$exercices['iid'],
                                 'class' => 'dialog',
                                 'style' => 'display:none',
                             ]
@@ -5679,7 +5678,7 @@ class Tracking
                                 '<img src="'.$graph.'" >',
                                 $normal_graph,
                                 [
-                                    'id' => $exercices['id'],
+                                    'id' => $exercices['iid'],
                                     'class' => 'expand-image',
                                 ]
                             );
@@ -6483,16 +6482,16 @@ class Tracking
                 ta.answer as answer_id,
                 ta.tms as time,
                 te.exe_exo_id as quiz_id,
-                CONCAT ('c', q.c_id, '_e', q.id) as exercise_id,
+                CONCAT ('c', q.c_id, '_e', q.iid) as exercise_id,
                 q.title as quiz_title,
                 qq.description as description
                 FROM $ttrack_exercises te
                 INNER JOIN $ttrack_attempt ta
                 ON ta.exe_id = te.exe_id
                 INNER JOIN $tquiz q
-                ON q.id = te.exe_exo_id
+                ON q.iid = te.exe_exo_id
                 INNER JOIN $tquiz_rel_question rq
-                ON rq.exercice_id = q.id AND rq.c_id = q.c_id
+                ON rq.exercice_id = q.iid AND rq.c_id = q.c_id
                 INNER JOIN $tquiz_question qq
                 ON
                     qq.id = rq.question_id AND
@@ -8046,7 +8045,7 @@ class TrackingCourseLog
             case 'quiz':
                 $table_name = TABLE_QUIZ_TEST;
                 $link_tool = 'exercise/exercise.php';
-                $id_tool = 'id';
+                $id_tool = 'iid';
                 break;
             case 'glossary':
                 $table_name = TABLE_GLOSSARY;

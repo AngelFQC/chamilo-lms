@@ -856,7 +856,7 @@ if (!empty($groupList)) {
                 foreach ($exerciseList as $exerciseData) {
                     foreach ($usersInGroup as $userId) {
                         $results = Event::get_best_exercise_results_by_user(
-                            $exerciseData['id'],
+                            $exerciseData['iid'],
                             $courseInfo['real_id'],
                             0,
                             $userId
@@ -952,7 +952,7 @@ if (!empty($groupList)) {
         foreach ($exerciseList as $exerciseData) {
             foreach ($studentIdList as $userId) {
                 $results = Event::get_best_exercise_results_by_user(
-                    $exerciseData['id'],
+                    $exerciseData['iid'],
                     $courseInfo['real_id'],
                     $sessionId,
                     $userId
