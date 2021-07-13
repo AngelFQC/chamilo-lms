@@ -157,12 +157,30 @@ class CCalendarEvent extends AbstractResource implements ResourceInterface
      */
     protected Collection $attachments;
 
+    /**
+     * @var Collection
+     *
+     * @ORM\OneToMany(targetEntity="Chamilo\CourseBundle\Entity\CCalendarEventInvitation", mappedBy="event", cascade={"persist", "remove"})
+     */
+    #[Groups(['calendar_event:read', 'calendar_event:write'])]
+    protected Collection $invitations;
+
+    /**
+     * @var bool
+     *
+     * @ORM\Column(name="collective", type="boolean", options={"default": false})
+     */
+    #[Groups(['calendar_event:read', 'calendar_event:write'])]
+    protected bool $collective;
+
     public function __construct()
     {
         $this->children = new ArrayCollection();
         $this->attachments = new ArrayCollection();
         $this->repeatEvents = new ArrayCollection();
         $this->allDay = 0;
+        $this->invitations = new ArrayCollection();
+        $this->collective = false;
     }
 
     public function __toString(): string
@@ -384,5 +402,15 @@ class CCalendarEvent extends AbstractResource implements ResourceInterface
     public function setResourceName(string $name): self
     {
         return $this->setTitle($name);
+    }
+
+    public function getInvitations(): Collection
+    {
+        return $this->invitations;
+    }
+
+    public function isCollective(): bool
+    {
+        return $this->collective;
     }
 }

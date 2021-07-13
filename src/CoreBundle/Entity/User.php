@@ -615,10 +615,17 @@ class User implements UserInterface, EquatableInterface, ResourceInterface, Reso
     protected Collection $userRelTags;
 
     /**
-     * @var Collection<int, PersonalAgenda>|PersonalAgenda[]
+     * @var Collection<int, PersonalAgenda>
      * @ORM\OneToMany(targetEntity="PersonalAgenda", mappedBy="user", cascade={"persist", "remove"}, orphanRemoval=true)
      */
     protected Collection $personalAgendas;
+
+    /**
+     * @var Collection
+     *
+     * @ORM\OneToMany(targetEntity="Chamilo\CourseBundle\Entity\CCalendarEventInvitation", mappedBy="user", cascade={"persist", "remove"}, orphanRemoval=true)
+     */
+    protected Collection $cCalendarEventInvitations;
 
     /**
      * @var CGroupRelUser[]|Collection<int, CGroupRelUser>
@@ -844,6 +851,7 @@ class User implements UserInterface, EquatableInterface, ResourceInterface, Reso
         $this->userRelCourseVotes = new ArrayCollection();
         $this->userRelTags = new ArrayCollection();
         $this->personalAgendas = new ArrayCollection();
+        $this->cCalendarEventInvitations = new ArrayCollection();
         $this->sessionsRelUser = new ArrayCollection();
         $this->sentMessages = new ArrayCollection();
         $this->receivedMessages = new ArrayCollection();
@@ -2107,6 +2115,11 @@ class User implements UserInterface, EquatableInterface, ResourceInterface, Reso
     public function getPersonalAgendas()
     {
         return $this->personalAgendas;
+    }
+
+    public function getCCalendarEventInvitations(): Collection
+    {
+        return $this->cCalendarEventInvitations;
     }
 
     /**
