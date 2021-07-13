@@ -62,6 +62,25 @@
       </template>
     </q-input>
 
+    <VueMultiselect
+        placeholder="To"
+        v-model="item.receivers"
+        :loading="isLoadingSelect"
+        :options="users"
+        :multiple="true"
+        :searchable="true"
+        :internal-search="false"
+        @search-change="asyncFind"
+        limit-text="3"
+        limit="3"
+        label="username"
+        track-by="id"
+        :allow-empty="false"
+        @input="v$.item.receivers.$touch()"
+    />
+
+<!--    <q-checkbox label="Collective" v-model="item.collective"></q-checkbox>-->
+
     <q-input
         v-model="item.content"
         type="textarea"
@@ -80,11 +99,40 @@
 import has from 'lodash/has';
 import useVuelidate from '@vuelidate/core';
 import { required } from '@vuelidate/validators';
+import VueMultiselect from 'vue-multiselect'
+import {ref} from "vue";
+import axios from "axios";
+import {ENTRYPOINT} from "../../config/entrypoint";
 
 export default {
   name: 'CCalendarEventForm',
+  components: {
+    VueMultiselect
+  },
   setup () {
-    return { v$: useVuelidate() }
+    const users = ref([]);
+    const isLoadingSelect = ref(false);
+
+    function asyncFind (query) {
+      if (query.toString().length < 3) {
+        return;
+      }
+
+      isLoadingSelect.value = true;
+      axios.get(ENTRYPOINT + 'users', {
+        params: {
+          username: query
+        }
+      }).then(response => {
+        isLoadingSelect.value = false;
+        let data = response.data;
+        users.value = data['hydra:member'];
+      }).catch(function (error) {
+        isLoadingSelect.value = false;
+      });
+    }
+
+    return { v$: useVuelidate(), users, asyncFind, isLoadingSelect }
   },
   props: {
     values: {
