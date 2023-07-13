@@ -8,7 +8,7 @@ permissions:
 jobs:
     build:
         name: PHP ${{ matrix.php-versions }} Test on ${{ matrix.operating-system }}
-        runs-on: ubuntu-20.04
+        runs-on: ubuntu-latest
 
         strategy:
             fail-fast: false
@@ -18,7 +18,7 @@ jobs:
 
         services:
           mysql:
-            image: mysql:latest
+            image: mariadb:latest
             env:
               MYSQL_ALLOW_EMPTY_PASSWORD: false
               MYSQL_ROOT_PASSWORD: root
@@ -151,6 +151,7 @@ jobs:
               run: |
                 sudo /etc/init.d/mysql start
                 sudo systemctl restart apache2
+
 #
 #            - name: Install database
 #              run: |
