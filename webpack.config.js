@@ -172,8 +172,20 @@ Encore.addPlugin(new CopyPlugin({
                 to: 'libs/mathjax/config'
             },
             {
-                from: './node_modules/tinymce/skins',
-                to: 'libs/tinymce/skins'
+                from: 'node_modules/tinymce/models/dom/model.js',
+                to: 'models/dom/model.js'
+            },
+            {
+                from: 'node_modules/tinymce/skins/ui/oxide/skin.min.css',
+                to: 'skins/ui/oxide/skin.min.css'
+            },
+            {
+                from: 'node_modules/tinymce/skins/ui/oxide/content.min.css',
+                to: 'skins/ui/oxide/content.min.css'
+            },
+            {
+                from: 'node_modules/tinymce/skins/content/default/content.css',
+                to: 'skins/content/default/content.css'
             },
             {
                 context: 'node_modules/moment/locale',

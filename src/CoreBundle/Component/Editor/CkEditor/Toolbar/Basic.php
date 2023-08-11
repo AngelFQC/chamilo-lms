@@ -42,7 +42,6 @@ class Basic extends Toolbar
         'oembed',
         'pagebreak',
         'preview',
-        'print',
         'save',
         'selectall',
         //'sharedspace',
@@ -157,9 +156,9 @@ class Basic extends Toolbar
         }
 
         $plugins = [
-            'advlist autolink lists link image charmap print preview anchor',
+            'advlist autolink lists link image charmap preview anchor',
             'searchreplace visualblocks code fullscreen',
-            'insertdatetime media table paste wordcount '.$customPlugins,
+            'insertdatetime media table wordcount '.$customPlugins,
         ];
 
         if ($this->getConfigAttribute('fullPage')) {
@@ -167,14 +166,12 @@ class Basic extends Toolbar
         }
 
         $config['plugins'] = implode(' ', $plugins);
-        $config['toolbar'] = 'undo redo directionality | bold italic underline strikethrough | insertfile image media template link | fontselect fontsizeselect formatselect | alignleft aligncenter alignright alignjustify | outdent indent |  numlist bullist | forecolor backcolor removeformat | pagebreak | charmap emoticons | fullscreen  preview save print | code codesample | ltr rtl | '.$customPlugins;
+        $config['toolbar'] = 'undo redo directionality | bold italic underline strikethrough | insertfile image media template link | fontselect fontsizeselect formatselect | alignleft aligncenter alignright alignjustify | outdent indent |  numlist bullist | forecolor backcolor removeformat | pagebreak | charmap emoticons | fullscreen  preview save | code codesample | ltr rtl | '.$customPlugins;
 
         if (!empty($customPluginsPath)) {
             $config['external_plugins'] = $customPluginsPath;
         }
 
-        $config['skin_url'] = '/build/libs/tinymce/skins/ui/oxide';
-        $config['content_css'] = '/build/libs/tinymce/skins/content/default/content.css';
         $config['branding'] = false;
         $config['relative_urls'] = false;
         $config['toolbar_mode'] = 'sliding';

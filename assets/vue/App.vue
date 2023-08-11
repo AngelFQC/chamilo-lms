@@ -95,10 +95,14 @@ watchEffect(() => {
     return;
   }
 
-  const content = document.querySelector("#sectionMainContent");
+  const content = document.getElementById("sectionMainContent");
 
   if (content) {
     legacyContainer.value.appendChild(content);
+    
+    const chEditors = window.chEditors || []
+    chEditors.forEach(chEditorConfig => window.tinymce.init(chEditorConfig))
+    
     content.style.display = "block";
   }
 });

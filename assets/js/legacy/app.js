@@ -17,6 +17,8 @@ import 'select2/dist/js/select2.full.min';
 import 'select2/dist/css/select2.min.css';
 import 'moment';
 
+require('./vendor');
+
 // Gets HTML content from tinymce
 window.getContentFromEditor = function (id) {
   if (typeof tinymce == "undefined") {
@@ -48,7 +50,6 @@ import 'jquery-ui-dist/jquery-ui.js';
 // global.frameReady = frameReady;
 // window.frameReady = frameReady;
 
-require('./vendor');
 import './main';
 
 // Date time settings.
