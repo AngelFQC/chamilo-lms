@@ -46,10 +46,10 @@ import { useStore } from "vuex"
 import axios from "axios"
 import { capitalize, isEmpty } from "lodash"
 import ConfirmDialog from "primevue/confirmdialog"
-import { useSecurityStore } from "./store/securityStore"
-import { usePlatformConfig } from "./store/platformConfig"
+import { useSecurityStore } from "../store/securityStore"
+import { usePlatformConfig } from "../store/platformConfig"
 import Toast from "primevue/toast"
-import { useNotification } from "./composables/notification"
+import { useNotification } from "../composables/notification"
 
 const apolloClient = new ApolloClient({
   link: createHttpLink({
