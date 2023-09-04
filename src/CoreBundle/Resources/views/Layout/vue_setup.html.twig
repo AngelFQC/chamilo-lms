@@ -1,8 +1,10 @@
-{% include 'vue_js_setup.html.twig' %}
-
 <div
     id="app"
     {{ vue_component('App', {
-        flashes: app.flashes()|json_encode
+        flashes: app.flashes()|json_encode,
+        user: user_json,
+        accessUrlId: access_url_id,
+        languages: languages_json,
+        breadcrumb: legacy_breadcrumb is defined ? legacy_breadcrumb : ''
     }) }}
 ></div>

@@ -44,12 +44,36 @@ import { DefaultApolloClient } from "@vue/apollo-composable"
 import { ApolloClient, createHttpLink, InMemoryCache } from "@apollo/client/core"
 import { useStore } from "vuex"
 import axios from "axios"
-import { capitalize, isEmpty } from "lodash"
+import { capitalize } from "lodash"
 import ConfirmDialog from "primevue/confirmdialog"
 import { useSecurityStore } from "../store/securityStore"
 import { usePlatformConfig } from "../store/platformConfig"
 import Toast from "primevue/toast"
 import { useNotification } from "../composables/notification"
+
+const props = defineProps({
+  user: {
+    type: String,
+    require: true,
+  },
+  accessUrlId: {
+    type: Number,
+    required: true,
+  },
+  languages: {
+    type: String,
+    required: true,
+  },
+  breadcrumb: {
+    type: String,
+    required: true,
+  },
+  flashes: {
+    type: Array,
+    required: false,
+    default: () => [],
+  },
+})
 
 const apolloClient = new ApolloClient({
   link: createHttpLink({
@@ -107,23 +131,15 @@ watchEffect(async () => {
   }
 })
 
-const user = ref({})
-
-let isAuthenticated = false
-
-if (!isEmpty(window.user)) {
-  user.value = window.user
-  isAuthenticated = true
-}
-
 const store = useStore()
 const securityStore = useSecurityStore()
 const notification = useNotification()
 
-const payload = { isAuthenticated, user }
+securityStore.user = JSON.parse(props.user)
+
+const payload = { isAuthenticated: securityStore.isAuthenticated, user: securityStore.user }
 
 store.dispatch("security/onRefresh", payload)
-securityStore.user = window.user
 
 onUpdated(() => {
   const app = document.getElementById("app")
