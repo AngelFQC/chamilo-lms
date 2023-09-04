@@ -18,6 +18,7 @@ Encore
     .setPublicPath('/build')
     .cleanupOutputBeforeBuild()
     .enableBuildNotifications()
+    .enableStimulusBridge("./assets/controllers.json")
 
     .addEntry('legacy_app', './assets/js/legacy/app.js')
     //.addEntry('bootstrap', './assets/js/bootstrap.js')
