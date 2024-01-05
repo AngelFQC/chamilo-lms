@@ -1,4 +1,8 @@
 const Encore = require('@symfony/webpack-encore');
+const dotenv = require('dotenv');
+const webpack = require('webpack');
+
+const env = dotenv.config()
 
 if (!Encore.isRuntimeEnvironmentConfigured()) {
     Encore.configureRuntimeEnvironment(process.env.NODE_ENV || 'dev');
@@ -164,6 +168,12 @@ Encore
         use: ['style-loader', 'css-loader', 'postcss-loader'],
         exclude: /node_modules/,
     })*/
+    .addPlugin(
+        new webpack.DefinePlugin({
+           'ENV_ROOT_WEB': JSON.stringify(env.parsed?.APP_ROOT_WEB),
+           'ENV_URL_APPEND': JSON.stringify(env.parsed?.APP_URL_APPEND),
+        })
+    )
 ;
 
 //Encore.addPlugin(new VueLoaderPlugin);

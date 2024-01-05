@@ -9,6 +9,7 @@ use Symfony\Component\Console\Input\ArrayInput;
 use Symfony\Component\Console\Output\ConsoleOutput;
 use Symfony\Component\Dotenv\Dotenv;
 use Symfony\Component\ErrorHandler\Debug;
+use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Session\Session as HttpSession;
 use Symfony\Component\Translation\Loader\PoFileLoader;
 use Symfony\Component\Translation\Translator;
@@ -80,6 +81,10 @@ $translator->addResource(
 Container::$translator = $translator;
 
 Container::$session = new HttpSession();
+Container::$request = Request::createFromGlobals();
+$host = Container::$request->getHost();
+$httpHost = Container::$request->getHttpHost();
+$schemaHttpHost = Container::$request->getSchemeAndHttpHost();
 
 // The function api_get_setting() might be called within the installation scripts.
 // We need to provide some limited support for it through initialization of the
@@ -478,6 +483,8 @@ if (isset($_POST['step2'])) {
                 '{{APP_INSTALLED}}' => 1,
                 '{{APP_ENCRYPT_METHOD}}' => $encryptPassForm,
                 '{{APP_SECRET}}' => generateRandomToken(),
+                '{{APP_ROOT_WEB}}' => $urlForm,
+                '{{APP_URL_APPEND}}' => $urlAppendPath,
             ];
             error_log('Update env file');
             updateEnvFile($distFile, $envFile, $params);
@@ -567,6 +574,8 @@ if (isset($_POST['step2'])) {
             '{{APP_INSTALLED}}' => 1,
             '{{APP_ENCRYPT_METHOD}}' => $encryptPassForm,
             '{{APP_SECRET}}' => generateRandomToken(),
+            '{{APP_ROOT_WEB}}' => $urlForm,
+            '{{APP_URL_APPEND}}' => $urlAppendPath,
         ];
 
         updateEnvFile($distFile, $envFile, $params);

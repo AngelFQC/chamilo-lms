@@ -704,6 +704,13 @@ function api_get_path($path = '', $configuration = [])
         );
     }
 
+    if (empty($root_web) && defined('SYSTEM_INSTALLATION') && SYSTEM_INSTALLATION) {
+        if ($pos = strpos($requestedPageRel = Container::$request->getRequestUri(), 'main/install')) {
+            $root_rel = substr($requestedPageRel, 0, $pos);
+            $root_web = Container::$request->getSchemeAndHttpHost().$root_rel;
+        }
+    }
+
     if (isset($configuration['multiple_access_urls']) &&
         $configuration['multiple_access_urls']
     ) {
