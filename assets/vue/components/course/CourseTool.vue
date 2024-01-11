@@ -1,9 +1,9 @@
 <template>
   <div class="course-tool">
     <router-link
-      v-if="to"
+      v-if="tool.to"
       :aria-labelledby="`course-tool-${tool.ctool.iid}`"
-      :to="to"
+      :to="tool.to"
       class="course-tool__link hover:primary-gradient"
       :class="cardCustomClass"
     >
@@ -16,7 +16,7 @@
     <a
       v-else
       :aria-labelledby="`course-tool-${tool.ctool.iid}`"
-      :href="url"
+      :href="tool.url"
       class="course-tool__link"
       :class="cardCustomClass"
     >
@@ -28,10 +28,10 @@
     </a>
 
     <router-link
-      v-if="to"
+      v-if="tool.to"
       :id="`course-tool-${tool.ctool.iid}`"
       :class="titleCustomClass"
-      :to="to"
+      :to="tool.to"
       class="course-tool__title"
     >
       {{ tool.tool.nameToShow }}
@@ -40,7 +40,7 @@
       v-else
       :id="`course-tool-${tool.ctool.iid}`"
       v-t="tool.tool.nameToShow"
-      :href="url"
+      :href="tool.url"
       class="course-tool__title"
       :class="titleCustomClass"
     />
@@ -96,23 +96,9 @@ const isCustomizing = inject("isCustomizing")
 
 // eslint-disable-next-line no-undef
 const props = defineProps({
-  course: {
-    type: Object,
-    required: true,
-  },
   tool: {
     type: Object,
     required: true,
-  },
-  url: {
-    type: String,
-    required: false,
-    default: () => null,
-  },
-  to: {
-    type: String,
-    required: false,
-    default: () => null,
   },
   changeVisibility: {
     type: Function,

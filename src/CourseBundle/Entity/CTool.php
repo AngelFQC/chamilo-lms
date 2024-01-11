@@ -6,13 +6,18 @@ declare(strict_types=1);
 
 namespace Chamilo\CourseBundle\Entity;
 
+use ApiPlatform\Metadata\ApiFilter;
 use ApiPlatform\Metadata\ApiResource;
+use ApiPlatform\Metadata\GetCollection;
+use Chamilo\CoreBundle\ApiResource\CourseTool;
 use Chamilo\CoreBundle\Entity\AbstractResource;
 use Chamilo\CoreBundle\Entity\Course;
 use Chamilo\CoreBundle\Entity\ResourceInterface;
 use Chamilo\CoreBundle\Entity\ResourceShowCourseResourcesInSessionInterface;
 use Chamilo\CoreBundle\Entity\Session;
 use Chamilo\CoreBundle\Entity\Tool;
+use Chamilo\CoreBundle\Filter\CidFilter;
+use Chamilo\CoreBundle\Filter\SidFilter;
 use Chamilo\CourseBundle\Repository\CToolRepository;
 use Doctrine\ORM\Mapping as ORM;
 use Gedmo\Mapping\Annotation as Gedmo;
@@ -21,8 +26,12 @@ use Symfony\Component\Serializer\Annotation\Groups;
 use Symfony\Component\Validator\Constraints as Assert;
 
 #[ApiResource(
+    operations: [
+        new GetCollection()
+    ],
     normalizationContext: ['groups' => ['ctool:read']],
     denormalizationContext: ['groups' => ['ctool:write']],
+    output: CourseTool::class,
     security: "is_granted('ROLE_ADMIN') or is_granted('ROLE_CURRENT_COURSE_TEACHER')"
 )]
 #[ORM\Table(name: 'c_tool')]
@@ -30,20 +39,19 @@ use Symfony\Component\Validator\Constraints as Assert;
 #[ORM\Index(columns: ['session_id'], name: 'session_id')]
 #[ORM\HasLifecycleCallbacks]
 #[ORM\Entity(repositoryClass: CToolRepository::class)]
+#[ApiFilter(CidFilter::class)]
+#[ApiFilter(SidFilter::class)]
 class CTool extends AbstractResource implements ResourceInterface, ResourceShowCourseResourcesInSessionInterface, Stringable
 {
-    #[Groups(['ctool:read'])]
     #[ORM\Column(name: 'iid', type: 'integer')]
     #[ORM\Id]
     #[ORM\GeneratedValue]
     protected ?int $iid = null;
 
     #[Assert\NotBlank]
-    #[Groups(['ctool:read'])]
     #[ORM\Column(name: 'name', type: 'text', nullable: false)]
     protected string $name;
 
-    #[Groups(['ctool:read'])]
     #[ORM\Column(name: 'visibility', type: 'boolean', nullable: true)]
     protected ?bool $visibility = null;
 
@@ -65,7 +73,6 @@ class CTool extends AbstractResource implements ResourceInterface, ResourceShowC
     #[ORM\Column(name: 'position', type: 'integer')]
     protected int $position;
 
-    #[Groups(['ctool:read'])]
     protected string $nameToTranslate;
 
     public function __construct()

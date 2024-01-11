@@ -184,13 +184,10 @@
           v-for="(tool, index) in tools"
           :key="'tool-' + index.toString()"
           :change-visibility="changeVisibility"
-          :course="course"
           :data-index="index"
           :data-tool="tool.ctool.name"
           :go-to-setting-course-tool="goToSettingCourseTool"
-          :to="tool.to"
           :tool="tool"
-          :url="tool.url"
         />
 
         <ShortCutList
