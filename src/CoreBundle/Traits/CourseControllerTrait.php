@@ -58,6 +58,24 @@ trait CourseControllerTrait
         return false;
     }*/
 
+    public function setCourseFromSessionHandler(): ?Course
+    {
+        $request = $this->getRequest();
+
+        if ($request) {
+            $courseId = $request->getSession()->get('cid', 0);
+        }
+
+        if (empty($courseId)) {
+            return null;
+        }
+
+        $course = $this->container->get('doctrine')->getManager()->find(Course::class, $courseId);
+        $this->course = $course;
+
+        return $this->getCourse();
+    }
+
     /**
      * Gets the current Chamilo session based in the "sid" $_SESSION variable.
      *

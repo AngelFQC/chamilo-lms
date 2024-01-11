@@ -8,15 +8,27 @@ namespace Chamilo\CoreBundle\DataTransformer;
 
 use ApiPlatform\Core\DataTransformer\DataTransformerInterface;
 use Chamilo\CoreBundle\ApiResource\CourseTool;
+use Chamilo\CoreBundle\Entity\Course;
+use Chamilo\CoreBundle\Entity\Session;
+use Chamilo\CoreBundle\Entity\Tool;
+use Chamilo\CoreBundle\Tool\AbstractTool;
 use Chamilo\CoreBundle\Tool\ToolChain;
+use Chamilo\CoreBundle\Traits\ControllerTrait;
+use Chamilo\CoreBundle\Traits\CourseControllerTrait;
+use Chamilo\CourseBundle\Entity\CGroup;
 use Chamilo\CourseBundle\Entity\CTool;
+use Symfony\Component\DependencyInjection\ContainerInterface;
 
 class CourseToolDataTranformer implements DataTransformerInterface
 {
+    use ControllerTrait;
+    use CourseControllerTrait;
 
     public function __construct(
-        protected readonly ToolChain $toolChain
+        protected readonly ToolChain $toolChain,
+        protected readonly ContainerInterface $appContainer,
     ) {
+        $this->container = $this->appContainer;
     }
 
     /**
@@ -26,16 +38,37 @@ class CourseToolDataTranformer implements DataTransformerInterface
     {
         assert($object instanceof CTool);
 
-        $courseTool = new CourseTool();
-        $courseTool->iid = $object->getIid();
-        $courseTool->name = $object->getName();
-        $courseTool->visibility = $object->getVisibility();
-        $courseTool->tool = $this->toolChain->getToolFromName(
-            $object->getTool()->getName()
-        );
-        $courseTool->resourceNode = $object->resourceNode;
+        $tool = $object->getTool();
 
-        return $courseTool;
+        $toolModel = $this->toolChain->getToolFromName(
+            $tool->getName()
+        );
+
+        $course = $this->setCourseFromSessionHandler();
+
+        $cTool = new CourseTool();
+        $cTool->iid = $object->getIid();
+        $cTool->name = $object->getName();
+        $cTool->visibility = $object->getVisibility();
+        $cTool->tool = $toolModel;
+        $cTool->resourceNode = $object->resourceNode;
+        $cTool->illustrationUrl = $object->illustrationUrl;
+        $cTool->url = $this->generateToolUrl($toolModel, $course);
+        $cTool->category = $toolModel->getCategory();
+
+        return $cTool;
+    }
+
+    private function generateToolUrl(AbstractTool $tool, Course $course): string
+    {
+        $link = $tool->getLink();
+
+        if (strpos($link, 'nodeId')) {
+            $nodeId = (string) $course->getResourceNode()->getId();
+            $link = str_replace(':nodeId', $nodeId, $link);
+        }
+
+        return $link.'?'.$this->getCourseUrlQuery();
     }
 
     /**

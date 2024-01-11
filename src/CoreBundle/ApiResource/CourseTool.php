@@ -10,7 +10,7 @@ use Chamilo\CoreBundle\Entity\ResourceNode;
 use Chamilo\CoreBundle\Tool\AbstractTool;
 use Symfony\Component\Serializer\Annotation\Groups;
 
-class CourseTool
+class CourseTool extends AbstractResource
 {
     #[Groups(['ctool:read'])]
     public ?int $iid = null;
@@ -26,4 +26,10 @@ class CourseTool
 
     #[Groups(['ctool:read'])]
     public ?ResourceNode $resourceNode = null;
+
+    #[Groups(['ctool:read'])]
+    public string $url;
+
+    #[Groups(['ctool:read'])]
+    public string $category = '';
 }
