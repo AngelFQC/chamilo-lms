@@ -3593,10 +3593,18 @@ function saveThreadScore(
             $row = Database::fetch_array($result);
 
             if ($row[0] == 0) {
-                $sql = "INSERT INTO $table_threads_qualify (c_id, user_id, thread_id,qualify,qualify_user_id,qualify_time,session_id)
-                        VALUES (".$course_id.", '".$user_id."','".$thread_id."',".(float) $thread_qualify.", '".$currentUserId."','".$qualify_time."','".$session_id."')";
-                Database::query($sql);
-                $insertId = Database::insert_id();
+                $insertId = Database::insert(
+                    $table_threads_qualify,
+                    [
+                        "c_id" => $course_id,
+                        "user_id" => $user_id,
+                        "thread_id" => $thread_id,
+                        "qualify" => (float) $thread_qualify,
+                        "qualify_user_id" => $currentUserId,
+                        "qualify_time" => $qualify_time,
+                        "session_id" => $session_id,
+                    ]
+                );
                 if ($insertId) {
                     $sql = "UPDATE $table_threads_qualify SET id = iid
                             WHERE iid = $insertId";
@@ -3613,17 +3621,21 @@ function saveThreadScore(
                 );
 
                 // Update
-                $sql = "UPDATE $table_threads_qualify
-                        SET
-                            qualify = '".$thread_qualify."',
-                            qualify_time = '".$qualify_time."'
-                        WHERE
-                            c_id = $course_id AND
-                            user_id=".$user_id." AND
-                            thread_id=".$thread_id." AND
-                            qualify_user_id = $currentUserId
-                        ";
-                Database::query($sql);
+                Database::update(
+                    $table_threads_qualify,
+                    [
+                        'qualify' => $thread_qualify,
+                        'qualify_time' => $qualify_time,
+                    ],
+                    [
+                        'c_id = ? AND user_id= ? AND thread_id = ? AND qualify_user_id = ?' => [
+                            $course_id,
+                            $user_id,
+                            $thread_id,
+                            $currentUserId
+                        ]
+                    ]
+                );
 
                 return 'update';
             }
@@ -3779,11 +3791,18 @@ function saveThreadScoreHistory(
         $row = Database::fetch_array($rs);
 
         // Insert thread_historical.
-        $sql = "INSERT INTO $table_threads_qualify_log (c_id, user_id, thread_id, qualify, qualify_user_id,qualify_time,session_id)
-                VALUES(".$course_id.", '".$user_id."','".$thread_id."',".(float) $row[0].", '".$qualify_user_id."','".$row[1]."','')";
-        Database::query($sql);
-
-        $insertId = Database::insert_id();
+        $insertId = Database::insert(
+            $table_threads_qualify_log,
+            [
+                "c_id" => $course_id,
+                "user_id" => $user_id,
+                "thread_id" => $thread_id,
+                "qualify" => (float) $row[0],
+                "qualify_user_id" => $qualify_user_id,
+                "qualify_time" => $row[1],
+                "session_id" => null,
+            ]
+        );
         if ($insertId) {
             $sql = "UPDATE $table_threads_qualify_log SET id = iid
                     WHERE iid = $insertId";
@@ -4863,6 +4882,7 @@ function store_move_post($values)
             'thread_poster_name' => $current_post['poster_name'],
             'thread_last_post' => $values['post_id'],
             'thread_date' => $current_post['post_date'],
+            'thread_qualify_max' => 0,
         ];
 
         $new_thread_id = Database::insert($table_threads, $params);

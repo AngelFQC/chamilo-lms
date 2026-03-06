@@ -1290,6 +1290,7 @@ class CourseRestorer
         $params['thread_views'] = 0;
         $params['session_id'] = $sessionId;
         $params['thread_id'] = 0;
+        $params['thread_qualify_max'] = 0;
 
         unset($params['iid']);
 

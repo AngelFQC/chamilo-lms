@@ -84,6 +84,11 @@ class CForumThreadQualifyLog
      */
     protected $sessionId;
 
+    public function __construct()
+    {
+        $this->qualify = 0;
+    }
+
     /**
      * Set userId.
      *

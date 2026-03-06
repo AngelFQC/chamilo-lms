@@ -169,6 +169,7 @@ class CForumThread
         $this->threadPeerQualify = false;
         $this->threadReplies = 0;
         $this->threadViews = 0;
+        $this->threadQualifyMax = 0;
     }
 
     /**
