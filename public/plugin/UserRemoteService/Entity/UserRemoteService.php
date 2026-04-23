@@ -102,7 +102,7 @@ class UserRemoteService
      */
     public function getAccessURL($pluginName)
     {
-        $accessUrl = api_get_path(WEB_PLUGIN_PATH).$pluginName."/redirect.php?serviceId=".$this->getId();
+        $accessUrl = api_get_path(WEB_PLUGIN_PATH, [], true).$pluginName."/redirect.php?serviceId=".$this->getId();
 
         return $accessUrl;
     }

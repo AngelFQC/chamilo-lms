@@ -170,12 +170,12 @@ if (!empty($docPath)) {
     $trackHash = $jwtManager->getHash($trackPayload);
 
     $fileUrl = appendVersionTokenToUrl(
-        api_get_path(WEB_PLUGIN_PATH).'Onlyoffice/callback.php?hash='.$downloadHash.'&docPath='.urlencode($newDocPath),
+        api_get_path(WEB_PLUGIN_PATH, [], true).'Onlyoffice/callback.php?hash='.$downloadHash.'&docPath='.urlencode($newDocPath),
         $versionToken
     );
 
     $callbackUrl = appendVersionTokenToUrl(
-        api_get_path(WEB_PLUGIN_PATH).'Onlyoffice/callback.php?hash='.$trackHash.'&docPath='.urlencode($newDocPath),
+        api_get_path(WEB_PLUGIN_PATH, [], true).'Onlyoffice/callback.php?hash='.$trackHash.'&docPath='.urlencode($newDocPath),
         $versionToken
     );
 
@@ -251,12 +251,12 @@ if (!empty($docPath)) {
         $trackHash = $jwtManager->getHash($trackPayload);
 
         $fileUrl = appendVersionTokenToUrl(
-            api_get_path(WEB_PLUGIN_PATH).'Onlyoffice/callback.php?hash='.$downloadHash,
+            api_get_path(WEB_PLUGIN_PATH, [], true).'Onlyoffice/callback.php?hash='.$downloadHash,
             $versionToken
         );
 
         $callbackUrl = appendVersionTokenToUrl(
-            api_get_path(WEB_PLUGIN_PATH).'Onlyoffice/callback.php?hash='.$trackHash,
+            api_get_path(WEB_PLUGIN_PATH, [], true).'Onlyoffice/callback.php?hash='.$trackHash,
             $versionToken
         );
 
@@ -271,7 +271,7 @@ if (!empty($docPath)) {
             'size' => $resolvedC2['size'],
             'readonly' => (int) $isReadOnly,
             'session_id' => $sessionId,
-            'url' => api_get_path(WEB_PLUGIN_PATH).'Onlyoffice/editor.php?docId='.$docId
+            'url' => api_get_path(WEB_PLUGIN_PATH, [], true).'/plugin/Onlyoffice/editor.php?docId='.$docId
                 .($isReadOnly ? '&readOnly='.$isReadOnly : '')
                 .($groupId ? '&groupId='.$groupId : '')
                 .($forceEdit ? '&forceEdit=true' : '')
@@ -339,12 +339,12 @@ if (!empty($docPath)) {
             $trackHash = $jwtManager->getHash($trackPayload);
 
             $fileUrl = appendVersionTokenToUrl(
-                api_get_path(WEB_PLUGIN_PATH).'Onlyoffice/callback.php?hash='.$downloadHash,
+                api_get_path(WEB_PLUGIN_PATH, [], true).'Onlyoffice/callback.php?hash='.$downloadHash,
                 $versionToken
             );
 
             $callbackUrl = appendVersionTokenToUrl(
-                api_get_path(WEB_PLUGIN_PATH).'Onlyoffice/callback.php?hash='.$trackHash,
+                api_get_path(WEB_PLUGIN_PATH, [], true).'Onlyoffice/callback.php?hash='.$trackHash,
                 $versionToken
             );
 
@@ -354,7 +354,7 @@ if (!empty($docPath)) {
             $docInfo['return_url'] = $returnUrl;
             $docInfo['origin'] = $origin;
             $docInfo['embedded'] = $isEmbedded;
-            $docInfo['url'] = api_get_path(WEB_PLUGIN_PATH).'Onlyoffice/editor.php?docId='.$docId
+            $docInfo['url'] = api_get_path(WEB_PLUGIN_PATH, [], true).'Onlyoffice/editor.php?docId='.$docId
                 .($isReadOnly ? '&readOnly='.$isReadOnly : '')
                 .($groupId ? '&groupId='.$groupId : '')
                 .($forceEdit ? '&forceEdit=true' : '')
@@ -416,12 +416,12 @@ $metaUrl = buildOnlyofficeMetaUrl(
 $fileUrl = $fileUrl ?? $documentManager->getFileUrl($runtimeIdentifier);
 
 if (!empty($appSettings->getStorageUrl()) && !empty($fileUrl)) {
-    $fileUrl = str_replace(api_get_path(WEB_PATH), $appSettings->getStorageUrl(), $fileUrl);
+    $fileUrl = str_replace(api_get_path(WEB_PATH, [], true), $appSettings->getStorageUrl(), $fileUrl);
     if (!empty($callbackUrl)) {
-        $callbackUrl = str_replace(api_get_path(WEB_PATH), $appSettings->getStorageUrl(), $callbackUrl);
+        $callbackUrl = str_replace(api_get_path(WEB_PATH, [], true), $appSettings->getStorageUrl(), $callbackUrl);
     }
     if (!empty($metaUrl)) {
-        $metaUrl = str_replace(api_get_path(WEB_PATH), $appSettings->getStorageUrl(), $metaUrl);
+        $metaUrl = str_replace(api_get_path(WEB_PATH, [], true), $appSettings->getStorageUrl(), $metaUrl);
     }
 }
 
@@ -569,8 +569,8 @@ sendOnlyofficeEditorNoCacheHeaders();
     <script type="text/javascript">
         (function () {
             const config = <?php echo json_encode($config, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE); ?>;
-            const errorPage = <?php echo json_encode(api_get_path(WEB_PLUGIN_PATH).'Onlyoffice/error.php'); ?>;
-            const saveAsUrl = <?php echo json_encode(api_get_path(WEB_PLUGIN_PATH).'Onlyoffice/ajax/saveas.php'); ?>;
+            const errorPage = <?php echo json_encode(api_get_path(WEB_PLUGIN_PATH, [], true).'Onlyoffice/error.php'); ?>;
+            const saveAsUrl = <?php echo json_encode(api_get_path(WEB_PLUGIN_PATH, [], true).'Onlyoffice/ajax/saveas.php'); ?>;
             const folderId = <?php echo json_encode((int) ($docInfo['parent_id'] ?? 0)); ?>;
             const sessionId = <?php echo json_encode((int) $sessionId); ?>;
             const courseId = <?php echo json_encode((int) $courseId); ?>;
@@ -1138,7 +1138,7 @@ function buildOnlyofficeMetaUrl(
         $params['embedded'] = '1';
     }
 
-    return api_get_path(WEB_PLUGIN_PATH).'Onlyoffice/editor.php?'.http_build_query($params);
+    return api_get_path(WEB_PLUGIN_PATH, [], true).'Onlyoffice/editor.php?'.http_build_query($params);
 }
 
 /**
@@ -1303,7 +1303,7 @@ function isOnlyofficeSafeInternalUrl(string $url): bool
         return false;
     }
 
-    $editorUrl = api_get_path(WEB_PLUGIN_PATH).'Onlyoffice/editor.php';
+    $editorUrl = api_get_path(WEB_PLUGIN_PATH, [], true).'Onlyoffice/editor.php';
     if (str_starts_with($url, $editorUrl)) {
         return false;
     }

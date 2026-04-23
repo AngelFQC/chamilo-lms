@@ -72,8 +72,8 @@ switch ($sale['payment_type']) {
         $extra .= "&L_PAYMENTREQUEST_0_AMT0=".urlencode((string) $sale['price']);
         $extra .= '&L_PAYMENTREQUEST_0_QTY0=1';
 
-        $returnUrl = api_get_path(WEB_PLUGIN_PATH).'BuyCourses/src/success.php';
-        $cancelUrl = api_get_path(WEB_PLUGIN_PATH).'BuyCourses/src/error.php';
+        $returnUrl = api_get_path(WEB_PLUGIN_PATH, [], true).'BuyCourses/src/success.php';
+        $cancelUrl = api_get_path(WEB_PLUGIN_PATH, [], true).'BuyCourses/src/error.php';
 
         error_log('[BuyCourses][PayPal] Return URL: '.$returnUrl);
         error_log('[BuyCourses][PayPal] Cancel URL: '.$cancelUrl);
@@ -487,8 +487,8 @@ switch ($sale['payment_type']) {
                 ]],
                 'customer_email' => $_SESSION['_user']['email'],
                 'mode' => 'payment',
-                'success_url' => api_get_path(WEB_PLUGIN_PATH).'BuyCourses/src/stripe_success.php',
-                'cancel_url' => api_get_path(WEB_PLUGIN_PATH).'BuyCourses/src/stripe_cancel.php',
+                'success_url' => api_get_path(WEB_PLUGIN_PATH, [], true).'BuyCourses/src/stripe_success.php',
+                'cancel_url' => api_get_path(WEB_PLUGIN_PATH, [], true).'BuyCourses/src/stripe_cancel.php',
             ]);
 
             if (!empty($session)) {

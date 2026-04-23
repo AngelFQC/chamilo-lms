@@ -96,8 +96,8 @@ switch ((int) $sale['payment_type']) {
         $extra .= "&L_PAYMENTREQUEST_0_AMT0=".urlencode((string) $sale['price']);
         $extra .= '&L_PAYMENTREQUEST_0_QTY0=1';
 
-        $returnUrl = api_get_path(WEB_PLUGIN_PATH).'BuyCourses/src/subscription_success.php';
-        $cancelUrl = api_get_path(WEB_PLUGIN_PATH).'BuyCourses/src/subscription_error.php';
+        $returnUrl = api_get_path(WEB_PLUGIN_PATH, [], true).'BuyCourses/src/subscription_success.php';
+        $cancelUrl = api_get_path(WEB_PLUGIN_PATH, [], true).'BuyCourses/src/subscription_error.php';
 
         error_log('[BuyCourses][Subscription][PayPal] Return URL: '.$returnUrl);
         error_log('[BuyCourses][Subscription][PayPal] Cancel URL: '.$cancelUrl);

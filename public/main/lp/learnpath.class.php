@@ -3000,15 +3000,14 @@ class learnpath
                                 in_array($extension, $onlyofficeAllowedExtensions, true)
                             ) {
                                 $returnUrl = '';
-                                $currentRequestUri = isset($_SERVER['REQUEST_URI']) ? (string) $_SERVER['REQUEST_URI'] : '';
-                                $currentHost = isset($_SERVER['HTTP_HOST']) ? (string) $_SERVER['HTTP_HOST'] : '';
+                                $onlyofficeRequest = Container::getRequest();
 
-                                if ('' !== $currentRequestUri && '' !== $currentHost) {
-                                    $scheme = api_is_https() ? 'https://' : 'http://';
-                                    $returnUrl = $scheme.$currentHost.$currentRequestUri;
+                                if ($onlyofficeRequest) {
+                                    $returnUrl = $onlyofficeRequest->getSchemeAndHttpHost()
+                                        .$onlyofficeRequest->getRequestUri();
                                 }
 
-                                $onlyofficeUrl = api_get_path(WEB_PLUGIN_PATH).'Onlyoffice/editor.php'
+                                $onlyofficeUrl = api_get_path(WEB_PLUGIN_PATH, [], true).'Onlyoffice/editor.php'
                                     .'?docId='.$docId
                                     .'&cid='.$course_id
                                     .'&sid='.(int) $this->get_lp_session_id()
@@ -8159,10 +8158,10 @@ document.addEventListener("DOMContentLoaded", function () {
     {
         $urlInfo = parse_url($src);
 
-        $platformProtocol = 'https';
-        if (!str_contains(api_get_path(WEB_CODE_PATH), 'https')) {
-            $platformProtocol = 'http';
-        }
+        $request = Container::getRequest();
+
+        $platformProtocol = $request ? $request->getScheme() : 'https';
+        $platformHost = $request ? $request->getHost() : '';
 
         $protocolFixApplied = false;
         //Scheme validation to avoid "Notices" when the lesson doesn't contain a valid scheme
@@ -8176,7 +8175,7 @@ document.addEventListener("DOMContentLoaded", function () {
         }
 
         if (!$protocolFixApplied) {
-            if (!str_contains(api_get_path(WEB_PATH), $host)) {
+            if (!str_contains($platformHost, (string) $host)) {
                 // Check X-Frame-Options
                 $ch = curl_init();
                 $options = [

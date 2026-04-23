@@ -553,6 +553,6 @@ class DashboardManager
      */
     public static function getStyleSheet()
     {
-        return '<link rel="stylesheet" href="'.api_get_path(WEB_PLUGIN_PATH).'dashboard/css/default.css" type="text/css" />'.PHP_EOL;
+        return '<link rel="stylesheet" href="'.api_get_path(WEB_PLUGIN_PATH, [], true).'dashboard/css/default.css" type="text/css" />'.PHP_EOL;
     }
 }

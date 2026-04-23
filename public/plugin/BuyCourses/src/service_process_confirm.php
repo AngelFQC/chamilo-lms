@@ -81,8 +81,8 @@ switch ($serviceSale['payment_type']) {
         }
 
         $itemPrice = (float) $serviceSale['price'];
-        $returnUrl = api_get_path(WEB_PLUGIN_PATH).'BuyCourses/src/service_success.php';
-        $cancelUrl = api_get_path(WEB_PLUGIN_PATH).'BuyCourses/src/service_error.php';
+        $returnUrl = api_get_path(WEB_PLUGIN_PATH, [], true).'BuyCourses/src/service_success.php';
+        $cancelUrl = api_get_path(WEB_PLUGIN_PATH, [], true).'BuyCourses/src/service_error.php';
         $extra = '';
 
         require_once 'paypalfunctions.php';

@@ -682,7 +682,7 @@ class XApiPlugin extends Plugin
                 );
             $queryData['activity_id'] = $activityId;
         } elseif ('cmi5' === $type) {
-            $fetchUrl = api_get_path(WEB_PLUGIN_PATH).'XApi/cmi5/token.php';
+            $fetchUrl = api_get_path(WEB_PLUGIN_PATH, [], true).'XApi/cmi5/token.php';
 
             $queryData['fetch'] = $this->appendQueryToUrl(
                 $fetchUrl,

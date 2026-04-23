@@ -711,7 +711,7 @@ define('USER_SOFT_DELETED', -2);
  * Vchamilo changes : allow using an alternate configuration
  * to get vchamilo  instance paths
  */
-function api_get_path($path = '', $configuration = [])
+function api_get_path($path = '', $configuration = [], bool $absolute = false)
 {
     global $paths;
 
@@ -728,7 +728,20 @@ function api_get_path($path = '', $configuration = [])
     $root_web = '';
     if (isset(Container::$container)) {
         $router = Container::$container->get('router');
-        $root_web = $router->generate('index');
+        $root_web = $router->generate(
+            'index',
+            [],
+            $absolute ? UrlGeneratorInterface::ABSOLUTE_URL : UrlGeneratorInterface::ABSOLUTE_PATH
+        );
+
+        // The router may return http:// even on https setups (e.g. reverse proxy not fully trusted).
+        // Re-check the actual request scheme and upgrade if needed.
+        if ($absolute && str_starts_with($root_web, 'http://')) {
+            $request = Container::getRequest();
+            if ($request?->isSecure()) {
+                $root_web = 'https://'.substr($root_web, 7);
+            }
+        }
     }
 
 

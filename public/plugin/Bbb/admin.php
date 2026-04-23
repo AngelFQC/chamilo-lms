@@ -660,7 +660,7 @@ if (!$serverRunning) {
 $htmlHeadXtra[] = api_get_js_simple(
     api_get_path(WEB_PLUGIN_PATH).'Bbb/resources/utils.js'
 );
-$htmlHeadXtra[] = "<script>var _p = {web_plugin: '".api_get_path(WEB_PLUGIN_PATH)."'};</script>";
+$htmlHeadXtra[] = "<script>var _p = {web_plugin: '".api_get_path(WEB_PLUGIN_PATH, [], true)."'};</script>";
 
 $settingsForm = new FormValidator('settings', api_get_self());
 $settingsForm->addHeader($plugin->get_lang('UpdateAllCourseSettings'));

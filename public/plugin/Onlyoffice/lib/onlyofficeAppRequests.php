@@ -41,6 +41,6 @@ class OnlyofficeAppRequests extends RequestService
         ];
         $hashUrl = $this->jwtManager->getHash($data);
 
-        return api_get_path(WEB_PLUGIN_PATH).'Onlyoffice/callback.php?hash='.$hashUrl;
+        return api_get_path(WEB_PLUGIN_PATH, [], true).'Onlyoffice/callback.php?hash='.$hashUrl;
     }
 }

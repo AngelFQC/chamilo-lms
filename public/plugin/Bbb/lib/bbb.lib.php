@@ -2458,7 +2458,7 @@ class Bbb
      */
     private function buildWebhookCallbackUrl(?string $meetingId = null): string
     {
-        $base = rtrim(api_get_path(WEB_PLUGIN_PATH), '/').'/Bbb/webhook.php';
+        $base = rtrim(api_get_path(WEB_PLUGIN_PATH, [], true), '/').'/Bbb/webhook.php';
 
         $au  = (int) $this->accessUrl;              // current access_url_id
         $mid = (string) ($meetingId ?? '');         // meetingID (empty if global)
