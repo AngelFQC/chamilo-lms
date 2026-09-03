@@ -52,14 +52,6 @@ final class Version20250707212800 extends AbstractMigrationChamilo
          *   DKIM_PRIVATE_KEY_STRING?: string,
          *   DKIM_PRIVATE_KEY?: string,
          *   DKIM_PASSPHRASE?: string,
-         *   XOAUTH2_METHOD?: bool,
-         *   XOAUTH2_URL_AUTHORIZE?: string,
-         *   XOAUTH2_URL_ACCES_TOKEN?: string,
-         *   XOAUTH2_URL_RESOURCE_OWNER_DETAILS?: string,
-         *   XOAUTH2_SCOPES?: string,
-         *   XOAUTH2_CLIENT_ID?: string,
-         *   XOAUTH2_CLIENT_SECRET?: string,
-         *   XOAUTH2_REFRESH_TOKEN?: string,
          * } $platform_email
          */
         $platform_email = [];
@@ -99,17 +91,6 @@ final class Version20250707212800 extends AbstractMigrationChamilo
             'passphrase' => $platform_email['DKIM_PASSPHRASE'] ?? '',
         ];
 
-        $xoauth2 = [
-            'method' => $platform_email['XOAUTH2_METHOD'] ?? false,
-            'url_authorize' => $platform_email['XOAUTH2_URL_AUTHORIZE'] ?? '',
-            'url_access_token' => $platform_email['XOAUTH2_URL_ACCES_TOKEN'] ?? '',
-            'url_resource_owner_details' => $platform_email['XOAUTH2_URL_RESOURCE_OWNER_DETAILS'] ?? '',
-            'scopes' => $platform_email['XOAUTH2_SCOPES'] ?? '',
-            'client_id' => $platform_email['XOAUTH2_CLIENT_ID'] ?? '',
-            'client_secret' => $platform_email['XOAUTH2_CLIENT_SECRET'] ?? '',
-            'refresh_token' => $platform_email['XOAUTH2_REFRESH_TOKEN'] ?? '',
-        ];
-
         // SMTP_UNIQUE_SENDER intentionally ignored as requested.
 
         return [
@@ -120,7 +101,6 @@ final class Version20250707212800 extends AbstractMigrationChamilo
             'mailer_debug_enable' => !empty($platform_email['SMTP_DEBUG']) ? 'true' : 'false',
             'mailer_exclude_json' => $platform_email['EXCLUDE_JSON'] ?? false,
             'mailer_dkim' => json_encode($dkim),
-            'mailer_xoauth2' => json_encode($xoauth2),
         ];
     }
 

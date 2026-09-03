@@ -25,7 +25,6 @@ class Version20250721200725 extends AbstractMigrationChamilo
 
         $settings = [];
         $settings['mailer_dkim'] = '';
-        $settings['mailer_xoauth2'] = '';
 
         if (isset($_ENV['MAILER'])) {
             $mailerScheme = 'null';
@@ -68,14 +67,6 @@ class Version20250721200725 extends AbstractMigrationChamilo
              *   DKIM_PRIVATE_KEY_STRING?: string,
              *   DKIM_PRIVATE_KEY?: string,
              *   DKIM_PASSPHRASE?: string,
-             *   XOAUTH2_METHOD?: bool,
-             *   XOAUTH2_URL_AUTHORIZE?: string,
-             *   XOAUTH2_URL_ACCES_TOKEN?: string,
-             *   XOAUTH2_URL_RESOURCE_OWNER_DETAILS?: string,
-             *   XOAUTH2_SCOPES?: string,
-             *   XOAUTH2_CLIENT_ID?: string,
-             *   XOAUTH2_CLIENT_SECRET?: string,
-             *   XOAUTH2_REFRESH_TOKEN?: string,
              * } $platform_email
              */
             $platform_email = [];
@@ -93,19 +84,7 @@ class Version20250721200725 extends AbstractMigrationChamilo
                 'passphrase' => $platform_email['DKIM_PASSPHRASE'] ?? '',
             ];
 
-            $xoauth2 = [
-                'method' => $platform_email['XOAUTH2_METHOD'] ?? false,
-                'url_authorize' => $platform_email['XOAUTH2_URL_AUTHORIZE'] ?? '',
-                'url_access_token' => $platform_email['XOAUTH2_URL_ACCES_TOKEN'] ?? '',
-                'url_resource_owner_details' => $platform_email['XOAUTH2_URL_RESOURCE_OWNER_DETAILS'] ?? '',
-                'scopes' => $platform_email['XOAUTH2_SCOPES'] ?? '',
-                'client_id' => $platform_email['XOAUTH2_CLIENT_ID'] ?? '',
-                'client_secret' => $platform_email['XOAUTH2_CLIENT_SECRET'] ?? '',
-                'refresh_token' => $platform_email['XOAUTH2_REFRESH_TOKEN'] ?? '',
-            ];
-
             $settings['mailer_dkim'] = json_encode($dkim);
-            $settings['mailer_xoauth2'] = json_encode($xoauth2);
         }
 
         foreach ($settings as $variable => $value) {
