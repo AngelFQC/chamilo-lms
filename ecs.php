@@ -9,13 +9,11 @@ use PhpCsFixer\Fixer\ClassNotation\ClassAttributesSeparationFixer;
 use PhpCsFixer\Fixer\Comment\SingleLineCommentStyleFixer;
 use PhpCsFixer\Fixer\ControlStructure\YodaStyleFixer;
 use PhpCsFixer\Fixer\FunctionNotation\FopenFlagsFixer;
-use PhpCsFixer\Fixer\FunctionNotation\VoidReturnFixer;
 use PhpCsFixer\Fixer\Import\GlobalNamespaceImportFixer;
 use PhpCsFixer\Fixer\Operator\ConcatSpaceFixer;
 use PhpCsFixer\Fixer\Operator\IncrementStyleFixer;
 use PhpCsFixer\Fixer\Operator\NotOperatorWithSuccessorSpaceFixer;
 use PhpCsFixer\Fixer\PhpUnit\PhpUnitTestClassRequiresCoversFixer;
-use PhpCsFixer\Fixer\ReturnNotation\NoUselessReturnFixer;
 use PhpCsFixer\Fixer\Strict\DeclareStrictTypesFixer;
 use SlevomatCodingStandard\Sniffs\Commenting\UselessFunctionDocCommentSniff;
 use SlevomatCodingStandard\Sniffs\TypeHints\PropertyTypeHintSniff;
@@ -23,63 +21,51 @@ use Symplify\CodingStandard\Fixer\ArrayNotation\ArrayListItemNewlineFixer;
 use Symplify\CodingStandard\Fixer\ArrayNotation\ArrayOpenerAndCloserNewlineFixer;
 use Symplify\CodingStandard\Fixer\ArrayNotation\StandaloneLineInMultilineArrayFixer;
 use Symplify\EasyCodingStandard\Config\ECSConfig;
-use Symplify\EasyCodingStandard\ValueObject\Set\SetList;
 
 // Run php vendor/bin/ecs check src
 // See documentation: https://github.com/symplify/easy-coding-standard
 
-return static function (ECSConfig $ecsConfig): void {
-    $ecsConfig->import(SetList::COMMON);
-    $ecsConfig->import(SetList::CLEAN_CODE);
-    $ecsConfig->dynamicSets(['@Symfony']);
-    $ecsConfig->import(SetList::PSR_12);
-    $ecsConfig->dynamicSets(['@PhpCsFixer']);
-    $ecsConfig->dynamicSets(['@Symfony:risky']);
+$expandedRules = require __DIR__.'/ecs-rules.php';
 
-    // Only rules the sets above do NOT already enable, or whose configuration
-    // deviates from theirs, belong here — anything else is a no-op that hides
-    // which set actually decides the rule.
-    $ecsConfig->rule(UselessFunctionDocCommentSniff::class);
-    $ecsConfig->rule(PropertyTypeHintSniff::class);
-    // @Symfony leaves less_and_greater undecided; we do not want Yoda there.
-    $ecsConfig->ruleWithConfiguration(
+$config = ECSConfig::configure()
+    // A full run over src/ + tests takes minutes; the cache brings a run with
+    // few changed files down to seconds. Keep it inside the project so CI can
+    // persist it between jobs.
+    ->withCache(__DIR__.'/var/cache/ecs')
+    ->withPaths([
+        __DIR__.'/src',
+        __DIR__.'/tests/CoreBundle',
+        __DIR__.'/tests/CourseBundle',
+        //__DIR__.'/public/main/admin',
+    ])
+    ->withPreparedSets(psr12: true, common: true, cleanCode: true)
+    // @Symfony, @PhpCsFixer and @Symfony:risky, expanded in ecs-rules.php.
+    ->withRules([
+        ...$expandedRules['rules'],
+        // Only rules the sets above do NOT already enable, or whose configuration
+        // deviates from theirs, belong below — anything else is a no-op that hides
+        // which set actually decides the rule.
+        UselessFunctionDocCommentSniff::class,
+        PropertyTypeHintSniff::class,
+        DeclareStrictTypesFixer::class,
+    ])
+    ->withConfiguredRule(
         YodaStyleFixer::class,
+        // @Symfony leaves less_and_greater undecided; we do not want Yoda there.
         ['equal' => true, 'identical' => true, 'less_and_greater' => false]
-    );
-    $ecsConfig->rule(VoidReturnFixer::class);
-    $ecsConfig->rule(DeclareStrictTypesFixer::class);
-    // Only @PhpCsFixer enables this one, and it is a documented convention.
-    $ecsConfig->rule(NoUselessReturnFixer::class);
+    )
     // @Symfony's default is 'one'.
-    $ecsConfig->ruleWithConfiguration(
-        ConcatSpaceFixer::class,
-        [
-            'spacing' => 'none',
-        ]
-    );
+    ->withConfiguredRule(ConcatSpaceFixer::class, ['spacing' => 'none'])
     // @Symfony imports nothing.
-    $ecsConfig->ruleWithConfiguration(
+    ->withConfiguredRule(
         GlobalNamespaceImportFixer::class,
         [
             'import_classes' => true,
             'import_constants' => true,
             'import_functions' => false,
         ]
-    );
-
-    // A full run over src/ + tests takes minutes; the cache brings a run with
-    // few changed files down to seconds. Keep it inside the project so CI can
-    // persist it between jobs.
-    $ecsConfig->cacheDirectory(__DIR__.'/var/cache/ecs');
-
-    $ecsConfig->paths([
-        __DIR__.'/src',
-        __DIR__.'/tests/CoreBundle',
-        __DIR__.'/tests/CourseBundle',
-        //__DIR__.'/public/main/admin',
-    ]);
-
-    $ecsConfig->skip([
+    )
+    ->withSkip([
         __DIR__.'/src/CoreBundle/Component/HTMLPurifier/Filter/AllowIframes.php',
         __DIR__.'/src/CoreBundle/Traits/Repository/*',
         __DIR__.'/src/CourseBundle/Component/*',
@@ -103,5 +89,11 @@ return static function (ECSConfig $ecsConfig): void {
         AssignmentInConditionSniff::class.'.FoundInWhileCondition',
         AssignmentInConditionSniff::class.'.Found',
         PhpUnitTestClassRequiresCoversFixer::class,
-    ]);
-};
+    ])
+    ;
+
+foreach ($expandedRules['configured'] as $rule => $configuration) {
+    $config->withConfiguredRule($rule, $configuration);
+}
+
+return $config;
