@@ -75,6 +75,12 @@ final class Version20250310215900 extends AbstractMigrationChamilo
         }
     }
 
+    public function down(Schema $schema): void
+    {
+        $this->addSql("DELETE FROM conference_meeting WHERE service_provider = 'bbb';");
+        $this->addSql("DELETE FROM conference_meeting WHERE service_provider = 'zoom';");
+    }
+
     private function migrateBbbMeetings(): void
     {
         $bbbMeetings = $this->connection->fetchAllAssociative('SELECT * FROM plugin_bbb_meeting');
@@ -266,11 +272,5 @@ final class Version20250310215900 extends AbstractMigrationChamilo
         } catch (Exception $e) {
             return false;
         }
-    }
-
-    public function down(Schema $schema): void
-    {
-        $this->addSql("DELETE FROM conference_meeting WHERE service_provider = 'bbb';");
-        $this->addSql("DELETE FROM conference_meeting WHERE service_provider = 'zoom';");
     }
 }

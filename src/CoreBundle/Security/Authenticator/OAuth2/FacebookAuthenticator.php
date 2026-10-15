@@ -90,13 +90,13 @@ class FacebookAuthenticator extends AbstractAuthenticator
         return $user;
     }
 
-    private function changeToValidChamiloLogin(string $email): string
-    {
-        return $this->slugify->slugify($email);
-    }
-
     protected function getCustomBadge(): ?BadgeInterface
     {
         return new OAuth2Badge(UserAuthSource::FACEBOOK);
+    }
+
+    private function changeToValidChamiloLogin(string $email): string
+    {
+        return $this->slugify->slugify($email);
     }
 }

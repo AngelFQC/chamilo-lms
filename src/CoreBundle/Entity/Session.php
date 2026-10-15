@@ -519,6 +519,11 @@ class Session implements ResourceWithAccessUrlInterface, Stringable
         $this->position = 0;
     }
 
+    public function __toString(): string
+    {
+        return $this->getTitle();
+    }
+
     public static function getRelationTypeList(): array
     {
         return [self::STUDENT, self::DRH, self::COURSE_COACH, self::GENERAL_COACH, self::SESSION_ADMIN];
@@ -532,11 +537,6 @@ class Session implements ResourceWithAccessUrlInterface, Stringable
             self::INVISIBLE => 'status_invisible',
             self::AVAILABLE => 'status_available',
         ];
-    }
-
-    public function __toString(): string
-    {
-        return $this->getTitle();
     }
 
     public function getTitle(): string
@@ -753,7 +753,7 @@ class Session implements ResourceWithAccessUrlInterface, Stringable
     public function getGeneralCoaches(): Collection
     {
         return $this->getGeneralCoachesSubscriptions()
-            ->map(fn (SessionRelUser $subscription) => $subscription->getUser())
+            ->map(static fn (SessionRelUser $subscription) => $subscription->getUser())
         ;
     }
 
@@ -967,21 +967,6 @@ class Session implements ResourceWithAccessUrlInterface, Stringable
         return $this;
     }
 
-    protected function compareDates(?DateTime $start, ?DateTime $end = null): bool
-    {
-        $now = new DateTime('now');
-
-        if (!empty($start) && !empty($end)) {
-            return $now >= $start && $now <= $end;
-        }
-
-        if (!empty($start)) {
-            return $now >= $start;
-        }
-
-        return !empty($end) && $now <= $end;
-    }
-
     public function isActiveForCoach(): bool
     {
         $start = $this->getCoachAccessStartDate();
@@ -1169,7 +1154,7 @@ class Session implements ResourceWithAccessUrlInterface, Stringable
         // If the session is registered in the course session list.
         $exists = $this->getCourses()
             ->exists(
-                fn ($key, $element) => $course->getId() === $element->getCourse()->getId()
+                static fn ($key, $element) => $course->getId() === $element->getCourse()->getId()
             )
         ;
 
@@ -1297,7 +1282,7 @@ class Session implements ResourceWithAccessUrlInterface, Stringable
     public function getSessionAdmins(): ReadableCollection
     {
         return $this->getGeneralAdminsSubscriptions()
-            ->map(fn (SessionRelUser $subscription) => $subscription->getUser())
+            ->map(static fn (SessionRelUser $subscription) => $subscription->getUser())
         ;
     }
 
@@ -1565,39 +1550,6 @@ class Session implements ResourceWithAccessUrlInterface, Stringable
         return $this->accessVisibility;
     }
 
-    private function getAccessVisibilityByDuration(User $user, bool $coachAccessAfterDurationEnd = false): int
-    {
-        // Session duration per student.
-        if ($this->getDuration() > 0) {
-            // If the setting is enabled, coaches always have access regardless of duration end.
-            if ($coachAccessAfterDurationEnd && $this->hasCoach($user)) {
-                return self::AVAILABLE;
-            }
-
-            $duration = $this->getDuration() * 24 * 60 * 60;
-            $courseAccess = $user->getFirstAccessToSession($this);
-
-            // If there is a session duration but there is no previous
-            // access by the user, then the session is still available
-            if (!$courseAccess) {
-                return self::AVAILABLE;
-            }
-
-            $currentTime = time();
-            $firstAccess = $courseAccess->getLoginCourseDate()->getTimestamp();
-            $userSessionSubscription = $user->getSubscriptionToSession($this);
-            $userDuration = $userSessionSubscription
-                ? $userSessionSubscription->getDuration() * 24 * 60 * 60
-                : 0;
-
-            $totalDuration = $firstAccess + $duration + $userDuration;
-
-            return $totalDuration > $currentTime ? self::AVAILABLE : $this->visibility;
-        }
-
-        return self::AVAILABLE;
-    }
-
     /**
      * Checks whether the user is a course or session coach.
      */
@@ -1643,27 +1595,6 @@ class Session implements ResourceWithAccessUrlInterface, Stringable
         return $this->hasUserInCourse($user, $course, self::COURSE_COACH);
     }
 
-    private function getAcessVisibilityByDates(User $user): int
-    {
-        $now = new DateTime();
-
-        $userIsCoach = $this->hasCoach($user);
-
-        $sessionEndDate = $userIsCoach && $this->coachAccessEndDate
-            ? $this->coachAccessEndDate
-            : $this->accessEndDate;
-
-        if (!$userIsCoach && $this->accessStartDate && $now < $this->accessStartDate) {
-            return self::LIST_ONLY;
-        }
-
-        if ($sessionEndDate) {
-            return $now <= $sessionEndDate ? self::AVAILABLE : $this->visibility;
-        }
-
-        return self::AVAILABLE;
-    }
-
     public function getAccessVisibility(): int
     {
         if (0 === $this->accessVisibility) {
@@ -1680,7 +1611,7 @@ class Session implements ResourceWithAccessUrlInterface, Stringable
             Course::HIDDEN,
         ];
 
-        return $this->courses->filter(fn (SessionRelCourse $sessionRelCourse) => \in_array(
+        return $this->courses->filter(static fn (SessionRelCourse $sessionRelCourse) => \in_array(
             $sessionRelCourse->getCourse()->getVisibility(),
             $closedVisibilities
         ));
@@ -1780,5 +1711,74 @@ class Session implements ResourceWithAccessUrlInterface, Stringable
         $this->daysLeft = $daysLeft;
 
         return $this;
+    }
+
+    protected function compareDates(?DateTime $start, ?DateTime $end = null): bool
+    {
+        $now = new DateTime('now');
+
+        if (!empty($start) && !empty($end)) {
+            return $now >= $start && $now <= $end;
+        }
+
+        if (!empty($start)) {
+            return $now >= $start;
+        }
+
+        return !empty($end) && $now <= $end;
+    }
+
+    private function getAccessVisibilityByDuration(User $user, bool $coachAccessAfterDurationEnd = false): int
+    {
+        // Session duration per student.
+        if ($this->getDuration() > 0) {
+            // If the setting is enabled, coaches always have access regardless of duration end.
+            if ($coachAccessAfterDurationEnd && $this->hasCoach($user)) {
+                return self::AVAILABLE;
+            }
+
+            $duration = $this->getDuration() * 24 * 60 * 60;
+            $courseAccess = $user->getFirstAccessToSession($this);
+
+            // If there is a session duration but there is no previous
+            // access by the user, then the session is still available
+            if (!$courseAccess) {
+                return self::AVAILABLE;
+            }
+
+            $currentTime = time();
+            $firstAccess = $courseAccess->getLoginCourseDate()->getTimestamp();
+            $userSessionSubscription = $user->getSubscriptionToSession($this);
+            $userDuration = $userSessionSubscription
+                ? $userSessionSubscription->getDuration() * 24 * 60 * 60
+                : 0;
+
+            $totalDuration = $firstAccess + $duration + $userDuration;
+
+            return $totalDuration > $currentTime ? self::AVAILABLE : $this->visibility;
+        }
+
+        return self::AVAILABLE;
+    }
+
+    private function getAcessVisibilityByDates(User $user): int
+    {
+        $now = new DateTime();
+
+        $userIsCoach = $this->hasCoach($user);
+
+        $sessionEndDate = $userIsCoach && $this->coachAccessEndDate
+            ? $this->coachAccessEndDate
+            : $this->accessEndDate;
+
+        if (!$userIsCoach && $this->accessStartDate && $now < $this->accessStartDate) {
+            return self::LIST_ONLY;
+        }
+
+        if ($sessionEndDate) {
+            return $now <= $sessionEndDate ? self::AVAILABLE : $this->visibility;
+        }
+
+        return self::AVAILABLE;
     }
 }

@@ -46,8 +46,6 @@ class CCalendarEventRepeat
     }
 
     /**
-     * Get calType.
-     *
      * @return string
      */
     public function getCalType()
@@ -63,8 +61,6 @@ class CCalendarEventRepeat
     }
 
     /**
-     * Get calEnd.
-     *
      * @return int
      */
     public function getCalEnd()
@@ -80,8 +76,6 @@ class CCalendarEventRepeat
     }
 
     /**
-     * Get calFrequency.
-     *
      * @return int
      */
     public function getCalFrequency()
@@ -97,8 +91,6 @@ class CCalendarEventRepeat
     }
 
     /**
-     * Get calDays.
-     *
      * @return string
      */
     public function getCalDays()

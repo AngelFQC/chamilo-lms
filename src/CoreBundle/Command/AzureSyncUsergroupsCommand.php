@@ -101,7 +101,7 @@ class AzureSyncUsergroupsCommand extends AzureSyncAbstractCommand
                 \sprintf(
                     'User IDs subscribed in class (ID %d): %s',
                     $group->getId(),
-                    implode(', ', array_map(fn ($u) => $u->getId(), $newGroupMembers))
+                    implode(', ', array_map(static fn ($u) => $u->getId(), $newGroupMembers))
                 )
             );
         }

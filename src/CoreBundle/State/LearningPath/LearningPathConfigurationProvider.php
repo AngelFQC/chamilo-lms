@@ -39,7 +39,9 @@ use Symfony\Contracts\Translation\TranslatorInterface;
 
 use const DATE_ATOM;
 
-/** @implements ProviderInterface<LearningPathConfiguration> */
+/**
+ * @implements ProviderInterface<LearningPathConfiguration>
+ */
 final readonly class LearningPathConfigurationProvider implements ProviderInterface
 {
     use LearningPathStateHelperTrait;

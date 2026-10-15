@@ -17,23 +17,6 @@ class MessageApiTest extends AbstractApiTest
 {
     use ChamiloTestTrait;
 
-    private function createMessageWithContent(User $sender, User $receiver, string $content): Message
-    {
-        $repo = static::getContainer()->get(MessageRepository::class);
-
-        $message = (new Message())
-            ->setTitle('test message')
-            ->setContent($content)
-            ->setMsgType(Message::MESSAGE_TYPE_INBOX)
-            ->setSender($sender)
-            ->addReceiverTo($receiver)
-        ;
-
-        $repo->update($message);
-
-        return $message;
-    }
-
     public function testXssEventHandlersAreStrippedOnItemGet(): void
     {
         $sender = $this->createUser('xss_sender');
@@ -136,5 +119,22 @@ class MessageApiTest extends AbstractApiTest
         $this->assertStringNotContainsString('onerror', $content);
         $this->assertStringNotContainsString('stealCookies', $content);
         $this->assertStringContainsString('<em>text</em>', $content);
+    }
+
+    private function createMessageWithContent(User $sender, User $receiver, string $content): Message
+    {
+        $repo = static::getContainer()->get(MessageRepository::class);
+
+        $message = (new Message())
+            ->setTitle('test message')
+            ->setContent($content)
+            ->setMsgType(Message::MESSAGE_TYPE_INBOX)
+            ->setSender($sender)
+            ->addReceiverTo($receiver)
+        ;
+
+        $repo->update($message);
+
+        return $message;
     }
 }

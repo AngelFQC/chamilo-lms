@@ -25,7 +25,8 @@ FROM user u
 INNER JOIN access_url_rel_user aru ON aru.user_id = u.id
 WHERE aru.access_url_id = 1
   AND (u.roles LIKE :roleAdmin OR u.roles LIKE :roleGlobalAdmin)
-SQL,
+SQL
+            ,
             [
                 'roleAdmin' => '%ROLE_ADMIN%',
                 'roleGlobalAdmin' => '%ROLE_GLOBAL_ADMIN%',

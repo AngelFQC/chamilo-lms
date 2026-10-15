@@ -80,8 +80,6 @@ class CLpItemView
     }
 
     /**
-     * Get viewCount.
-     *
      * @return int
      */
     public function getViewCount()
@@ -97,8 +95,6 @@ class CLpItemView
     }
 
     /**
-     * Get startTime.
-     *
      * @return int
      */
     public function getStartTime()
@@ -114,8 +110,6 @@ class CLpItemView
     }
 
     /**
-     * Get totalTime.
-     *
      * @return int
      */
     public function getTotalTime()
@@ -131,8 +125,6 @@ class CLpItemView
     }
 
     /**
-     * Get score.
-     *
      * @return float
      */
     public function getScore()
@@ -160,8 +152,6 @@ class CLpItemView
     }
 
     /**
-     * Get status.
-     *
      * @return string
      */
     public function getStatus()
@@ -177,8 +167,6 @@ class CLpItemView
     }
 
     /**
-     * Get suspendData.
-     *
      * @return string
      */
     public function getSuspendData()
@@ -194,8 +182,6 @@ class CLpItemView
     }
 
     /**
-     * Get lessonLocation.
-     *
      * @return string
      */
     public function getLessonLocation()
@@ -211,8 +197,6 @@ class CLpItemView
     }
 
     /**
-     * Get coreExit.
-     *
      * @return string
      */
     public function getCoreExit()
@@ -228,8 +212,6 @@ class CLpItemView
     }
 
     /**
-     * Get maxScore.
-     *
      * @return string
      */
     public function getMaxScore()

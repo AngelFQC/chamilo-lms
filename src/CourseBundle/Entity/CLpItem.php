@@ -211,8 +211,6 @@ class CLpItem implements Stringable
     }
 
     /**
-     * Get path.
-     *
      * @return string
      */
     public function getPath()
@@ -228,8 +226,6 @@ class CLpItem implements Stringable
     }
 
     /**
-     * Get minScore.
-     *
      * @return float
      */
     public function getMinScore()
@@ -257,8 +253,6 @@ class CLpItem implements Stringable
     }
 
     /**
-     * Get masteryScore.
-     *
      * @return float
      */
     public function getMasteryScore()
@@ -274,8 +268,6 @@ class CLpItem implements Stringable
     }
 
     /**
-     * Get previousItemId.
-     *
      * @return int
      */
     public function getPreviousItemId()
@@ -291,8 +283,6 @@ class CLpItem implements Stringable
     }
 
     /**
-     * Get nextItemId.
-     *
      * @return int
      */
     public function getNextItemId()
@@ -308,8 +298,6 @@ class CLpItem implements Stringable
     }
 
     /**
-     * Get displayOrder.
-     *
      * @return int
      */
     public function getDisplayOrder()
@@ -325,8 +313,6 @@ class CLpItem implements Stringable
     }
 
     /**
-     * Get prerequisite.
-     *
      * @return string
      */
     public function getPrerequisite()
@@ -342,8 +328,6 @@ class CLpItem implements Stringable
     }
 
     /**
-     * Get parameters.
-     *
      * @return string
      */
     public function getParameters()
@@ -359,8 +343,6 @@ class CLpItem implements Stringable
     }
 
     /**
-     * Get launchData.
-     *
      * @return string
      */
     public function getLaunchData()
@@ -376,8 +358,6 @@ class CLpItem implements Stringable
     }
 
     /**
-     * Get maxTimeAllowed.
-     *
      * @return string
      */
     public function getMaxTimeAllowed()
@@ -393,8 +373,6 @@ class CLpItem implements Stringable
     }
 
     /**
-     * Get terms.
-     *
      * @return string
      */
     public function getTerms()
@@ -410,8 +388,6 @@ class CLpItem implements Stringable
     }
 
     /**
-     * Get searchDid.
-     *
      * @return int
      */
     public function getSearchDid()
@@ -427,8 +403,6 @@ class CLpItem implements Stringable
     }
 
     /**
-     * Get audio.
-     *
      * @return string
      */
     public function getAudio()
@@ -444,8 +418,6 @@ class CLpItem implements Stringable
     }
 
     /**
-     * Get prerequisiteMinScore.
-     *
      * @return float
      */
     public function getPrerequisiteMinScore()
@@ -461,8 +433,6 @@ class CLpItem implements Stringable
     }
 
     /**
-     * Get prerequisiteMaxScore.
-     *
      * @return float
      */
     public function getPrerequisiteMaxScore()

@@ -167,7 +167,8 @@ WHERE source.variable = ?
             )
         )
   )
-SQL,
+SQL
+                ,
                 $table
             ),
             [

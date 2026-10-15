@@ -45,8 +45,6 @@ class TrackEOnline
     protected int $accessUrlId;
 
     /**
-     * Get loginUserId.
-     *
      * @return int
      */
     public function getLoginUserId()
@@ -55,8 +53,6 @@ class TrackEOnline
     }
 
     /**
-     * Set loginUserId.
-     *
      * @return TrackEOnline
      */
     public function setLoginUserId(int $loginUserId)
@@ -67,8 +63,6 @@ class TrackEOnline
     }
 
     /**
-     * Get loginDate.
-     *
      * @return DateTime
      */
     public function getLoginDate()
@@ -77,8 +71,6 @@ class TrackEOnline
     }
 
     /**
-     * Set loginDate.
-     *
      * @return TrackEOnline
      */
     public function setLoginDate(DateTime $loginDate)
@@ -89,8 +81,6 @@ class TrackEOnline
     }
 
     /**
-     * Get userIp.
-     *
      * @return string
      */
     public function getUserIp()
@@ -99,8 +89,6 @@ class TrackEOnline
     }
 
     /**
-     * Set userIp.
-     *
      * @return TrackEOnline
      */
     public function setUserIp(string $userIp)
@@ -111,8 +99,6 @@ class TrackEOnline
     }
 
     /**
-     * Get cId.
-     *
      * @return int
      */
     public function getCId()
@@ -121,8 +107,6 @@ class TrackEOnline
     }
 
     /**
-     * Set cId.
-     *
      * @return TrackEOnline
      */
     public function setCId(int $cId)
@@ -133,8 +117,6 @@ class TrackEOnline
     }
 
     /**
-     * Get sessionId.
-     *
      * @return int
      */
     public function getSessionId()
@@ -143,8 +125,6 @@ class TrackEOnline
     }
 
     /**
-     * Set sessionId.
-     *
      * @return TrackEOnline
      */
     public function setSessionId(int $sessionId)
@@ -155,8 +135,6 @@ class TrackEOnline
     }
 
     /**
-     * Get accessUrlId.
-     *
      * @return int
      */
     public function getAccessUrlId()
@@ -165,8 +143,6 @@ class TrackEOnline
     }
 
     /**
-     * Set accessUrlId.
-     *
      * @return TrackEOnline
      */
     public function setAccessUrlId(int $accessUrlId)
@@ -177,8 +153,6 @@ class TrackEOnline
     }
 
     /**
-     * Get loginId.
-     *
      * @return int
      */
     public function getLoginId()

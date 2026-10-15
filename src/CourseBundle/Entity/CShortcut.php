@@ -19,6 +19,8 @@ use Symfony\Component\Validator\Constraints as Assert;
 #[ORM\Entity(repositoryClass: CShortcutRepository::class)]
 class CShortcut extends AbstractResource implements ResourceInterface, Stringable
 {
+    #[Groups(['cshortcut:read'])]
+    public ?string $target = null;
     #[ORM\Column(name: 'id', type: 'integer')]
     #[ORM\Id]
     #[ORM\GeneratedValue]
@@ -44,9 +46,6 @@ class CShortcut extends AbstractResource implements ResourceInterface, Stringabl
 
     #[Groups(['cshortcut:read'])]
     private ?string $customImageUrl = null;
-
-    #[Groups(['cshortcut:read'])]
-    public ?string $target = null;
 
     /**
      * Optional custom URL to override the default /r/.../link format.
@@ -121,11 +120,11 @@ class CShortcut extends AbstractResource implements ResourceInterface, Stringabl
             return $this->urlOverride;
         }
 
-        return '/r/'.
-            $this->getShortCutNode()->getResourceType()->getTool()->getTitle().'/'.
-            $this->getShortCutNode()->getResourceType()->getTitle().'/'.
-            $this->getShortCutNode()->getId().
-            '/link';
+        return '/r/'
+            .$this->getShortCutNode()->getResourceType()->getTool()->getTitle().'/'
+            .$this->getShortCutNode()->getResourceType()->getTitle().'/'
+            .$this->getShortCutNode()->getId()
+            .'/link';
     }
 
     /**

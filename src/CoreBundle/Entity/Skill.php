@@ -461,7 +461,7 @@ class Skill implements Stringable, Translatable
     {
         return $this
             ->getSkills()
-            ->map(fn (SkillRelSkill $skillRelSkill): Skill => $skillRelSkill->getSkill())
+            ->map(static fn (SkillRelSkill $skillRelSkill): Skill => $skillRelSkill->getSkill())
         ;
     }
 

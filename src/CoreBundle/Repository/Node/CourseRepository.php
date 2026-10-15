@@ -276,7 +276,7 @@ class CourseRepository extends ResourceRepository
         // Getting sessions that are related to a coach in the session_rel_course_rel_user table
         if ($isAllowedToCreateCourse) {
             $sessionListFromCourseCoach = array_map(
-                fn (SessionRelCourseRelUser $srcru) => $srcru->getSession()->getId(),
+                static fn (SessionRelCourseRelUser $srcru) => $srcru->getSession()->getId(),
                 $sessionCourseUserRepo->findBy(['user' => $user->getId(), 'status' => Session::COURSE_COACH])
             );
         }

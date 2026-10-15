@@ -26,8 +26,6 @@ class SequenceFormula
     protected ?SequenceVariable $variable = null;
 
     /**
-     * Get id.
-     *
      * @return int
      */
     public function getId()

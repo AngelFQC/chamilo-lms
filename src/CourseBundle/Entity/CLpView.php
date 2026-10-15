@@ -68,8 +68,6 @@ class CLpView
     }
 
     /**
-     * Get viewCount.
-     *
      * @return int
      */
     public function getViewCount()
@@ -85,8 +83,6 @@ class CLpView
     }
 
     /**
-     * Get lastItem.
-     *
      * @return int
      */
     public function getLastItem()
@@ -102,8 +98,6 @@ class CLpView
     }
 
     /**
-     * Get progress.
-     *
      * @return int
      */
     public function getProgress()

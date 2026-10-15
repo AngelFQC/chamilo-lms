@@ -24,55 +24,6 @@ final class SessionSelfSubscriptionApiTest extends AbstractApiTest
 {
     use ChamiloTestTrait;
 
-    private function setAutoSubscription(string $value): void
-    {
-        self::getContainer()->get(SettingsManager::class)->updateSetting(
-            'catalog.allow_session_auto_subscription',
-            $value
-        );
-    }
-
-    /**
-     * Once the access URL lists some sessions, only those are in the catalogue.
-     */
-    private function listOnlyInCatalogue(Session $session): void
-    {
-        $em = $this->getEntityManager();
-        $em->persist(
-            (new CatalogueSessionRelAccessUrlRelUsergroup())
-                ->setSession($session)
-                ->setAccessUrl($this->getAccessUrl())
-        );
-        $em->flush();
-    }
-
-    private function subscribeToSession(User $user, Session $session): void
-    {
-        $this->createClientWithCredentials($this->getUserTokenFromUser($user))->request('POST', '/api/session_rel_users', [
-            'json' => [
-                'user' => '/api/users/'.$user->getId(),
-                'session' => '/api/sessions/'.$session->getId(),
-                'relationType' => Session::STUDENT,
-                'duration' => 0,
-            ],
-        ]);
-    }
-
-    private function subscribeToSessionCourse(User $user, Session $session, Course $course): void
-    {
-        $this->createClientWithCredentials($this->getUserTokenFromUser($user))->request('POST', '/api/session_rel_course_rel_users', [
-            'json' => [
-                'user' => '/api/users/'.$user->getId(),
-                'session' => '/api/sessions/'.$session->getId(),
-                'course' => '/api/courses/'.$course->getId(),
-                'status' => Session::STUDENT,
-                'visibility' => 1,
-                'legalAgreement' => 0,
-                'progress' => 0,
-            ],
-        ]);
-    }
-
     public function testLearnerCanSubscribeToSessionOfTheCatalogue(): void
     {
         $this->setAutoSubscription('true');
@@ -126,5 +77,54 @@ final class SessionSelfSubscriptionApiTest extends AbstractApiTest
 
         $this->subscribeToSession($learner, $session);
         $this->assertResponseStatusCodeSame(403);
+    }
+
+    private function setAutoSubscription(string $value): void
+    {
+        self::getContainer()->get(SettingsManager::class)->updateSetting(
+            'catalog.allow_session_auto_subscription',
+            $value
+        );
+    }
+
+    /**
+     * Once the access URL lists some sessions, only those are in the catalogue.
+     */
+    private function listOnlyInCatalogue(Session $session): void
+    {
+        $em = $this->getEntityManager();
+        $em->persist(
+            (new CatalogueSessionRelAccessUrlRelUsergroup())
+                ->setSession($session)
+                ->setAccessUrl($this->getAccessUrl())
+        );
+        $em->flush();
+    }
+
+    private function subscribeToSession(User $user, Session $session): void
+    {
+        $this->createClientWithCredentials($this->getUserTokenFromUser($user))->request('POST', '/api/session_rel_users', [
+            'json' => [
+                'user' => '/api/users/'.$user->getId(),
+                'session' => '/api/sessions/'.$session->getId(),
+                'relationType' => Session::STUDENT,
+                'duration' => 0,
+            ],
+        ]);
+    }
+
+    private function subscribeToSessionCourse(User $user, Session $session, Course $course): void
+    {
+        $this->createClientWithCredentials($this->getUserTokenFromUser($user))->request('POST', '/api/session_rel_course_rel_users', [
+            'json' => [
+                'user' => '/api/users/'.$user->getId(),
+                'session' => '/api/sessions/'.$session->getId(),
+                'course' => '/api/courses/'.$course->getId(),
+                'status' => Session::STUDENT,
+                'visibility' => 1,
+                'legalAgreement' => 0,
+                'progress' => 0,
+            ],
+        ]);
     }
 }

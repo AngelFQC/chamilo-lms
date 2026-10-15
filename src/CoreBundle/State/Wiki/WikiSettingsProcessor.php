@@ -18,7 +18,9 @@ use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 
-/** @implements ProcessorInterface<WikiSettings, void> */
+/**
+ * @implements ProcessorInterface<WikiSettings, void>
+ */
 final readonly class WikiSettingsProcessor implements ProcessorInterface
 {
     public function __construct(

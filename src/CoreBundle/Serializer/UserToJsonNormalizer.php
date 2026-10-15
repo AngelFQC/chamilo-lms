@@ -697,7 +697,7 @@ final class UserToJsonNormalizer
         $messages = $em->getRepository(Message::class)->findBy(['sender' => $userId]);
         foreach ($messages as $item) {
             $receivers = array_map(
-                fn ($receiver) => $receiver->getReceiver()?->getUsername() ?? 'n/a',
+                static fn ($receiver) => $receiver->getReceiver()?->getUsername() ?? 'n/a',
                 $item->getReceivers()->toArray()
             );
             $personalData['Messages'][] = [

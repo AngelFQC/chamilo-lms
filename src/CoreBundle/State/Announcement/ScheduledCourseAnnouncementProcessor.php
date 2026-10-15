@@ -84,7 +84,8 @@ final readonly class ScheduledCourseAnnouncementProcessor
                     ORDER BY rl.id ASC
                     LIMIT 1
                     FOR UPDATE
-                    SQL,
+                    SQL
+                ,
                 [
                     'accessUrlId' => $accessUrlId,
                     'announcementId' => $announcementId,
@@ -180,8 +181,8 @@ final readonly class ScheduledCourseAnnouncementProcessor
                     if ($alsoInternalMessage) {
                         $io->writeln(
                             \sprintf(
-                                'Debug: Scheduled course announcement #%d has %d internal message(s) available '.
-                                '(%d created in this run), but no external email was delivered.',
+                                'Debug: Scheduled course announcement #%d has %d internal message(s) available '
+                                .'(%d created in this run), but no external email was delivered.',
                                 $announcementId,
                                 $delivery['internalMessageCount'],
                                 $delivery['internalMessageCreatedCount'],
@@ -189,8 +190,8 @@ final readonly class ScheduledCourseAnnouncementProcessor
                         );
                     } else {
                         $io->writeln(
-                            'Debug: Scheduled course announcement #'.$announcementId.
-                            ' could not be delivered by external email.',
+                            'Debug: Scheduled course announcement #'.$announcementId
+                            .' could not be delivered by external email.',
                         );
                     }
                 }
@@ -206,8 +207,8 @@ final readonly class ScheduledCourseAnnouncementProcessor
 
             if ($debug) {
                 $io->writeln(
-                    'Debug: Scheduled course announcement #'.$announcementId.
-                    ' delivered to '.$delivery['primarySentCount'].' recipient(s).',
+                    'Debug: Scheduled course announcement #'.$announcementId
+                    .' delivered to '.$delivery['primarySentCount'].' recipient(s).',
                 );
             }
 
@@ -248,7 +249,8 @@ final readonly class ScheduledCourseAnnouncementProcessor
                   AND category = :category
                   AND access_url = :accessUrlId
                 LIMIT 1
-                SQL,
+                SQL
+            ,
             [
                 'variable' => 'course_announcement_scheduled_by_date',
                 'category' => 'announcement',
@@ -265,7 +267,8 @@ final readonly class ScheduledCourseAnnouncementProcessor
                       AND category = :category
                       AND access_url = 1
                     LIMIT 1
-                    SQL,
+                    SQL
+                ,
                 [
                     'variable' => 'course_announcement_scheduled_by_date',
                     'category' => 'announcement',
@@ -294,7 +297,8 @@ final readonly class ScheduledCourseAnnouncementProcessor
                    AND aurc.access_url_id = :accessUrlId
                 WHERE a.email_sent IS NULL OR a.email_sent = 0
                 ORDER BY a.iid ASC
-                SQL,
+                SQL
+            ,
             ['accessUrlId' => $accessUrlId],
         );
 

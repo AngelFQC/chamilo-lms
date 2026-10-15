@@ -34,49 +34,6 @@ readonly class AuthenticationConfigHelper
     }
 
     /**
-     * @return array<string, array<string, mixed>>
-     */
-    private function getOAuthProvidersForUrl(?AccessUrl $url): array
-    {
-        $authentication = $this->getAuthSources($url);
-
-        if (isset($authentication['oauth2'])) {
-            return $authentication['oauth2'];
-        }
-
-        return [];
-    }
-
-    private function getAuthSources(?AccessUrl $url): array
-    {
-        $urlId = $url ?: $this->accessUrlHelper->getCurrent();
-
-        $authentication = $this->getAuthenticationParameter();
-
-        if ($urlId && isset($authentication[$urlId->getId()])) {
-            return $authentication[$urlId->getId()];
-        }
-
-        if (isset($authentication['default'])) {
-            return $authentication['default'];
-        }
-
-        return [];
-    }
-
-    /**
-     * @return array<mixed>
-     */
-    private function getAuthenticationParameter(): array
-    {
-        $authentication = $this->parameterBag->has('authentication')
-            ? $this->parameterBag->get('authentication')
-            : [];
-
-        return \is_array($authentication) ? $authentication : [];
-    }
-
-    /**
      * @return array<int, string>
      */
     public function getAuthSourceAuthentications(?AccessUrl $url): array
@@ -135,25 +92,6 @@ readonly class AuthenticationConfigHelper
     }
 
     /**
-     * @param array<string, mixed> $dataCorrespondence
-     *
-     * @return array<string, mixed>
-     */
-    private function getLdapDataCorrespondenceConfig(array $dataCorrespondence): array
-    {
-        return [
-            'firstname' => $dataCorrespondence['firstname'] ?? null,
-            'lastname' => $dataCorrespondence['lastname'] ?? 'sn',
-            'email' => $dataCorrespondence['email'] ?? 'mail',
-            'locale' => $dataCorrespondence['locale'] ?? null,
-            'role' => $dataCorrespondence['role'] ?? null,
-            'phone' => $dataCorrespondence['phone'] ?? null,
-            'active' => $dataCorrespondence['active'] ?? null,
-            'admin' => $dataCorrespondence['admin'] ?? null,
-        ];
-    }
-
-    /**
      * @return array<string, array<string, mixed>>
      */
     public function getEnabledOAuthProviders(?AccessUrl $url = null): array
@@ -162,7 +100,7 @@ readonly class AuthenticationConfigHelper
 
         return array_filter(
             $urlProviders,
-            fn (array $providerParams) => $providerParams['enabled'] ?? false
+            static fn (array $providerParams) => $providerParams['enabled'] ?? false
         );
     }
 
@@ -217,7 +155,7 @@ readonly class AuthenticationConfigHelper
             ],
         };
 
-        return array_filter($defaults, fn ($value) => null !== $value);
+        return array_filter($defaults, static fn ($value) => null !== $value);
     }
 
     /**
@@ -314,6 +252,68 @@ readonly class AuthenticationConfigHelper
         return [
             'enabled' => $config['enabled'] ?? false,
             'auth_source' => $config['auth_source'] ?? UserAuthSource::PLATFORM,
+        ];
+    }
+
+    /**
+     * @return array<string, array<string, mixed>>
+     */
+    private function getOAuthProvidersForUrl(?AccessUrl $url): array
+    {
+        $authentication = $this->getAuthSources($url);
+
+        if (isset($authentication['oauth2'])) {
+            return $authentication['oauth2'];
+        }
+
+        return [];
+    }
+
+    private function getAuthSources(?AccessUrl $url): array
+    {
+        $urlId = $url ?: $this->accessUrlHelper->getCurrent();
+
+        $authentication = $this->getAuthenticationParameter();
+
+        if ($urlId && isset($authentication[$urlId->getId()])) {
+            return $authentication[$urlId->getId()];
+        }
+
+        if (isset($authentication['default'])) {
+            return $authentication['default'];
+        }
+
+        return [];
+    }
+
+    /**
+     * @return array<mixed>
+     */
+    private function getAuthenticationParameter(): array
+    {
+        $authentication = $this->parameterBag->has('authentication')
+            ? $this->parameterBag->get('authentication')
+            : [];
+
+        return \is_array($authentication) ? $authentication : [];
+    }
+
+    /**
+     * @param array<string, mixed> $dataCorrespondence
+     *
+     * @return array<string, mixed>
+     */
+    private function getLdapDataCorrespondenceConfig(array $dataCorrespondence): array
+    {
+        return [
+            'firstname' => $dataCorrespondence['firstname'] ?? null,
+            'lastname' => $dataCorrespondence['lastname'] ?? 'sn',
+            'email' => $dataCorrespondence['email'] ?? 'mail',
+            'locale' => $dataCorrespondence['locale'] ?? null,
+            'role' => $dataCorrespondence['role'] ?? null,
+            'phone' => $dataCorrespondence['phone'] ?? null,
+            'active' => $dataCorrespondence['active'] ?? null,
+            'admin' => $dataCorrespondence['admin'] ?? null,
         ];
     }
 

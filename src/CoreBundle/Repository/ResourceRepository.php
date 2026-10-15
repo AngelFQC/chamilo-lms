@@ -338,8 +338,8 @@ abstract class ResourceRepository extends ServiceEntityRepository
         }
 
         $checker = $this->getAuthorizationChecker();
-        $isAdminOrTeacher =
-            $checker->isGranted('ROLE_ADMIN')
+        $isAdminOrTeacher
+            = $checker->isGranted('ROLE_ADMIN')
             || $checker->isGranted('ROLE_CURRENT_COURSE_TEACHER');
 
         if ($displayOnlyPublished) {
@@ -656,42 +656,6 @@ abstract class ResourceRepository extends ServiceEntityRepository
         $em = $this->getEntityManager();
         $this->scheduleForRemoval($resource, $em);
         $em->flush();
-    }
-
-    /**
-     * Recursively marks a resource and its whole descendant tree for removal
-     * WITHOUT flushing. Deleting a resource with children used to call
-     * `$em->flush()` once per recursion level (once per child, then once
-     * more for the resource itself) — each of those flushes independently
-     * triggers ResourceDoctrineListener's own postRemove/postFlush cycle,
-     * which persists a tracking (TrackEDefault) entity and immediately
-     * flushes AGAIN from inside that listener. Confirmed live: deleting a
-     * CLinkCategory that has a single CLink nested inside it threw
-     * `Doctrine\ORM\ORMInvalidArgumentException::newEntitiesFoundThroughRelationships`
-     * on the second (outer) flush — the repeated, interleaved nested-flush
-     * cycles confuse the UnitOfWork's changeset computation. Collecting
-     * every removal first and flushing exactly ONCE at the end (here, only
-     * at the outermost `delete()` call) keeps the same public contract
-     * (resource + all descendants gone by the time `delete()` returns)
-     * while removing the repeated-flush pattern that caused it. Every child
-     * is resolved via its own resourceNode id before any removal happens
-     * (the parent's children are enumerated up front), so deferring the
-     * flush doesn't risk a later lookup seeing stale not-yet-deleted data.
-     */
-    private function scheduleForRemoval(ResourceInterface $resource, EntityManagerInterface $em): void
-    {
-        $children = $resource->getResourceNode()->getChildren();
-        foreach ($children as $child) {
-            foreach ($child->getResourceFiles() as $resourceFile) {
-                $em->remove($resourceFile);
-            }
-            $childResource = $this->getResourceFromResourceNode($child->getId());
-            if (null !== $childResource) {
-                $this->scheduleForRemoval($childResource, $em);
-            }
-        }
-
-        $em->remove($resource);
     }
 
     /**
@@ -1052,6 +1016,63 @@ abstract class ResourceRepository extends ServiceEntityRepository
         return true;
     }
 
+    public function findByTitleAndParentResourceNode(string $title, int $parentResourceNodeId): ?AbstractResource
+    {
+        return $this->createQueryBuilder('d')
+            ->innerJoin('d.resourceNode', 'node')
+            ->andWhere('d.title = :title')
+            ->andWhere('node.parent = :parentResourceNodeId')
+            ->setParameter('title', $title)
+            ->setParameter('parentResourceNodeId', $parentResourceNodeId)
+            ->setMaxResults(1)
+            ->getQuery()
+            ->getOneOrNullResult()
+        ;
+    }
+
+    public function findResourceByTitleInCourse(
+        string $title,
+        Course $course,
+        ?Session $session = null,
+        ?CGroup $group = null
+    ): ?ResourceInterface {
+        $qb = $this->getResourcesByCourse($course, $session, $group);
+
+        $this->addTitleQueryBuilder($title, $qb);
+
+        $qb->setMaxResults(1);
+
+        return $qb->getQuery()->getOneOrNullResult();
+    }
+
+    public function findResourceByOriginalNameInCourse(
+        string $originalName,
+        Course $course,
+        ?Session $session = null,
+        ?CGroup $group = null
+    ): ?ResourceInterface {
+        $qb = $this->getResourcesByCourseIgnoreVisibility($course, $session, $group);
+
+        $this->addOriginalNameQueryBuilder($originalName, $qb);
+        $qb->setMaxResults(1);
+
+        return $qb->getQuery()->getOneOrNullResult();
+    }
+
+    public function findResourceByTitleInCourseIgnoreVisibility(
+        string $title,
+        Course $course,
+        ?Session $session = null,
+        ?CGroup $group = null
+    ): ?ResourceInterface {
+        $qb = $this->getResourcesByCourseIgnoreVisibility($course, $session, $group);
+
+        $this->addTitleQueryBuilder($title, $qb);
+        $qb->setMaxResults(1);
+
+        return $qb->getQuery()->getOneOrNullResult();
+    }
+
     protected function addSlugQueryBuilder(?string $slug, ?QueryBuilder $qb = null): QueryBuilder
     {
         $qb = $this->getOrCreateQueryBuilder($qb);
@@ -1096,6 +1117,57 @@ abstract class ResourceRepository extends ServiceEntityRepository
         ;
 
         return $qb;
+    }
+
+    protected function addOriginalNameQueryBuilder(?string $originalName, ?QueryBuilder $qb = null): QueryBuilder
+    {
+        $qb = $this->getOrCreateQueryBuilder($qb);
+        if (null === $originalName || '' === trim($originalName)) {
+            return $qb;
+        }
+
+        $qb
+            ->andWhere('file.originalName = :originalName')
+            ->setParameter('originalName', $originalName)
+        ;
+
+        return $qb;
+    }
+
+    /**
+     * Recursively marks a resource and its whole descendant tree for removal
+     * WITHOUT flushing. Deleting a resource with children used to call
+     * `$em->flush()` once per recursion level (once per child, then once
+     * more for the resource itself) — each of those flushes independently
+     * triggers ResourceDoctrineListener's own postRemove/postFlush cycle,
+     * which persists a tracking (TrackEDefault) entity and immediately
+     * flushes AGAIN from inside that listener. Confirmed live: deleting a
+     * CLinkCategory that has a single CLink nested inside it threw
+     * `Doctrine\ORM\ORMInvalidArgumentException::newEntitiesFoundThroughRelationships`
+     * on the second (outer) flush — the repeated, interleaved nested-flush
+     * cycles confuse the UnitOfWork's changeset computation. Collecting
+     * every removal first and flushing exactly ONCE at the end (here, only
+     * at the outermost `delete()` call) keeps the same public contract
+     * (resource + all descendants gone by the time `delete()` returns)
+     * while removing the repeated-flush pattern that caused it. Every child
+     * is resolved via its own resourceNode id before any removal happens
+     * (the parent's children are enumerated up front), so deferring the
+     * flush doesn't risk a later lookup seeing stale not-yet-deleted data.
+     */
+    private function scheduleForRemoval(ResourceInterface $resource, EntityManagerInterface $em): void
+    {
+        $children = $resource->getResourceNode()->getChildren();
+        foreach ($children as $child) {
+            foreach ($child->getResourceFiles() as $resourceFile) {
+                $em->remove($resourceFile);
+            }
+            $childResource = $this->getResourceFromResourceNode($child->getId());
+            if (null !== $childResource) {
+                $this->scheduleForRemoval($childResource, $em);
+            }
+        }
+
+        $em->remove($resource);
     }
 
     private function setLinkVisibility(
@@ -1163,77 +1235,5 @@ abstract class ResourceRepository extends ServiceEntityRepository
         $em->flush();
 
         return true;
-    }
-
-    public function findByTitleAndParentResourceNode(string $title, int $parentResourceNodeId): ?AbstractResource
-    {
-        return $this->createQueryBuilder('d')
-            ->innerJoin('d.resourceNode', 'node')
-            ->andWhere('d.title = :title')
-            ->andWhere('node.parent = :parentResourceNodeId')
-            ->setParameter('title', $title)
-            ->setParameter('parentResourceNodeId', $parentResourceNodeId)
-            ->setMaxResults(1)
-            ->getQuery()
-            ->getOneOrNullResult()
-        ;
-    }
-
-    public function findResourceByTitleInCourse(
-        string $title,
-        Course $course,
-        ?Session $session = null,
-        ?CGroup $group = null
-    ): ?ResourceInterface {
-        $qb = $this->getResourcesByCourse($course, $session, $group);
-
-        $this->addTitleQueryBuilder($title, $qb);
-
-        $qb->setMaxResults(1);
-
-        return $qb->getQuery()->getOneOrNullResult();
-    }
-
-    protected function addOriginalNameQueryBuilder(?string $originalName, ?QueryBuilder $qb = null): QueryBuilder
-    {
-        $qb = $this->getOrCreateQueryBuilder($qb);
-        if (null === $originalName || '' === trim($originalName)) {
-            return $qb;
-        }
-
-        $qb
-            ->andWhere('file.originalName = :originalName')
-            ->setParameter('originalName', $originalName)
-        ;
-
-        return $qb;
-    }
-
-    public function findResourceByOriginalNameInCourse(
-        string $originalName,
-        Course $course,
-        ?Session $session = null,
-        ?CGroup $group = null
-    ): ?ResourceInterface {
-        $qb = $this->getResourcesByCourseIgnoreVisibility($course, $session, $group);
-
-        $this->addOriginalNameQueryBuilder($originalName, $qb);
-        $qb->setMaxResults(1);
-
-        return $qb->getQuery()->getOneOrNullResult();
-    }
-
-    public function findResourceByTitleInCourseIgnoreVisibility(
-        string $title,
-        Course $course,
-        ?Session $session = null,
-        ?CGroup $group = null
-    ): ?ResourceInterface {
-        $qb = $this->getResourcesByCourseIgnoreVisibility($course, $session, $group);
-
-        $this->addTitleQueryBuilder($title, $qb);
-        $qb->setMaxResults(1);
-
-        return $qb->getQuery()->getOneOrNullResult();
     }
 }

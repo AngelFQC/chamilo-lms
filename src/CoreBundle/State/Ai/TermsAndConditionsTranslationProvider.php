@@ -11,7 +11,9 @@ use ApiPlatform\State\ProviderInterface;
 use Chamilo\CoreBundle\ApiResource\Ai\TermsAndConditionsTranslation;
 use Chamilo\CoreBundle\Service\Ai\TermsAndConditionsTranslationService;
 
-/** @implements ProviderInterface<TermsAndConditionsTranslation> */
+/**
+ * @implements ProviderInterface<TermsAndConditionsTranslation>
+ */
 final readonly class TermsAndConditionsTranslationProvider implements ProviderInterface
 {
     public function __construct(

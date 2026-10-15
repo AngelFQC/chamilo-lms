@@ -13,7 +13,9 @@ use Chamilo\CoreBundle\Service\GlobalReporting\GlobalReportingContextResolver;
 use Chamilo\CoreBundle\Service\GlobalReporting\GlobalReportingSectionQueryService;
 use Symfony\Component\HttpFoundation\RequestStack;
 
-/** @implements ProviderInterface<GlobalReportingSection> */
+/**
+ * @implements ProviderInterface<GlobalReportingSection>
+ */
 final readonly class GlobalReportingSectionProvider implements ProviderInterface
 {
     public function __construct(

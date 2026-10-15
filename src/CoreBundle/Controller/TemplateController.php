@@ -195,7 +195,7 @@ class TemplateController extends AbstractController
 
     private function formatSystemTemplates(array $systemTemplates, AssetRepository $assetRepository): array
     {
-        return array_map(function ($template) use ($assetRepository) {
+        return array_map(static function ($template) use ($assetRepository) {
             $imageUrl = null;
             if ($template->hasImage()) {
                 $imageUrl = $assetRepository->getAssetUrl($template->getImage());
@@ -238,7 +238,7 @@ class TemplateController extends AbstractController
     {
         $courseTemplates = $templatesRepository->findCourseDocumentTemplates($course);
 
-        return array_map(function ($template) use ($assetRepository, $documentRepository) {
+        return array_map(static function ($template) use ($assetRepository, $documentRepository) {
             $imageUrl = null;
             if ($template->hasImage()) {
                 $imageUrl = $assetRepository->getAssetUrl($template->getImage());

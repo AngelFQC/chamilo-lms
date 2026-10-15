@@ -29,8 +29,6 @@ class AccessUrlRelSession implements EntityAccessUrlInterface
     protected ?AccessUrl $url = null;
 
     /**
-     * Get id.
-     *
      * @return int
      */
     public function getId()

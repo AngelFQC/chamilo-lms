@@ -158,7 +158,7 @@ class SessionRepetitionCommand extends Command
         }
 
         // Extract course IDs
-        $courseList = array_map(function ($sessionRelCourse) {
+        $courseList = array_map(static function ($sessionRelCourse) {
             $course = $sessionRelCourse->getCourse();
 
             return $course?->getId();

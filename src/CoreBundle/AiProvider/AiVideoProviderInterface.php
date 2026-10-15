@@ -9,8 +9,6 @@ namespace Chamilo\CoreBundle\AiProvider;
 interface AiVideoProviderInterface
 {
     /**
-     * Generate a video.
-     *
      * @param string $prompt   The prompt to generate a video from
      * @param string $toolName A tag, e.g. 'document_video_generate'
      * @param ?array $options  Provider-specific options

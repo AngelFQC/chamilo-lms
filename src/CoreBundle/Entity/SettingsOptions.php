@@ -31,8 +31,6 @@ class SettingsOptions
     protected string $displayText;
 
     /**
-     * Get variable.
-     *
      * @return string
      */
     public function getVariable()
@@ -48,8 +46,6 @@ class SettingsOptions
     }
 
     /**
-     * Get value.
-     *
      * @return string
      */
     public function getValue()
@@ -65,8 +61,6 @@ class SettingsOptions
     }
 
     /**
-     * Get displayText.
-     *
      * @return string
      */
     public function getDisplayText()
@@ -82,8 +76,6 @@ class SettingsOptions
     }
 
     /**
-     * Get id.
-     *
      * @return int
      */
     public function getId()

@@ -40,8 +40,6 @@ class TrackELinks
     protected int $linksId;
 
     /**
-     * Get linksUserId.
-     *
      * @return int
      */
     public function getLinksUserId()
@@ -50,8 +48,6 @@ class TrackELinks
     }
 
     /**
-     * Set linksUserId.
-     *
      * @return TrackELinks
      */
     public function setLinksUserId(int $linksUserId)
@@ -62,8 +58,6 @@ class TrackELinks
     }
 
     /**
-     * Get linksDate.
-     *
      * @return DateTime
      */
     public function getLinksDate()
@@ -72,8 +66,6 @@ class TrackELinks
     }
 
     /**
-     * Set linksDate.
-     *
      * @return TrackELinks
      */
     public function setLinksDate(DateTime $linksDate)
@@ -84,8 +76,6 @@ class TrackELinks
     }
 
     /**
-     * Get cId.
-     *
      * @return int
      */
     public function getCId()
@@ -94,8 +84,6 @@ class TrackELinks
     }
 
     /**
-     * Set cId.
-     *
      * @return TrackELinks
      */
     public function setCId(int $cId)
@@ -106,8 +94,6 @@ class TrackELinks
     }
 
     /**
-     * Get linksLinkId.
-     *
      * @return int
      */
     public function getLinksLinkId()
@@ -116,8 +102,6 @@ class TrackELinks
     }
 
     /**
-     * Set linksLinkId.
-     *
      * @return TrackELinks
      */
     public function setLinksLinkId(int $linksLinkId)
@@ -128,8 +112,6 @@ class TrackELinks
     }
 
     /**
-     * Get sessionId.
-     *
      * @return int
      */
     public function getSessionId()
@@ -138,8 +120,6 @@ class TrackELinks
     }
 
     /**
-     * Set sessionId.
-     *
      * @return TrackELinks
      */
     public function setSessionId(int $sessionId)
@@ -150,8 +130,6 @@ class TrackELinks
     }
 
     /**
-     * Get linksId.
-     *
      * @return int
      */
     public function getLinksId()

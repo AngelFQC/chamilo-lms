@@ -44,8 +44,6 @@ class Notification
     protected ?DateTime $sentAt = null;
 
     /**
-     * Get destUserId.
-     *
      * @return int
      */
     public function getDestUserId()
@@ -54,8 +52,6 @@ class Notification
     }
 
     /**
-     * Set destUserId.
-     *
      * @return Notification
      */
     public function setDestUserId(int $destUserId)
@@ -66,8 +62,6 @@ class Notification
     }
 
     /**
-     * Get destMail.
-     *
      * @return string
      */
     public function getDestMail()
@@ -76,8 +70,6 @@ class Notification
     }
 
     /**
-     * Set destMail.
-     *
      * @return Notification
      */
     public function setDestMail(string $destMail)
@@ -88,8 +80,6 @@ class Notification
     }
 
     /**
-     * Get title.
-     *
      * @return string
      */
     public function getTitle()
@@ -98,8 +88,6 @@ class Notification
     }
 
     /**
-     * Set title.
-     *
      * @return Notification
      */
     public function setTitle(string $title)
@@ -110,8 +98,6 @@ class Notification
     }
 
     /**
-     * Get content.
-     *
      * @return string
      */
     public function getContent()
@@ -120,8 +106,6 @@ class Notification
     }
 
     /**
-     * Set content.
-     *
      * @return Notification
      */
     public function setContent(string $content)
@@ -132,8 +116,6 @@ class Notification
     }
 
     /**
-     * Get sendFreq.
-     *
      * @return int
      */
     public function getSendFreq()
@@ -142,8 +124,6 @@ class Notification
     }
 
     /**
-     * Set sendFreq.
-     *
      * @return Notification
      */
     public function setSendFreq(int $sendFreq)
@@ -154,8 +134,6 @@ class Notification
     }
 
     /**
-     * Get createdAt.
-     *
      * @return DateTime
      */
     public function getCreatedAt()
@@ -164,8 +142,6 @@ class Notification
     }
 
     /**
-     * Set createdAt.
-     *
      * @return Notification
      */
     public function setCreatedAt(DateTime $createdAt)
@@ -176,8 +152,6 @@ class Notification
     }
 
     /**
-     * Get sentAt.
-     *
      * @return DateTime
      */
     public function getSentAt()
@@ -186,8 +160,6 @@ class Notification
     }
 
     /**
-     * Set sentAt.
-     *
      * @return Notification
      */
     public function setSentAt(DateTime $sentAt)
@@ -198,8 +170,6 @@ class Notification
     }
 
     /**
-     * Get id.
-     *
      * @return int
      */
     public function getId()

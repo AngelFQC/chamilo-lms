@@ -359,8 +359,6 @@ final class GeminiProvider implements AiProviderInterface, AiImageProviderInterf
     }
 
     /**
-     * Generate an image.
-     *
      * @param ?array $options Provider-specific options
      */
     public function generateImage(string $prompt, string $toolName, ?array $options = []): array|string|null
@@ -419,6 +417,229 @@ final class GeminiProvider implements AiProviderInterface, AiImageProviderInterf
                 $toolName,
                 $resolved['aspect_ratio'],
             );
+    }
+
+    public function generateVideo(string $prompt, string $toolName, ?array $options = []): array|string|null
+    {
+        $prompt = trim($prompt);
+        if ('' === $prompt) {
+            return 'Error: Empty prompt.';
+        }
+
+        if ('' === trim($this->videoModel) || '' === trim($this->videoUrlTemplate)) {
+            error_log('[AI][Gemini][Video] Video is not configured for this provider.');
+
+            return null;
+        }
+
+        $userId = $this->getUserId();
+        if (!$userId) {
+            return 'Error: User is not authenticated.';
+        }
+
+        $toolName = trim($toolName);
+        if ('' === $toolName) {
+            $toolName = 'video';
+        }
+
+        $opts = \is_array($options) ? $options : [];
+
+        // Veo requires durationSeconds as NUMBER (int).
+        $durationSeconds = null;
+        if (isset($opts['seconds']) && is_numeric($opts['seconds'])) {
+            $durationSeconds = (int) $opts['seconds'];
+        } elseif (isset($opts['durationSeconds']) && is_numeric($opts['durationSeconds'])) {
+            $durationSeconds = (int) $opts['durationSeconds'];
+        }
+
+        if (null !== $durationSeconds) {
+            if ($durationSeconds < 1) {
+                $durationSeconds = 1;
+            }
+            if ($durationSeconds > 15) {
+                $durationSeconds = 15;
+            }
+        }
+
+        $aspectRatio = (string) ($opts['aspect_ratio'] ?? $this->videoDefaultAspectRatio);
+        $resolution = (string) ($opts['resolution'] ?? $this->videoDefaultResolution);
+
+        if (isset($opts['size'])) {
+            $this->applySizeHintsToVeoParams((string) $opts['size'], $aspectRatio, $resolution);
+        }
+
+        $payload = [
+            'instances' => [
+                ['prompt' => $prompt],
+            ],
+            'parameters' => [
+                'sampleCount' => 1,
+            ],
+        ];
+
+        if ('' !== trim($aspectRatio)) {
+            $payload['parameters']['aspectRatio'] = $aspectRatio;
+        }
+        if ('' !== trim($resolution)) {
+            $payload['parameters']['resolution'] = $resolution;
+        }
+        if (null !== $durationSeconds) {
+            $payload['parameters']['durationSeconds'] = $durationSeconds; // int
+        }
+
+        $url = $this->buildUrl($this->videoUrlTemplate, $this->videoModel);
+        $data = $this->postJson($url, $payload);
+
+        $opName = isset($data['name']) ? trim((string) $data['name']) : '';
+        if ('' === $opName) {
+            $err = $this->extractGeminiErrorMessage($data) ?? 'Missing operation name for video generation.';
+
+            return 'Error: '.$err;
+        }
+
+        $publicId = $this->encodeVideoJobId($opName);
+
+        $this->saveAiRequest(
+            userId: $userId,
+            toolName: $toolName,
+            requestText: $prompt,
+            promptTokens: 0,
+            completionTokens: 0,
+            totalTokens: 0
+        );
+
+        return [
+            'id' => $publicId,
+            'status' => 'pending',
+            'is_base64' => false,
+            'content' => null,
+            'url' => null,
+            'content_type' => 'video/mp4',
+            'revised_prompt' => null,
+        ];
+    }
+
+    public function getVideoJobStatus(string $jobId): ?array
+    {
+        $jobId = trim($jobId);
+        if ('' === $jobId) {
+            return null;
+        }
+
+        // Decode URL-safe id back to the real operation name.
+        $opName = $this->decodeVideoJobId($jobId);
+
+        $base = rtrim($this->videoStatusBaseUrl, '/');
+        $path = ltrim($opName, '/');
+        $url = $base.'/'.$path;
+
+        try {
+            $resp = $this->httpClient->request('GET', $url, [
+                'headers' => [
+                    'x-goog-api-key' => $this->apiKey,
+                    'Accept' => 'application/json',
+                ],
+                'timeout' => 20,
+                'max_duration' => 40,
+            ]);
+
+            $statusCode = $resp->getStatusCode();
+            $raw = (string) $resp->getContent(false);
+            $data = json_decode($raw, true);
+
+            if ($statusCode < 200 || $statusCode >= 300 || !\is_array($data)) {
+                return [
+                    'id' => $jobId,
+                    'status' => 'error',
+                    'error' => 'Failed to fetch Veo operation status.',
+                    'job' => $raw,
+                ];
+            }
+
+            $done = (bool) ($data['done'] ?? false);
+
+            $errMsg = null;
+            if (isset($data['error']) && \is_array($data['error'])) {
+                $msg = $data['error']['message'] ?? null;
+                $errMsg = \is_string($msg) ? trim($msg) : 'Veo returned an error response.';
+            }
+
+            return [
+                'id' => $jobId,
+                'status' => $done ? 'done' : 'pending',
+                'error' => $errMsg,
+                'job' => $data,
+            ];
+        } catch (Throwable $e) {
+            return [
+                'id' => $jobId,
+                'status' => 'error',
+                'error' => $e->getMessage(),
+                'job' => null,
+            ];
+        }
+    }
+
+    public function getVideoJobContentAsBase64(string $jobId, int $maxBytes = 15728640): ?array
+    {
+        $job = $this->getVideoJobStatus($jobId);
+        if (!\is_array($job)) {
+            return null;
+        }
+
+        $status = strtolower(trim((string) ($job['status'] ?? '')));
+        if ('done' !== $status) {
+            return [
+                'is_base64' => false,
+                'content' => null,
+                'url' => null,
+                'content_type' => 'video/mp4',
+                'error' => null,
+            ];
+        }
+
+        $raw = $job['job'] ?? null;
+        if (!\is_array($raw)) {
+            return [
+                'is_base64' => false,
+                'content' => null,
+                'url' => null,
+                'content_type' => 'video/mp4',
+                'error' => (string) ($job['error'] ?? 'Missing operation payload.'),
+            ];
+        }
+
+        $uri = $this->extractVeoVideoUri($raw);
+        if ('' === $uri) {
+            $err = $this->extractGeminiErrorMessage($raw) ?? 'Missing video URI in Veo operation response.';
+
+            return [
+                'is_base64' => false,
+                'content' => null,
+                'url' => null,
+                'content_type' => 'video/mp4',
+                'error' => $err,
+            ];
+        }
+
+        $dl = $this->downloadGeminiFileWithLimit($uri, $maxBytes, 'video/mp4');
+        if (null === $dl) {
+            return [
+                'is_base64' => false,
+                'content' => null,
+                'url' => $uri,
+                'content_type' => 'video/mp4',
+                'error' => 'Failed to download video bytes (or exceeded size limit).',
+            ];
+        }
+
+        return [
+            'is_base64' => true,
+            'content' => base64_encode($dl['bytes']),
+            'url' => null,
+            'content_type' => $dl['content_type'],
+            'error' => null,
+        ];
     }
 
     private function requestGeminiText(
@@ -711,229 +932,6 @@ final class GeminiProvider implements AiProviderInterface, AiImageProviderInterf
 
             return [];
         }
-    }
-
-    public function generateVideo(string $prompt, string $toolName, ?array $options = []): array|string|null
-    {
-        $prompt = trim($prompt);
-        if ('' === $prompt) {
-            return 'Error: Empty prompt.';
-        }
-
-        if ('' === trim($this->videoModel) || '' === trim($this->videoUrlTemplate)) {
-            error_log('[AI][Gemini][Video] Video is not configured for this provider.');
-
-            return null;
-        }
-
-        $userId = $this->getUserId();
-        if (!$userId) {
-            return 'Error: User is not authenticated.';
-        }
-
-        $toolName = trim($toolName);
-        if ('' === $toolName) {
-            $toolName = 'video';
-        }
-
-        $opts = \is_array($options) ? $options : [];
-
-        // Veo requires durationSeconds as NUMBER (int).
-        $durationSeconds = null;
-        if (isset($opts['seconds']) && is_numeric($opts['seconds'])) {
-            $durationSeconds = (int) $opts['seconds'];
-        } elseif (isset($opts['durationSeconds']) && is_numeric($opts['durationSeconds'])) {
-            $durationSeconds = (int) $opts['durationSeconds'];
-        }
-
-        if (null !== $durationSeconds) {
-            if ($durationSeconds < 1) {
-                $durationSeconds = 1;
-            }
-            if ($durationSeconds > 15) {
-                $durationSeconds = 15;
-            }
-        }
-
-        $aspectRatio = (string) ($opts['aspect_ratio'] ?? $this->videoDefaultAspectRatio);
-        $resolution = (string) ($opts['resolution'] ?? $this->videoDefaultResolution);
-
-        if (isset($opts['size'])) {
-            $this->applySizeHintsToVeoParams((string) $opts['size'], $aspectRatio, $resolution);
-        }
-
-        $payload = [
-            'instances' => [
-                ['prompt' => $prompt],
-            ],
-            'parameters' => [
-                'sampleCount' => 1,
-            ],
-        ];
-
-        if ('' !== trim($aspectRatio)) {
-            $payload['parameters']['aspectRatio'] = $aspectRatio;
-        }
-        if ('' !== trim($resolution)) {
-            $payload['parameters']['resolution'] = $resolution;
-        }
-        if (null !== $durationSeconds) {
-            $payload['parameters']['durationSeconds'] = $durationSeconds; // int
-        }
-
-        $url = $this->buildUrl($this->videoUrlTemplate, $this->videoModel);
-        $data = $this->postJson($url, $payload);
-
-        $opName = isset($data['name']) ? trim((string) $data['name']) : '';
-        if ('' === $opName) {
-            $err = $this->extractGeminiErrorMessage($data) ?? 'Missing operation name for video generation.';
-
-            return 'Error: '.$err;
-        }
-
-        $publicId = $this->encodeVideoJobId($opName);
-
-        $this->saveAiRequest(
-            userId: $userId,
-            toolName: $toolName,
-            requestText: $prompt,
-            promptTokens: 0,
-            completionTokens: 0,
-            totalTokens: 0
-        );
-
-        return [
-            'id' => $publicId,
-            'status' => 'pending',
-            'is_base64' => false,
-            'content' => null,
-            'url' => null,
-            'content_type' => 'video/mp4',
-            'revised_prompt' => null,
-        ];
-    }
-
-    public function getVideoJobStatus(string $jobId): ?array
-    {
-        $jobId = trim($jobId);
-        if ('' === $jobId) {
-            return null;
-        }
-
-        // Decode URL-safe id back to the real operation name.
-        $opName = $this->decodeVideoJobId($jobId);
-
-        $base = rtrim($this->videoStatusBaseUrl, '/');
-        $path = ltrim($opName, '/');
-        $url = $base.'/'.$path;
-
-        try {
-            $resp = $this->httpClient->request('GET', $url, [
-                'headers' => [
-                    'x-goog-api-key' => $this->apiKey,
-                    'Accept' => 'application/json',
-                ],
-                'timeout' => 20,
-                'max_duration' => 40,
-            ]);
-
-            $statusCode = $resp->getStatusCode();
-            $raw = (string) $resp->getContent(false);
-            $data = json_decode($raw, true);
-
-            if ($statusCode < 200 || $statusCode >= 300 || !\is_array($data)) {
-                return [
-                    'id' => $jobId,
-                    'status' => 'error',
-                    'error' => 'Failed to fetch Veo operation status.',
-                    'job' => $raw,
-                ];
-            }
-
-            $done = (bool) ($data['done'] ?? false);
-
-            $errMsg = null;
-            if (isset($data['error']) && \is_array($data['error'])) {
-                $msg = $data['error']['message'] ?? null;
-                $errMsg = \is_string($msg) ? trim($msg) : 'Veo returned an error response.';
-            }
-
-            return [
-                'id' => $jobId,
-                'status' => $done ? 'done' : 'pending',
-                'error' => $errMsg,
-                'job' => $data,
-            ];
-        } catch (Throwable $e) {
-            return [
-                'id' => $jobId,
-                'status' => 'error',
-                'error' => $e->getMessage(),
-                'job' => null,
-            ];
-        }
-    }
-
-    public function getVideoJobContentAsBase64(string $jobId, int $maxBytes = 15728640): ?array
-    {
-        $job = $this->getVideoJobStatus($jobId);
-        if (!\is_array($job)) {
-            return null;
-        }
-
-        $status = strtolower(trim((string) ($job['status'] ?? '')));
-        if ('done' !== $status) {
-            return [
-                'is_base64' => false,
-                'content' => null,
-                'url' => null,
-                'content_type' => 'video/mp4',
-                'error' => null,
-            ];
-        }
-
-        $raw = $job['job'] ?? null;
-        if (!\is_array($raw)) {
-            return [
-                'is_base64' => false,
-                'content' => null,
-                'url' => null,
-                'content_type' => 'video/mp4',
-                'error' => (string) ($job['error'] ?? 'Missing operation payload.'),
-            ];
-        }
-
-        $uri = $this->extractVeoVideoUri($raw);
-        if ('' === $uri) {
-            $err = $this->extractGeminiErrorMessage($raw) ?? 'Missing video URI in Veo operation response.';
-
-            return [
-                'is_base64' => false,
-                'content' => null,
-                'url' => null,
-                'content_type' => 'video/mp4',
-                'error' => $err,
-            ];
-        }
-
-        $dl = $this->downloadGeminiFileWithLimit($uri, $maxBytes, 'video/mp4');
-        if (null === $dl) {
-            return [
-                'is_base64' => false,
-                'content' => null,
-                'url' => $uri,
-                'content_type' => 'video/mp4',
-                'error' => 'Failed to download video bytes (or exceeded size limit).',
-            ];
-        }
-
-        return [
-            'is_base64' => true,
-            'content' => base64_encode($dl['bytes']),
-            'url' => null,
-            'content_type' => $dl['content_type'],
-            'error' => null,
-        ];
     }
 
     private function encodeVideoJobId(string $operationName): string

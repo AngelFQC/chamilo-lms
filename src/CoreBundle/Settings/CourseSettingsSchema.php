@@ -37,43 +37,6 @@ class CourseSettingsSchema extends AbstractSettingsSchema
         $this->toolChain = $tools;
     }
 
-    private function getFilteredToolChoices(): array
-    {
-        $choices = [];
-        $excludedSlugs = [
-            'asset',
-            'course_homepage',
-            'course_tool',
-            'course_maintenance',
-            'member',
-            'course_setting',
-            'shortcuts',
-            'tool_intro',
-            'usergroup',
-        ];
-
-        /** @var AbstractTool $tool */
-        foreach ($this->toolChain->getTools() as $tool) {
-            $title = $tool->getTitle();
-            $slug = null;
-            if (method_exists($tool, 'getTitle')) {
-                $slug = strtolower((string) $tool->getTitle());
-            } elseif (method_exists($tool, 'getId')) {
-                $slug = strtolower((string) $tool->getId());
-            }
-
-            if ($slug && \in_array($slug, $excludedSlugs, true)) {
-                continue;
-            }
-
-            $choices[$title] = $slug ?: $title;
-        }
-
-        ksort($choices, SORT_NATURAL | SORT_FLAG_CASE);
-
-        return $choices;
-    }
-
     public function buildSettings(AbstractSettingsBuilder $builder): void
     {
         $toolChoices = $this->getFilteredToolChoices();
@@ -256,5 +219,42 @@ class CourseSettingsSchema extends AbstractSettingsSchema
         ;
 
         $this->updateFormFieldsFromSettingsInfo($builder);
+    }
+
+    private function getFilteredToolChoices(): array
+    {
+        $choices = [];
+        $excludedSlugs = [
+            'asset',
+            'course_homepage',
+            'course_tool',
+            'course_maintenance',
+            'member',
+            'course_setting',
+            'shortcuts',
+            'tool_intro',
+            'usergroup',
+        ];
+
+        /** @var AbstractTool $tool */
+        foreach ($this->toolChain->getTools() as $tool) {
+            $title = $tool->getTitle();
+            $slug = null;
+            if (method_exists($tool, 'getTitle')) {
+                $slug = strtolower((string) $tool->getTitle());
+            } elseif (method_exists($tool, 'getId')) {
+                $slug = strtolower((string) $tool->getId());
+            }
+
+            if ($slug && \in_array($slug, $excludedSlugs, true)) {
+                continue;
+            }
+
+            $choices[$title] = $slug ?: $title;
+        }
+
+        ksort($choices, SORT_NATURAL | SORT_FLAG_CASE);
+
+        return $choices;
     }
 }

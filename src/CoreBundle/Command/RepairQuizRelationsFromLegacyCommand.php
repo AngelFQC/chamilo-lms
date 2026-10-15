@@ -209,8 +209,8 @@ final class RepairQuizRelationsFromLegacyCommand extends Command
              FROM c_quiz quiz
              LEFT JOIN c_quiz_rel_question relation ON relation.quiz_id = quiz.iid
              LEFT JOIN c_quiz_question question ON question.iid = relation.question_id'
-            .$quizFilterSql.
-            ' GROUP BY quiz.iid
+            .$quizFilterSql
+            .' GROUP BY quiz.iid
               ORDER BY quiz.iid ASC',
             $quizFilterParams,
             $quizFilterTypes

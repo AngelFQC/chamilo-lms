@@ -42,7 +42,7 @@ class SessionDeletedEventTest extends AbstractApiTest
 
         self::getContainer()->get('event_dispatcher')->addListener(
             Events::SESSION_DELETED,
-            function (SessionDeletedEvent $event) use (&$seen, $repo): void {
+            static function (SessionDeletedEvent $event) use (&$seen, $repo): void {
                 $seen[] = [
                     'id' => $event->getSessionId(),
                     'type' => $event->getType(),
@@ -78,7 +78,7 @@ class SessionDeletedEventTest extends AbstractApiTest
 
         self::getContainer()->get('event_dispatcher')->addListener(
             Events::SESSION_DELETED,
-            function (SessionDeletedEvent $event) use (&$seen, $repo): void {
+            static function (SessionDeletedEvent $event) use (&$seen, $repo): void {
                 $seen[] = [
                     'id' => $event->getSessionId(),
                     'readable' => null !== $repo->find($event->getSessionId()),
@@ -141,7 +141,7 @@ class SessionDeletedEventTest extends AbstractApiTest
 
         self::getContainer()->get('event_dispatcher')->addListener(
             Events::SESSION_DELETED,
-            function (SessionDeletedEvent $event) use (&$seen): void {
+            static function (SessionDeletedEvent $event) use (&$seen): void {
                 $seen[] = $event->getSessionId();
             }
         );

@@ -171,6 +171,11 @@ final class Version20240323181500 extends AbstractMigrationChamilo
         ));
     }
 
+    public function down(Schema $schema): void
+    {
+        // Data migration cannot be safely reverted automatically.
+    }
+
     /**
      * @param array<int, array<string, mixed>> $rows
      * @param array<int, string>               $eventColumns
@@ -687,10 +692,5 @@ SQL
         } catch (Throwable) {
             return false;
         }
-    }
-
-    public function down(Schema $schema): void
-    {
-        // Data migration cannot be safely reverted automatically.
     }
 }

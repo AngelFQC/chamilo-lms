@@ -69,8 +69,6 @@ class CWikiConf
     protected int $delayedsubmit;
 
     /**
-     * Get task.
-     *
      * @return string
      */
     public function getTask()
@@ -79,8 +77,6 @@ class CWikiConf
     }
 
     /**
-     * Set task.
-     *
      * @return CWikiConf
      */
     public function setTask(string $task)
@@ -91,8 +87,6 @@ class CWikiConf
     }
 
     /**
-     * Get feedback1.
-     *
      * @return string
      */
     public function getFeedback1()
@@ -101,8 +95,6 @@ class CWikiConf
     }
 
     /**
-     * Set feedback1.
-     *
      * @return CWikiConf
      */
     public function setFeedback1(string $feedback1)
@@ -113,8 +105,6 @@ class CWikiConf
     }
 
     /**
-     * Get feedback2.
-     *
      * @return string
      */
     public function getFeedback2()
@@ -123,8 +113,6 @@ class CWikiConf
     }
 
     /**
-     * Set feedback2.
-     *
      * @return CWikiConf
      */
     public function setFeedback2(string $feedback2)
@@ -135,8 +123,6 @@ class CWikiConf
     }
 
     /**
-     * Get feedback3.
-     *
      * @return string
      */
     public function getFeedback3()
@@ -145,8 +131,6 @@ class CWikiConf
     }
 
     /**
-     * Set feedback3.
-     *
      * @return CWikiConf
      */
     public function setFeedback3(string $feedback3)
@@ -157,8 +141,6 @@ class CWikiConf
     }
 
     /**
-     * Get fprogress1.
-     *
      * @return string
      */
     public function getFprogress1()
@@ -167,8 +149,6 @@ class CWikiConf
     }
 
     /**
-     * Set fprogress1.
-     *
      * @return CWikiConf
      */
     public function setFprogress1(string $fprogress1)
@@ -179,8 +159,6 @@ class CWikiConf
     }
 
     /**
-     * Get fprogress2.
-     *
      * @return string
      */
     public function getFprogress2()
@@ -189,8 +167,6 @@ class CWikiConf
     }
 
     /**
-     * Set fprogress2.
-     *
      * @return CWikiConf
      */
     public function setFprogress2(string $fprogress2)
@@ -201,8 +177,6 @@ class CWikiConf
     }
 
     /**
-     * Get fprogress3.
-     *
      * @return string
      */
     public function getFprogress3()
@@ -211,8 +185,6 @@ class CWikiConf
     }
 
     /**
-     * Set fprogress3.
-     *
      * @return CWikiConf
      */
     public function setFprogress3(string $fprogress3)
@@ -223,8 +195,6 @@ class CWikiConf
     }
 
     /**
-     * Get maxSize.
-     *
      * @return int
      */
     public function getMaxSize()
@@ -233,8 +203,6 @@ class CWikiConf
     }
 
     /**
-     * Set maxSize.
-     *
      * @return CWikiConf
      */
     public function setMaxSize(int $maxSize)
@@ -245,8 +213,6 @@ class CWikiConf
     }
 
     /**
-     * Get maxText.
-     *
      * @return int
      */
     public function getMaxText()
@@ -255,8 +221,6 @@ class CWikiConf
     }
 
     /**
-     * Set maxText.
-     *
      * @return CWikiConf
      */
     public function setMaxText(int $maxText)
@@ -267,8 +231,6 @@ class CWikiConf
     }
 
     /**
-     * Get maxVersion.
-     *
      * @return int
      */
     public function getMaxVersion()
@@ -277,8 +239,6 @@ class CWikiConf
     }
 
     /**
-     * Set maxVersion.
-     *
      * @return CWikiConf
      */
     public function setMaxVersion(int $maxVersion)
@@ -288,9 +248,6 @@ class CWikiConf
         return $this;
     }
 
-    /**
-     * Get startdateAssig.
-     */
     public function getStartdateAssig(): ?DateTime
     {
         return $this->startdateAssig;
@@ -316,8 +273,6 @@ class CWikiConf
     }
 
     /**
-     * Get delayedsubmit.
-     *
      * @return int
      */
     public function getDelayedsubmit()
@@ -326,8 +281,6 @@ class CWikiConf
     }
 
     /**
-     * Set delayedsubmit.
-     *
      * @return CWikiConf
      */
     public function setDelayedsubmit(int $delayedsubmit)
@@ -338,8 +291,6 @@ class CWikiConf
     }
 
     /**
-     * Get cId.
-     *
      * @return int
      */
     public function getCId()
@@ -348,8 +299,6 @@ class CWikiConf
     }
 
     /**
-     * Set cId.
-     *
      * @return CWikiConf
      */
     public function setCId(int $cId)
@@ -360,8 +309,6 @@ class CWikiConf
     }
 
     /**
-     * Get pageId.
-     *
      * @return int
      */
     public function getPageId()
@@ -370,8 +317,6 @@ class CWikiConf
     }
 
     /**
-     * Set pageId.
-     *
      * @return CWikiConf
      */
     public function setPageId(int $pageId)

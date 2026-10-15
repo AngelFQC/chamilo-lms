@@ -55,8 +55,6 @@ class CGroupRelTutor
     }
 
     /**
-     * Get group.
-     *
      * @return CGroup
      */
     public function getGroup()
@@ -65,8 +63,6 @@ class CGroupRelTutor
     }
 
     /**
-     * Set cId.
-     *
      * @return CGroupRelTutor
      */
     public function setCId(int $cId)
@@ -77,8 +73,6 @@ class CGroupRelTutor
     }
 
     /**
-     * Get cId.
-     *
      * @return int
      */
     public function getCId()

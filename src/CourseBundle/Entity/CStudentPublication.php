@@ -524,7 +524,7 @@ class CStudentPublication extends AbstractResource implements ResourceInterface,
     public function getChildFileCount(): int
     {
         return $this->children
-            ->filter(fn (self $child) => 'file' === $child->getFiletype() && 2 !== $child->getActive())
+            ->filter(static fn (self $child) => 'file' === $child->getFiletype() && 2 !== $child->getActive())
             ->count()
         ;
     }
@@ -689,7 +689,7 @@ class CStudentPublication extends AbstractResource implements ResourceInterface,
             ->filter(function (self $child) {
                 return $child->postGroupId === $this->postGroupId;
             })
-            ->reduce(function (int $accumulator, self $child) use (&$userIdList): int {
+            ->reduce(static function (int $accumulator, self $child) use (&$userIdList): int {
                 $user = $child->getUser();
 
                 if (!\in_array($user->getId(), $userIdList, true)) {

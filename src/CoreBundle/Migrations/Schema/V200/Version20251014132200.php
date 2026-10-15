@@ -191,8 +191,8 @@ SQL;
             $var = (string) $row['variable'];
             $cnt = (int) $row['c'];
 
-            $this->dbg("[GROUP] Consolidating variable='{$var}' category='{$category}' access_url=".
-                (null === $accessUrl ? 'NULL' : (string) $accessUrl)." (rows={$cnt})");
+            $this->dbg("[GROUP] Consolidating variable='{$var}' category='{$category}' access_url="
+                .(null === $accessUrl ? 'NULL' : (string) $accessUrl)." (rows={$cnt})");
 
             $this->consolidateOne($conn, $accessUrl, $category, $var);
         }
@@ -217,8 +217,8 @@ SQL;
             $var = (string) $row['variable'];
             $cnt = (int) $row['c'];
 
-            $this->dbg("[GROUP] (safety) Consolidating variable='{$var}' category='{$category}' access_url=".
-                (null === $accessUrl ? 'NULL' : (string) $accessUrl)." (rows={$cnt})");
+            $this->dbg("[GROUP] (safety) Consolidating variable='{$var}' category='{$category}' access_url="
+                .(null === $accessUrl ? 'NULL' : (string) $accessUrl)." (rows={$cnt})");
 
             $this->consolidateOne($conn, $accessUrl, $category, $var);
         }
@@ -254,14 +254,14 @@ SQL;
         }
 
         if (empty($items)) {
-            $this->dbg("[SKIP] No rows for variable='{$variable}' category='{$category}' access_url=".
-                (null === $accessUrl ? 'NULL' : (string) $accessUrl));
+            $this->dbg("[SKIP] No rows for variable='{$variable}' category='{$category}' access_url="
+                .(null === $accessUrl ? 'NULL' : (string) $accessUrl));
 
             return;
         }
 
-        $this->dbg("[WORK] Processing variable='{$variable}' category='{$category}' access_url=".
-            (null === $accessUrl ? 'NULL' : (string) $accessUrl).' (row_count='.\count($items).')');
+        $this->dbg("[WORK] Processing variable='{$variable}' category='{$category}' access_url="
+            .(null === $accessUrl ? 'NULL' : (string) $accessUrl).' (row_count='.\count($items).')');
 
         // Determine if there is at least one subkey among rows
         $hasSubkey = false;
@@ -284,9 +284,9 @@ SQL;
                 $subkey = $it['subkey'] ?? null;
 
                 $clean = str_replace(['[', ']', '"', "'", ' '], '', $rawVal);
-                $this->dbg("[TOKENIZE] id={$id} subkey=".
-                    (null === $subkey ? 'NULL' : "'".$subkey."'").
-                    " raw='{$rawVal}' cleaned='{$clean}'");
+                $this->dbg("[TOKENIZE] id={$id} subkey="
+                    .(null === $subkey ? 'NULL' : "'".$subkey."'")
+                    ." raw='{$rawVal}' cleaned='{$clean}'");
 
                 if (null !== $subkey && '' !== $subkey) {
                     $v = strtolower(trim($rawVal));
@@ -325,8 +325,8 @@ SQL;
         $csv = implode(',', $finalTokens);
         $keepId = (int) $items[0]['id'];
 
-        $this->dbg("[UPDATE] KEEP id={$keepId} variable='{$variable}' category='{$category}' access_url=".
-            (null === $accessUrl ? 'NULL' : (string) $accessUrl)." final_csv='{$csv}'");
+        $this->dbg("[UPDATE] KEEP id={$keepId} variable='{$variable}' category='{$category}' access_url="
+            .(null === $accessUrl ? 'NULL' : (string) $accessUrl)." final_csv='{$csv}'");
 
         $conn->executeStatement(
             'UPDATE settings SET selected_value = ? WHERE id = ?',
@@ -336,9 +336,9 @@ SQL;
         // Delete the rest
         $idsToDelete = array_map(static fn ($it) => (int) $it['id'], \array_slice($items, 1));
         if ($idsToDelete) {
-            $this->dbg("[DELETE] variable='{$variable}' category='{$category}' access_url=".
-                (null === $accessUrl ? 'NULL' : (string) $accessUrl).' deleting_ids='.
-                json_encode($idsToDelete));
+            $this->dbg("[DELETE] variable='{$variable}' category='{$category}' access_url="
+                .(null === $accessUrl ? 'NULL' : (string) $accessUrl).' deleting_ids='
+                .json_encode($idsToDelete));
 
             $in = implode(',', array_fill(0, \count($idsToDelete), '?'));
             $conn->executeStatement("DELETE FROM settings WHERE id IN ($in)", $idsToDelete);

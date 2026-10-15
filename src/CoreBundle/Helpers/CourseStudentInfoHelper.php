@@ -36,12 +36,12 @@ final class CourseStudentInfoHelper
      */
     private const int LOG_LIMIT = 600;
 
-    private static int $logCount = 0;
-
     /**
      * Standard table in Chamilo 2 for resources visibility and placement.
      */
     private const string RESOURCE_LINK_TABLE = 'resource_link';
+
+    private static int $logCount = 0;
 
     private bool $showDebug = false;
 

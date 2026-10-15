@@ -127,7 +127,7 @@ final readonly class ApnsMobilePushProvider implements MobilePushProviderInterfa
 
         return $this->cache->get(
             $cacheKey,
-            function (ItemInterface $item) use ($config): string {
+            static function (ItemInterface $item) use ($config): string {
                 $privateKey = file_get_contents($config['keyFile']);
 
                 if (false === $privateKey || !str_contains($privateKey, 'BEGIN PRIVATE KEY')) {

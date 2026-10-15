@@ -55,7 +55,8 @@ WHERE TABLE_SCHEMA = DATABASE()
   AND TABLE_NAME = :tableName
   AND COLUMN_NAME = :columnName
 LIMIT 1
-SQL,
+SQL
+            ,
             ['tableName' => $table, 'columnName' => $column]
         );
 

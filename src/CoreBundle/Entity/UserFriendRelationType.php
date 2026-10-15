@@ -24,8 +24,6 @@ class UserFriendRelationType
     protected string $title;
 
     /**
-     * Get title.
-     *
      * @return string
      */
     public function getTitle()
@@ -34,8 +32,6 @@ class UserFriendRelationType
     }
 
     /**
-     * Set title.
-     *
      * @return UserFriendRelationType
      */
     public function setTitle(string $title)
@@ -46,8 +42,6 @@ class UserFriendRelationType
     }
 
     /**
-     * Get id.
-     *
      * @return int
      */
     public function getId()

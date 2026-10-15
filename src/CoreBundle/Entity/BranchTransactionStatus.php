@@ -24,8 +24,6 @@ class BranchTransactionStatus
     protected string $title;
 
     /**
-     * Get id.
-     *
      * @return int
      */
     public function getId()
@@ -34,8 +32,6 @@ class BranchTransactionStatus
     }
 
     /**
-     * Get title.
-     *
      * @return string
      */
     public function getTitle()
@@ -44,8 +40,6 @@ class BranchTransactionStatus
     }
 
     /**
-     * Set title.
-     *
      * @return BranchTransactionStatus
      */
     public function setTitle(string $title)

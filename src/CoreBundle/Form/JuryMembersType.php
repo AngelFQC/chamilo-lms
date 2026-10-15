@@ -29,7 +29,7 @@ class JuryMembersType extends AbstractType
             [
                 'class' => 'Entity\Role',
                 'property' => 'name',
-                'query_builder' => function (EntityRepository $er) {
+                'query_builder' => static function (EntityRepository $er) {
                     return $er->createQueryBuilder('u')
                         ->where('u.role LIKE :role')
                         ->setParameter(':role', 'ROLE_JURY%')
@@ -50,7 +50,7 @@ class JuryMembersType extends AbstractType
         // Fixes issue with the ajax select, waiting this workaround until symfony add ajax search into the core
         $builder->addEventListener(
             FormEvents::PRE_SUBMIT,
-            function ($event) use ($factory): void {
+            static function ($event) use ($factory): void {
                 $form = $event->getForm();
                 $case = $event->getData();
                 $id = $case['user_id'][0];

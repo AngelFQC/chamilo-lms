@@ -163,174 +163,6 @@ class BaseResourceFileAction
         }
     }
 
-    /**
-     * Builds the canonical resource link list from the request course context.
-     *
-     * The course/session/group that gate the operation's `security:` expression
-     * are resolved by CidReqListener and stored in the session (the contextual
-     * ROLE_CURRENT_COURSE_* roles are computed from there). That session context
-     * is therefore the single source of truth for the link binding, so we ignore
-     * any cid/sid/gid sent in the request body and only keep the caller-provided
-     * visibility. This closes the IDOR where the body could target a foreign
-     * course regardless of the gated context.
-     *
-     * $course is for in-process callers only — the MCP tools and the AI media
-     * storage service, which build a synthetic Request and never pass through
-     * CidReqListener, so there is no session context to read. They already hold
-     * the course as a first-class argument and their own authorization gates it.
-     * A real HTTP request must never reach this parameter: leave it null and the
-     * session stays the single source of truth. Session and group are not part of
-     * the override, since those callers only ever create base-course content.
-     *
-     * @param array<int, mixed> $bodyResourceLinkList resource link entries parsed from the request body
-     *
-     * @return array<int, array<string, int>> a single link bound to the current course context
-     */
-    protected function buildResourceLinkListFromContext(
-        CidReqHelper $cidReqHelper,
-        array $bodyResourceLinkList,
-        int $defaultVisibility = ResourceLink::VISIBILITY_PUBLISHED,
-        ?Course $course = null
-    ): array {
-        $cid = (int) ($course ?? $cidReqHelper->getCourseEntity())?->getId();
-        $sid = null === $course ? (int) $cidReqHelper->getSessionEntity()?->getId() : 0;
-        $gid = null === $course ? (int) $cidReqHelper->getGroupEntity()?->getIid() : 0;
-
-        // Visibility is the only field still honored from the body.
-        $visibility = $defaultVisibility;
-        $first = $bodyResourceLinkList[0] ?? null;
-        if (\is_array($first) && isset($first['visibility'])) {
-            $visibility = (int) $first['visibility'];
-        }
-
-        $link = ['visibility' => $visibility];
-        if ($cid > 0) {
-            $link['cid'] = $cid;
-        }
-        if ($sid > 0) {
-            $link['sid'] = $sid;
-        }
-        if ($gid > 0) {
-            $link['gid'] = $gid;
-        }
-
-        return [$link];
-    }
-
-    /**
-     * The body picks where inside the current course the new node lands; it must never point
-     * the parent at another course's tree. buildResourceLinkListFromContext() already forces
-     * the link binding, so without this a teacher could nest a node under a foreign course
-     * while its link stayed in their own — the node ends up in someone else's path, quota and
-     * subtree. Callers without a course context (personal files, ...) are left untouched.
-     *
-     * $course carries the same in-process-only meaning as in
-     * buildResourceLinkListFromContext(): it lets a caller with no session context
-     * still get the parent checked instead of skipping the guard.
-     */
-    protected function assertParentNodeIsInCurrentCourse(
-        CidReqHelper $cidReqHelper,
-        int $parentResourceNodeId,
-        EntityManagerInterface $em,
-        ?Course $course = null
-    ): void {
-        $courseNode = ($course ?? $cidReqHelper->getCourseEntity())?->getResourceNode();
-        if (null === $courseNode) {
-            return;
-        }
-
-        $parentNode = $em->getRepository(ResourceNode::class)->find($parentResourceNodeId);
-        if (null === $parentNode) {
-            throw new AccessDeniedHttpException('The parent resource node does not exist.');
-        }
-
-        if ((int) $parentNode->getId() === (int) $courseNode->getId()) {
-            return;
-        }
-
-        // Materialized paths end each segment with "-<id>/", so the prefix cannot match a
-        // different course by accident.
-        if (!str_starts_with((string) $parentNode->getPath(), (string) $courseNode->getPath())) {
-            throw new AccessDeniedHttpException('The parent resource node does not belong to the current course.');
-        }
-    }
-
-    /**
-     * A resource referenced by id from the body (e.g. a link category) must already live in
-     * the current course, otherwise a teacher could attach their content to another course's.
-     */
-    protected function assertResourceBelongsToCurrentCourse(AbstractResource $resource, CidReqHelper $cidReqHelper): void
-    {
-        $courseId = (int) $cidReqHelper->getCourseEntity()?->getId();
-
-        foreach ($resource->getResourceNode()?->getResourceLinks() ?? [] as $resourceLink) {
-            if ($courseId > 0 && $courseId === (int) $resourceLink->getCourse()?->getId()) {
-                return;
-            }
-        }
-
-        throw new AccessDeniedHttpException('The resource does not belong to the current course.');
-    }
-
-    /**
-     * @todo use this function inside handleCreateFileRequest
-     */
-    protected function handleCreateRequest(
-        AbstractResource $resource,
-        ResourceRepository $resourceRepository,
-        Request $request,
-        CidReqHelper $cidReqHelper,
-        EntityManagerInterface $em
-    ): array {
-        $contentData = $request->getContent();
-
-        if (!empty($contentData)) {
-            $contentData = json_decode($contentData, true);
-            $title = $contentData['title'] ?? '';
-            $rawParent = $contentData['parentResourceNodeId'] ?? 0;
-            $parentResourceNodeId = (int) ($this->normalizeNodeId($rawParent) ?? 0);
-            $resourceLinkList = $contentData['resourceLinkList'] ?? [];
-            if (empty($resourceLinkList)) {
-                $resourceLinkList = $contentData['resourceLinkListFromEntity'] ?? [];
-            }
-        } else {
-            $contentData = $request->request->all();
-            $title = $request->request->get('title');
-            $rawParent = $request->request->get('parentResourceNodeId');
-            $parentResourceNodeId = (int) ($this->normalizeNodeId($rawParent) ?? 0);
-            $resourceLinkList = ($request->request->get('resourceLinkList') ?? []);
-            if (!empty($resourceLinkList)) {
-                $resourceLinkList = !str_contains($resourceLinkList, '[') ? json_decode('['.$resourceLinkList.']', true) : json_decode($resourceLinkList, true);
-                if (empty($resourceLinkList)) {
-                    $message = 'resourceLinkList is not a valid json. Use for example: [{"cid":1, "visibility":1}]';
-
-                    throw new InvalidArgumentException($message);
-                }
-            }
-        }
-
-        if (0 === $parentResourceNodeId) {
-            throw new Exception('Parameter parentResourceNodeId int value is needed');
-        }
-
-        $this->assertParentNodeIsInCurrentCourse($cidReqHelper, $parentResourceNodeId, $em);
-
-        $resource->setParentResourceNode($parentResourceNodeId);
-
-        if (empty($title)) {
-            throw new InvalidArgumentException('title is required');
-        }
-
-        $resource->setResourceName($title);
-
-        // Set resource link list if exists.
-        if (!empty($resourceLinkList)) {
-            $resource->setResourceLinkArray($resourceLinkList);
-        }
-
-        return $contentData;
-    }
-
     public function handleCreateCommentRequest(
         AbstractResource $resource,
         ResourceRepository $resourceRepository,
@@ -412,82 +244,6 @@ class BaseResourceFileAction
             $courseRepository,
             $courseHelper,
             $course
-        );
-    }
-
-    /**
-     * Reads a create-file request into the typed input handleCreateFile() takes.
-     *
-     * @param ?array<int, mixed> $resourceLinkListOverride
-     */
-    protected function resourceFileInputFromRequest(
-        Request $request,
-        ?array $resourceLinkListOverride = null
-    ): ResourceFileInput {
-        $contentData = $request->getContent();
-
-        if (!empty($contentData)) {
-            $contentData = json_decode($contentData, true);
-            $title = $contentData['title'] ?? '';
-            $comment = $contentData['comment'] ?? '';
-            $rawParent = $contentData['parentResourceNodeId'] ?? 0;
-            $parentResourceNodeId = (int) ($this->normalizeNodeId($rawParent) ?? 0);
-            $fileType = $contentData['filetype'] ?? '';
-            $resourceLinkList = $contentData['resourceLinkList'] ?? [];
-            $language = \array_key_exists('language', (array) $contentData)
-                ? (string) $contentData['language']
-                : null;
-        } else {
-            $title = $request->request->get('title');
-            $comment = $request->request->get('comment');
-            $rawParent = $request->request->get('parentResourceNodeId');
-            $parentResourceNodeId = (int) ($this->normalizeNodeId($rawParent) ?? 0);
-            $fileType = $request->request->get('filetype');
-            $resourceLinkList = ($request->request->get('resourceLinkList') ?? []);
-            if (!empty($resourceLinkList)) {
-                $resourceLinkList = !str_contains($resourceLinkList, '[')
-                    ? json_decode('['.$resourceLinkList.']', true)
-                    : json_decode($resourceLinkList, true);
-
-                if (empty($resourceLinkList)) {
-                    $message = 'resourceLinkList is not a valid json. Use for example: [{"cid":1, "visibility":1}]';
-
-                    throw new InvalidArgumentException($message);
-                }
-            }
-            $language = $request->request->has('language')
-                ? (string) $request->request->get('language')
-                : null;
-        }
-
-        // The controller may force the link context (cid/sid/gid) from the
-        // session-resolved course, ignoring whatever the body sent.
-        if (null !== $resourceLinkListOverride) {
-            $resourceLinkList = $resourceLinkListOverride;
-        }
-
-        $uploadFile = null;
-        if ($request->files->count() > 0) {
-            if (!$request->files->has('uploadFile')) {
-                throw new BadRequestHttpException('"uploadFile" is required');
-            }
-
-            $uploadFile = $request->files->get('uploadFile');
-        }
-
-        return new ResourceFileInput(
-            filetype: (string) $fileType,
-            parentResourceNodeId: $parentResourceNodeId,
-            title: null === $title ? null : (string) $title,
-            comment: (string) $comment,
-            resourceLinkList: \is_array($resourceLinkList) ? $resourceLinkList : [],
-            uploadFile: $uploadFile instanceof UploadedFile ? $uploadFile : null,
-            contentFile: $request->request->has('contentFile')
-                ? (string) $request->request->get('contentFile')
-                : null,
-            contentFileExtension: strtolower(trim((string) $request->request->get('contentFileExtension', 'html'))),
-            contentFileMimeType: strtolower(trim((string) $request->request->get('contentFileMimeType', 'text/html'))),
-            language: $language,
         );
     }
 
@@ -686,6 +442,250 @@ class BaseResourceFileAction
             'filetype' => (string) $filetypeResult,
             'comment' => (string) $comment,
         ];
+    }
+
+    /**
+     * Builds the canonical resource link list from the request course context.
+     *
+     * The course/session/group that gate the operation's `security:` expression
+     * are resolved by CidReqListener and stored in the session (the contextual
+     * ROLE_CURRENT_COURSE_* roles are computed from there). That session context
+     * is therefore the single source of truth for the link binding, so we ignore
+     * any cid/sid/gid sent in the request body and only keep the caller-provided
+     * visibility. This closes the IDOR where the body could target a foreign
+     * course regardless of the gated context.
+     *
+     * $course is for in-process callers only — the MCP tools and the AI media
+     * storage service, which build a synthetic Request and never pass through
+     * CidReqListener, so there is no session context to read. They already hold
+     * the course as a first-class argument and their own authorization gates it.
+     * A real HTTP request must never reach this parameter: leave it null and the
+     * session stays the single source of truth. Session and group are not part of
+     * the override, since those callers only ever create base-course content.
+     *
+     * @param array<int, mixed> $bodyResourceLinkList resource link entries parsed from the request body
+     *
+     * @return array<int, array<string, int>> a single link bound to the current course context
+     */
+    protected function buildResourceLinkListFromContext(
+        CidReqHelper $cidReqHelper,
+        array $bodyResourceLinkList,
+        int $defaultVisibility = ResourceLink::VISIBILITY_PUBLISHED,
+        ?Course $course = null
+    ): array {
+        $cid = (int) ($course ?? $cidReqHelper->getCourseEntity())?->getId();
+        $sid = null === $course ? (int) $cidReqHelper->getSessionEntity()?->getId() : 0;
+        $gid = null === $course ? (int) $cidReqHelper->getGroupEntity()?->getIid() : 0;
+
+        // Visibility is the only field still honored from the body.
+        $visibility = $defaultVisibility;
+        $first = $bodyResourceLinkList[0] ?? null;
+        if (\is_array($first) && isset($first['visibility'])) {
+            $visibility = (int) $first['visibility'];
+        }
+
+        $link = ['visibility' => $visibility];
+        if ($cid > 0) {
+            $link['cid'] = $cid;
+        }
+        if ($sid > 0) {
+            $link['sid'] = $sid;
+        }
+        if ($gid > 0) {
+            $link['gid'] = $gid;
+        }
+
+        return [$link];
+    }
+
+    /**
+     * The body picks where inside the current course the new node lands; it must never point
+     * the parent at another course's tree. buildResourceLinkListFromContext() already forces
+     * the link binding, so without this a teacher could nest a node under a foreign course
+     * while its link stayed in their own — the node ends up in someone else's path, quota and
+     * subtree. Callers without a course context (personal files, ...) are left untouched.
+     *
+     * $course carries the same in-process-only meaning as in
+     * buildResourceLinkListFromContext(): it lets a caller with no session context
+     * still get the parent checked instead of skipping the guard.
+     */
+    protected function assertParentNodeIsInCurrentCourse(
+        CidReqHelper $cidReqHelper,
+        int $parentResourceNodeId,
+        EntityManagerInterface $em,
+        ?Course $course = null
+    ): void {
+        $courseNode = ($course ?? $cidReqHelper->getCourseEntity())?->getResourceNode();
+        if (null === $courseNode) {
+            return;
+        }
+
+        $parentNode = $em->getRepository(ResourceNode::class)->find($parentResourceNodeId);
+        if (null === $parentNode) {
+            throw new AccessDeniedHttpException('The parent resource node does not exist.');
+        }
+
+        if ((int) $parentNode->getId() === (int) $courseNode->getId()) {
+            return;
+        }
+
+        // Materialized paths end each segment with "-<id>/", so the prefix cannot match a
+        // different course by accident.
+        if (!str_starts_with((string) $parentNode->getPath(), (string) $courseNode->getPath())) {
+            throw new AccessDeniedHttpException('The parent resource node does not belong to the current course.');
+        }
+    }
+
+    /**
+     * A resource referenced by id from the body (e.g. a link category) must already live in
+     * the current course, otherwise a teacher could attach their content to another course's.
+     */
+    protected function assertResourceBelongsToCurrentCourse(AbstractResource $resource, CidReqHelper $cidReqHelper): void
+    {
+        $courseId = (int) $cidReqHelper->getCourseEntity()?->getId();
+
+        foreach ($resource->getResourceNode()?->getResourceLinks() ?? [] as $resourceLink) {
+            if ($courseId > 0 && $courseId === (int) $resourceLink->getCourse()?->getId()) {
+                return;
+            }
+        }
+
+        throw new AccessDeniedHttpException('The resource does not belong to the current course.');
+    }
+
+    /**
+     * @todo use this function inside handleCreateFileRequest
+     */
+    protected function handleCreateRequest(
+        AbstractResource $resource,
+        ResourceRepository $resourceRepository,
+        Request $request,
+        CidReqHelper $cidReqHelper,
+        EntityManagerInterface $em
+    ): array {
+        $contentData = $request->getContent();
+
+        if (!empty($contentData)) {
+            $contentData = json_decode($contentData, true);
+            $title = $contentData['title'] ?? '';
+            $rawParent = $contentData['parentResourceNodeId'] ?? 0;
+            $parentResourceNodeId = (int) ($this->normalizeNodeId($rawParent) ?? 0);
+            $resourceLinkList = $contentData['resourceLinkList'] ?? [];
+            if (empty($resourceLinkList)) {
+                $resourceLinkList = $contentData['resourceLinkListFromEntity'] ?? [];
+            }
+        } else {
+            $contentData = $request->request->all();
+            $title = $request->request->get('title');
+            $rawParent = $request->request->get('parentResourceNodeId');
+            $parentResourceNodeId = (int) ($this->normalizeNodeId($rawParent) ?? 0);
+            $resourceLinkList = ($request->request->get('resourceLinkList') ?? []);
+            if (!empty($resourceLinkList)) {
+                $resourceLinkList = !str_contains($resourceLinkList, '[') ? json_decode('['.$resourceLinkList.']', true) : json_decode($resourceLinkList, true);
+                if (empty($resourceLinkList)) {
+                    $message = 'resourceLinkList is not a valid json. Use for example: [{"cid":1, "visibility":1}]';
+
+                    throw new InvalidArgumentException($message);
+                }
+            }
+        }
+
+        if (0 === $parentResourceNodeId) {
+            throw new Exception('Parameter parentResourceNodeId int value is needed');
+        }
+
+        $this->assertParentNodeIsInCurrentCourse($cidReqHelper, $parentResourceNodeId, $em);
+
+        $resource->setParentResourceNode($parentResourceNodeId);
+
+        if (empty($title)) {
+            throw new InvalidArgumentException('title is required');
+        }
+
+        $resource->setResourceName($title);
+
+        // Set resource link list if exists.
+        if (!empty($resourceLinkList)) {
+            $resource->setResourceLinkArray($resourceLinkList);
+        }
+
+        return $contentData;
+    }
+
+    /**
+     * Reads a create-file request into the typed input handleCreateFile() takes.
+     *
+     * @param ?array<int, mixed> $resourceLinkListOverride
+     */
+    protected function resourceFileInputFromRequest(
+        Request $request,
+        ?array $resourceLinkListOverride = null
+    ): ResourceFileInput {
+        $contentData = $request->getContent();
+
+        if (!empty($contentData)) {
+            $contentData = json_decode($contentData, true);
+            $title = $contentData['title'] ?? '';
+            $comment = $contentData['comment'] ?? '';
+            $rawParent = $contentData['parentResourceNodeId'] ?? 0;
+            $parentResourceNodeId = (int) ($this->normalizeNodeId($rawParent) ?? 0);
+            $fileType = $contentData['filetype'] ?? '';
+            $resourceLinkList = $contentData['resourceLinkList'] ?? [];
+            $language = \array_key_exists('language', (array) $contentData)
+                ? (string) $contentData['language']
+                : null;
+        } else {
+            $title = $request->request->get('title');
+            $comment = $request->request->get('comment');
+            $rawParent = $request->request->get('parentResourceNodeId');
+            $parentResourceNodeId = (int) ($this->normalizeNodeId($rawParent) ?? 0);
+            $fileType = $request->request->get('filetype');
+            $resourceLinkList = ($request->request->get('resourceLinkList') ?? []);
+            if (!empty($resourceLinkList)) {
+                $resourceLinkList = !str_contains($resourceLinkList, '[')
+                    ? json_decode('['.$resourceLinkList.']', true)
+                    : json_decode($resourceLinkList, true);
+
+                if (empty($resourceLinkList)) {
+                    $message = 'resourceLinkList is not a valid json. Use for example: [{"cid":1, "visibility":1}]';
+
+                    throw new InvalidArgumentException($message);
+                }
+            }
+            $language = $request->request->has('language')
+                ? (string) $request->request->get('language')
+                : null;
+        }
+
+        // The controller may force the link context (cid/sid/gid) from the
+        // session-resolved course, ignoring whatever the body sent.
+        if (null !== $resourceLinkListOverride) {
+            $resourceLinkList = $resourceLinkListOverride;
+        }
+
+        $uploadFile = null;
+        if ($request->files->count() > 0) {
+            if (!$request->files->has('uploadFile')) {
+                throw new BadRequestHttpException('"uploadFile" is required');
+            }
+
+            $uploadFile = $request->files->get('uploadFile');
+        }
+
+        return new ResourceFileInput(
+            filetype: (string) $fileType,
+            parentResourceNodeId: $parentResourceNodeId,
+            title: null === $title ? null : (string) $title,
+            comment: (string) $comment,
+            resourceLinkList: \is_array($resourceLinkList) ? $resourceLinkList : [],
+            uploadFile: $uploadFile instanceof UploadedFile ? $uploadFile : null,
+            contentFile: $request->request->has('contentFile')
+                ? (string) $request->request->get('contentFile')
+                : null,
+            contentFileExtension: strtolower(trim((string) $request->request->get('contentFileExtension', 'html'))),
+            contentFileMimeType: strtolower(trim((string) $request->request->get('contentFileMimeType', 'text/html'))),
+            language: $language,
+        );
     }
 
     protected function handleCreateFileRequestUncompress(
@@ -961,6 +961,110 @@ class BaseResourceFileAction
         return $resource;
     }
 
+    protected function applyResourceLanguageFromRequest(AbstractResource $resource, Request $request, EntityManagerInterface $em): void
+    {
+        if (!$this->hasResourceLanguageInRequest($request)) {
+            return;
+        }
+
+        $language = $this->findResourceLanguageFromRequest($request, $em);
+        $this->applyResourceLanguage($resource, $language, $em);
+    }
+
+    /**
+     * The typed sibling of applyResourceLanguageFromRequest().
+     *
+     * A null $input->language means the caller said nothing, so the resource keeps
+     * what it has. An empty one means "the course's": that course is $course when
+     * an in-process caller supplied it, and otherwise the one the link list is
+     * already bound to -- which is the authorized course, not a raw query
+     * parameter.
+     */
+    protected function applyResourceLanguageFromInput(
+        AbstractResource $resource,
+        ResourceFileInput $input,
+        EntityManagerInterface $em,
+        ?Course $course = null
+    ): void {
+        $this->applyResourceLanguageCode(
+            $resource,
+            $input->language,
+            $em,
+            $course ?? $em->getRepository(Course::class)->find($input->courseIdFromLinks())
+        );
+    }
+
+    /**
+     * Same contract on a bare language code, for a caller that holds the course
+     * and the code but has no ResourceFileInput to hand.
+     */
+    protected function applyResourceLanguageCode(
+        AbstractResource $resource,
+        ?string $languageCode,
+        EntityManagerInterface $em,
+        ?Course $course = null
+    ): void {
+        if (null === $languageCode) {
+            return;
+        }
+
+        $this->applyResourceLanguage(
+            $resource,
+            $this->resolveResourceLanguage($languageCode, $em, $course),
+            $em
+        );
+    }
+
+    protected function applyResourceLanguage(AbstractResource $resource, ?Language $language, EntityManagerInterface $em): void
+    {
+        $resourceNode = $resource->getResourceNode();
+        if (null === $resourceNode) {
+            return;
+        }
+
+        $resourceNode->setLanguage($language);
+        $em->persist($resourceNode);
+
+        foreach ($resourceNode->getResourceFiles() as $resourceFile) {
+            if ($resourceFile instanceof ResourceFile) {
+                $resourceFile->setLanguage($language);
+                $em->persist($resourceFile);
+            }
+        }
+    }
+
+    protected function extractResourceLinkListFromRequest(Request $request): array
+    {
+        $raw = $request->request->get('resourceLinkList', null);
+
+        if (null === $raw) {
+            $content = $request->getContent();
+            if ('' !== trim($content)) {
+                $data = json_decode($content, true);
+                if (\is_array($data)) {
+                    $raw = $data['resourceLinkList'] ?? [];
+                }
+            }
+        }
+
+        if (\is_array($raw)) {
+            return $raw;
+        }
+
+        if (!\is_string($raw) || '' === trim($raw)) {
+            return [];
+        }
+
+        $decoded = json_decode($raw, true);
+        if (\is_array($decoded)) {
+            return $decoded;
+        }
+
+        $decoded = json_decode('['.$raw.']', true);
+
+        return \is_array($decoded) ? $decoded : [];
+    }
+
     private function resolveUpdatedContentMimeType(Request $request, ResourceNode $resourceNode, string $content): string
     {
         $requestedMimeType = strtolower(trim((string) $request->request->get('contentFileMimeType', '')));
@@ -1137,60 +1241,6 @@ class BaseResourceFileAction
         return $cleanSvg;
     }
 
-    protected function applyResourceLanguageFromRequest(AbstractResource $resource, Request $request, EntityManagerInterface $em): void
-    {
-        if (!$this->hasResourceLanguageInRequest($request)) {
-            return;
-        }
-
-        $language = $this->findResourceLanguageFromRequest($request, $em);
-        $this->applyResourceLanguage($resource, $language, $em);
-    }
-
-    /**
-     * The typed sibling of applyResourceLanguageFromRequest().
-     *
-     * A null $input->language means the caller said nothing, so the resource keeps
-     * what it has. An empty one means "the course's": that course is $course when
-     * an in-process caller supplied it, and otherwise the one the link list is
-     * already bound to -- which is the authorized course, not a raw query
-     * parameter.
-     */
-    protected function applyResourceLanguageFromInput(
-        AbstractResource $resource,
-        ResourceFileInput $input,
-        EntityManagerInterface $em,
-        ?Course $course = null
-    ): void {
-        $this->applyResourceLanguageCode(
-            $resource,
-            $input->language,
-            $em,
-            $course ?? $em->getRepository(Course::class)->find($input->courseIdFromLinks())
-        );
-    }
-
-    /**
-     * Same contract on a bare language code, for a caller that holds the course
-     * and the code but has no ResourceFileInput to hand.
-     */
-    protected function applyResourceLanguageCode(
-        AbstractResource $resource,
-        ?string $languageCode,
-        EntityManagerInterface $em,
-        ?Course $course = null
-    ): void {
-        if (null === $languageCode) {
-            return;
-        }
-
-        $this->applyResourceLanguage(
-            $resource,
-            $this->resolveResourceLanguage($languageCode, $em, $course),
-            $em
-        );
-    }
-
     private function resolveResourceLanguage(
         string $languageCode,
         EntityManagerInterface $em,
@@ -1245,24 +1295,6 @@ class BaseResourceFileAction
         ]);
 
         return $language instanceof Language ? $language : null;
-    }
-
-    protected function applyResourceLanguage(AbstractResource $resource, ?Language $language, EntityManagerInterface $em): void
-    {
-        $resourceNode = $resource->getResourceNode();
-        if (null === $resourceNode) {
-            return;
-        }
-
-        $resourceNode->setLanguage($language);
-        $em->persist($resourceNode);
-
-        foreach ($resourceNode->getResourceFiles() as $resourceFile) {
-            if ($resourceFile instanceof ResourceFile) {
-                $resourceFile->setLanguage($language);
-                $em->persist($resourceFile);
-            }
-        }
     }
 
     private function hasResourceLanguageInRequest(Request $request): bool
@@ -1366,38 +1398,6 @@ class BaseResourceFileAction
         }
 
         return 0;
-    }
-
-    protected function extractResourceLinkListFromRequest(Request $request): array
-    {
-        $raw = $request->request->get('resourceLinkList', null);
-
-        if (null === $raw) {
-            $content = $request->getContent();
-            if ('' !== trim($content)) {
-                $data = json_decode($content, true);
-                if (\is_array($data)) {
-                    $raw = $data['resourceLinkList'] ?? [];
-                }
-            }
-        }
-
-        if (\is_array($raw)) {
-            return $raw;
-        }
-
-        if (!\is_string($raw) || '' === trim($raw)) {
-            return [];
-        }
-
-        $decoded = json_decode($raw, true);
-        if (\is_array($decoded)) {
-            return $decoded;
-        }
-
-        $decoded = json_decode('['.$raw.']', true);
-
-        return \is_array($decoded) ? $decoded : [];
     }
 
     private function normalizeNodeId(mixed $value): ?int

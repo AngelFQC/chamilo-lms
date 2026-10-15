@@ -382,9 +382,6 @@ class TinyEditor extends Editor
         return null;
     }
 
-    /**
-     * Get the empty template.
-     */
     private function getEmptyTemplate(): array
     {
         return [
@@ -407,9 +404,6 @@ class TinyEditor extends Editor
         ];
     }
 
-    /**
-     * Get the platform templates.
-     */
     private function getPlatformTemplates(): array
     {
         $entityManager = Database::getManager();

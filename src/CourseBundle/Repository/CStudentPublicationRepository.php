@@ -119,39 +119,6 @@ final class CStudentPublicationRepository extends ResourceRepository
         ;
     }
 
-    private function addActiveQueryBuilder(?int $active = null, ?QueryBuilder $qb = null): void
-    {
-        $qb = $this->getOrCreateQueryBuilder($qb);
-
-        if (null !== $active) {
-            $qb
-                ->andWhere('resource.active = :active')
-                ->setParameter('active', $active)
-            ;
-        }
-    }
-
-    private function addNotDeletedPublicationQueryBuilder(?QueryBuilder $qb = null): void
-    {
-        $qb = $this->getOrCreateQueryBuilder($qb);
-        $qb
-            ->andWhere('resource.active <> 2')
-        ;
-    }
-
-    private function addFileTypeQueryBuilder(?string $fileType, ?QueryBuilder $qb = null): void
-    {
-        $qb = $this->getOrCreateQueryBuilder($qb);
-        if (null === $fileType) {
-            return;
-        }
-
-        $qb
-            ->andWhere('resource.filetype = :filetype')
-            ->setParameter('filetype', $fileType)
-        ;
-    }
-
     public function findVisibleAssignmentsForStudent(Course $course, ?Session $session = null, int $groupId = 0): array
     {
         $userId = api_get_user_id();
@@ -231,43 +198,6 @@ final class CStudentPublicationRepository extends ResourceRepository
         return $qb->getQuery()->getResult();
     }
 
-    private function findGroupCategoryIdInContext(Course $course, ?Session $session, int $groupId): int
-    {
-        /** @var CGroupRepository $groupRepository */
-        $groupRepository = $this->getEntityManager()->getRepository(CGroup::class);
-        $qb = $groupRepository->getResourcesByCourse($course, $session);
-        $qb
-            ->andWhere('resource.iid = :groupId')
-            ->setParameter('groupId', $groupId)
-        ;
-
-        $group = $qb->getQuery()->getOneOrNullResult();
-        if (!$group instanceof CGroup) {
-            return 0;
-        }
-
-        $categoryId = (int) ($group->getCategory()?->getIid() ?? 0);
-        if ($categoryId > 0) {
-            return $categoryId;
-        }
-
-        /** @var CGroupCategoryRepository $categoryRepository */
-        $categoryRepository = $this->getEntityManager()->getRepository(CGroupCategory::class);
-        $categories = $categoryRepository
-            ->getResourcesByCourse(
-                course: $course,
-                session: $session,
-                displayOnlyPublished: false,
-                displayOrder: true,
-            )
-            ->getQuery()
-            ->getResult()
-        ;
-        $defaultCategory = $categories[0] ?? null;
-
-        return $defaultCategory instanceof CGroupCategory ? (int) $defaultCategory->getIid() : 0;
-    }
-
     public function findStudentProgressByCourse(Course $course, ?Session $session): array
     {
         $em = $this->getEntityManager();
@@ -296,7 +226,7 @@ final class CStudentPublicationRepository extends ResourceRepository
             return [];
         }
 
-        $workIds = array_map(fn (CStudentPublication $sp) => $sp->getIid(), $workFolders);
+        $workIds = array_map(static fn (CStudentPublication $sp) => $sp->getIid(), $workFolders);
 
         if ($session) {
             $students = $em->getRepository(SessionRelCourseRelUser::class)->findBy([
@@ -478,5 +408,75 @@ final class CStudentPublicationRepository extends ResourceRepository
             ->getQuery()
             ->getResult()
         ;
+    }
+
+    private function addActiveQueryBuilder(?int $active = null, ?QueryBuilder $qb = null): void
+    {
+        $qb = $this->getOrCreateQueryBuilder($qb);
+
+        if (null !== $active) {
+            $qb
+                ->andWhere('resource.active = :active')
+                ->setParameter('active', $active)
+            ;
+        }
+    }
+
+    private function addNotDeletedPublicationQueryBuilder(?QueryBuilder $qb = null): void
+    {
+        $qb = $this->getOrCreateQueryBuilder($qb);
+        $qb
+            ->andWhere('resource.active <> 2')
+        ;
+    }
+
+    private function addFileTypeQueryBuilder(?string $fileType, ?QueryBuilder $qb = null): void
+    {
+        $qb = $this->getOrCreateQueryBuilder($qb);
+        if (null === $fileType) {
+            return;
+        }
+
+        $qb
+            ->andWhere('resource.filetype = :filetype')
+            ->setParameter('filetype', $fileType)
+        ;
+    }
+
+    private function findGroupCategoryIdInContext(Course $course, ?Session $session, int $groupId): int
+    {
+        /** @var CGroupRepository $groupRepository */
+        $groupRepository = $this->getEntityManager()->getRepository(CGroup::class);
+        $qb = $groupRepository->getResourcesByCourse($course, $session);
+        $qb
+            ->andWhere('resource.iid = :groupId')
+            ->setParameter('groupId', $groupId)
+        ;
+
+        $group = $qb->getQuery()->getOneOrNullResult();
+        if (!$group instanceof CGroup) {
+            return 0;
+        }
+
+        $categoryId = (int) ($group->getCategory()?->getIid() ?? 0);
+        if ($categoryId > 0) {
+            return $categoryId;
+        }
+
+        /** @var CGroupCategoryRepository $categoryRepository */
+        $categoryRepository = $this->getEntityManager()->getRepository(CGroupCategory::class);
+        $categories = $categoryRepository
+            ->getResourcesByCourse(
+                course: $course,
+                session: $session,
+                displayOnlyPublished: false,
+                displayOrder: true,
+            )
+            ->getQuery()
+            ->getResult()
+        ;
+        $defaultCategory = $categories[0] ?? null;
+
+        return $defaultCategory instanceof CGroupCategory ? (int) $defaultCategory->getIid() : 0;
     }
 }

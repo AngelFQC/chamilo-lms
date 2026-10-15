@@ -324,49 +324,6 @@ final readonly class CourseDocumentContentService
         return (string) Security::remove_XSS($content);
     }
 
-    private function resolveRequiredLanguageIsoCode(string $language): string
-    {
-        $language = trim($language);
-        if ('' === $language) {
-            throw new InvalidArgumentException('The language is required.');
-        }
-
-        $resolved = $this->languageRepository->findOneAvailableByTitleOrCode($language);
-        if (!$resolved instanceof Language) {
-            throw new InvalidArgumentException(\sprintf('Unknown language "%s". Provide a language name (e.g. "Spanish") or an existing Chamilo language code (e.g. "es").', $language));
-        }
-
-        return $this->translateHtmlLanguageService->normalizeLanguageCode((string) $resolved->getIsocode());
-    }
-
-    private function resolveSourceLanguageIsoCode(
-        Course $course,
-        ?string $sourceLanguage,
-        ?string $resourceLanguageIso = null,
-    ): string {
-        if (null !== $sourceLanguage && '' !== trim($sourceLanguage)) {
-            return $this->resolveRequiredLanguageIsoCode($sourceLanguage);
-        }
-
-        if (null !== $resourceLanguageIso && '' !== trim($resourceLanguageIso)) {
-            return $this->translateHtmlLanguageService->normalizeLanguageCode($resourceLanguageIso);
-        }
-
-        $courseLanguage = trim((string) $course->getCourseLanguage());
-        if ('' !== $courseLanguage) {
-            $fromCourse = $this->languageRepository->findOneAvailableByTitleOrCode($courseLanguage);
-            if ($fromCourse instanceof Language) {
-                return $this->translateHtmlLanguageService->normalizeLanguageCode((string) $fromCourse->getIsocode());
-            }
-
-            return $this->translateHtmlLanguageService->normalizeLanguageCode($courseLanguage);
-        }
-
-        $platformDefault = $this->languageRepository->getPlatformDefaultIso();
-
-        return $this->translateHtmlLanguageService->normalizeLanguageCode($platformDefault ?: 'en');
-    }
-
     public function writeContent(CDocument $document, string $newContent): void
     {
         $resourceNode = $document->getResourceNode();
@@ -428,5 +385,48 @@ final readonly class CourseDocumentContentService
         } catch (Throwable) {
             // Tracking must not turn a completed document update into a tool failure.
         }
+    }
+
+    private function resolveRequiredLanguageIsoCode(string $language): string
+    {
+        $language = trim($language);
+        if ('' === $language) {
+            throw new InvalidArgumentException('The language is required.');
+        }
+
+        $resolved = $this->languageRepository->findOneAvailableByTitleOrCode($language);
+        if (!$resolved instanceof Language) {
+            throw new InvalidArgumentException(\sprintf('Unknown language "%s". Provide a language name (e.g. "Spanish") or an existing Chamilo language code (e.g. "es").', $language));
+        }
+
+        return $this->translateHtmlLanguageService->normalizeLanguageCode((string) $resolved->getIsocode());
+    }
+
+    private function resolveSourceLanguageIsoCode(
+        Course $course,
+        ?string $sourceLanguage,
+        ?string $resourceLanguageIso = null,
+    ): string {
+        if (null !== $sourceLanguage && '' !== trim($sourceLanguage)) {
+            return $this->resolveRequiredLanguageIsoCode($sourceLanguage);
+        }
+
+        if (null !== $resourceLanguageIso && '' !== trim($resourceLanguageIso)) {
+            return $this->translateHtmlLanguageService->normalizeLanguageCode($resourceLanguageIso);
+        }
+
+        $courseLanguage = trim((string) $course->getCourseLanguage());
+        if ('' !== $courseLanguage) {
+            $fromCourse = $this->languageRepository->findOneAvailableByTitleOrCode($courseLanguage);
+            if ($fromCourse instanceof Language) {
+                return $this->translateHtmlLanguageService->normalizeLanguageCode((string) $fromCourse->getIsocode());
+            }
+
+            return $this->translateHtmlLanguageService->normalizeLanguageCode($courseLanguage);
+        }
+
+        $platformDefault = $this->languageRepository->getPlatformDefaultIso();
+
+        return $this->translateHtmlLanguageService->normalizeLanguageCode($platformDefault ?: 'en');
     }
 }

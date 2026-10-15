@@ -95,11 +95,6 @@ abstract class AbstractMigrationChamilo extends AbstractMigration
         $this->logger = $logger;
     }
 
-    protected function getLogger(): LoggerInterface
-    {
-        return $this->logger;
-    }
-
     public function setEntityManager(EntityManagerInterface $entityManager): void
     {
         $this->entityManager = $entityManager;
@@ -139,35 +134,6 @@ abstract class AbstractMigrationChamilo extends AbstractMigration
         }
 
         return $admin;
-    }
-
-    private function findRoleBasedAdminId(): ?int
-    {
-        $schemaManager = $this->connection->createSchemaManager();
-        if (!$schemaManager->tablesExist(['user'])) {
-            return null;
-        }
-
-        if (!$schemaManager->introspectTable('user')->hasColumn('roles')) {
-            return null;
-        }
-
-        $adminId = $this->connection->fetchOne(
-            <<<'SQL'
-SELECT id
-FROM user
-WHERE roles LIKE :admin_role
-   OR roles LIKE :global_admin_role
-ORDER BY id
-LIMIT 1
-SQL,
-            [
-                'admin_role' => '%ROLE_ADMIN%',
-                'global_admin_role' => '%ROLE_GLOBAL_ADMIN%',
-            ]
-        );
-
-        return false === $adminId ? null : (int) $adminId;
     }
 
     public function addSettingCurrent(
@@ -303,111 +269,6 @@ SQL,
         $repo->addFile($resource, $file, $description, false);
 
         return true;
-    }
-
-    /**
-     * Prefetch c_item_property rows for many refs in one shot (chunked IN()).
-     * This is intentionally implemented here to:
-     * - avoid "IN (?)" parameter binding issues
-     * - avoid N+1 queries in fixItemProperty().
-     *
-     * @param array<int> $refs
-     *
-     * @return array<int, array<int, array<string,mixed>>> Map: ref => rows[]
-     */
-    protected function fetchItemPropertiesMap(string $tool, int $courseId, array $refs): array
-    {
-        $tool = (string) $tool;
-        $courseId = (int) $courseId;
-
-        if ($courseId <= 0 || empty($refs)) {
-            return [];
-        }
-
-        $refs = array_values(array_unique(array_map('intval', $refs)));
-
-        $map = [];
-        $chunkSize = 500;
-
-        for ($i = 0; $i < \count($refs); $i += $chunkSize) {
-            $chunk = \array_slice($refs, $i, $chunkSize);
-
-            $sql = 'SELECT ref, visibility, insert_user_id, session_id, to_group_id, lastedit_date
-                    FROM c_item_property
-                    WHERE tool = :tool AND c_id = :cid AND ref IN (:refs)';
-
-            try {
-                $rows = $this->connection->executeQuery(
-                    $sql,
-                    [
-                        'tool' => $tool,
-                        'cid' => $courseId,
-                        'refs' => $chunk,
-                    ],
-                    [
-                        'refs' => ArrayParameterType::INTEGER,
-                    ]
-                )->fetchAllAssociative();
-            } catch (Throwable) {
-                return [];
-            }
-
-            foreach ($rows as $r) {
-                $ref = (int) ($r['ref'] ?? 0);
-                if ($ref > 0) {
-                    $map[$ref][] = $r;
-                }
-            }
-        }
-
-        return $map;
-    }
-
-    /**
-     * Fast existence check with caching.
-     * Returns:
-     * - true/false if the query ran successfully
-     * - null if a DB error happened (caller should fallback to repository->find() to preserve behavior).
-     */
-    private function idExistsFast(string $table, int $id, array &$cache): ?bool
-    {
-        if ($id <= 0) {
-            return false;
-        }
-
-        if (\array_key_exists($id, $cache)) {
-            return $cache[$id];
-        }
-
-        try {
-            $exists = (bool) $this->connection->fetchOne(
-                "SELECT 1 FROM {$table} WHERE id = :id LIMIT 1",
-                ['id' => $id]
-            );
-        } catch (Throwable) {
-            // Do not cache failures. Fallback to the original ORM find() logic.
-            return null;
-        }
-
-        $cache[$id] = $exists;
-
-        return $exists;
-    }
-
-    private function userIdExistsFast(int $userId): ?bool
-    {
-        return $this->idExistsFast('user', $userId, $this->userExistsCache);
-    }
-
-    private function sessionIdExistsFast(int $sessionId): ?bool
-    {
-        return $this->idExistsFast('session', $sessionId, $this->sessionExistsCache);
-    }
-
-    private function groupIdExistsFast(int $groupId): ?bool
-    {
-        // Most Chamilo installs use "c_group". If your schema differs, adjust here.
-        return $this->idExistsFast('c_group', $groupId, $this->groupExistsCache);
     }
 
     /**
@@ -676,11 +537,67 @@ SQL,
         return $selectedValue;
     }
 
-    private function generateFilePath(string $filename): string
+    protected function getLogger(): LoggerInterface
     {
-        $cacheDir = $this->container->get('kernel')->getCacheDir();
+        return $this->logger;
+    }
 
-        return $cacheDir.'/migration_'.$filename;
+    /**
+     * Prefetch c_item_property rows for many refs in one shot (chunked IN()).
+     * This is intentionally implemented here to:
+     * - avoid "IN (?)" parameter binding issues
+     * - avoid N+1 queries in fixItemProperty().
+     *
+     * @param array<int> $refs
+     *
+     * @return array<int, array<int, array<string,mixed>>> Map: ref => rows[]
+     */
+    protected function fetchItemPropertiesMap(string $tool, int $courseId, array $refs): array
+    {
+        $tool = (string) $tool;
+        $courseId = (int) $courseId;
+
+        if ($courseId <= 0 || empty($refs)) {
+            return [];
+        }
+
+        $refs = array_values(array_unique(array_map('intval', $refs)));
+
+        $map = [];
+        $chunkSize = 500;
+
+        for ($i = 0; $i < \count($refs); $i += $chunkSize) {
+            $chunk = \array_slice($refs, $i, $chunkSize);
+
+            $sql = 'SELECT ref, visibility, insert_user_id, session_id, to_group_id, lastedit_date
+                    FROM c_item_property
+                    WHERE tool = :tool AND c_id = :cid AND ref IN (:refs)';
+
+            try {
+                $rows = $this->connection->executeQuery(
+                    $sql,
+                    [
+                        'tool' => $tool,
+                        'cid' => $courseId,
+                        'refs' => $chunk,
+                    ],
+                    [
+                        'refs' => ArrayParameterType::INTEGER,
+                    ]
+                )->fetchAllAssociative();
+            } catch (Throwable) {
+                return [];
+            }
+
+            foreach ($rows as $r) {
+                $ref = (int) ($r['ref'] ?? 0);
+                if ($ref > 0) {
+                    $map[$ref][] = $r;
+                }
+            }
+        }
+
+        return $map;
     }
 
     protected function writeFile(string $filename, string $content): void
@@ -930,7 +847,7 @@ SQL,
 
         $html = (string) preg_replace_callback(
             '~\b(?:src|href)\s*=\s*([\'"])([^\'"]+)\1~i',
-            function (array $m) use ($rewriteUrl) {
+            static function (array $m) use ($rewriteUrl) {
                 $url = (string) $m[2];
 
                 if (!str_contains($url, '/courses/') || !str_contains($url, '/document/')) {
@@ -949,7 +866,7 @@ SQL,
 
         return (string) preg_replace_callback(
             '~\burl\(\s*([\'"]?)([^\'")]+)\1\s*\)~i',
-            function (array $m) use ($rewriteUrl) {
+            static function (array $m) use ($rewriteUrl) {
                 $url = (string) $m[2];
 
                 if (!str_contains($url, '/courses/') || !str_contains($url, '/document/')) {
@@ -1004,6 +921,90 @@ SQL,
         @error_log('[Migration][Documents] Created rewritten HTML temp file: '.$tmpPath);
 
         return $tmpPath;
+    }
+
+    private function findRoleBasedAdminId(): ?int
+    {
+        $schemaManager = $this->connection->createSchemaManager();
+        if (!$schemaManager->tablesExist(['user'])) {
+            return null;
+        }
+
+        if (!$schemaManager->introspectTable('user')->hasColumn('roles')) {
+            return null;
+        }
+
+        $adminId = $this->connection->fetchOne(
+            <<<'SQL'
+SELECT id
+FROM user
+WHERE roles LIKE :admin_role
+   OR roles LIKE :global_admin_role
+ORDER BY id
+LIMIT 1
+SQL
+            ,
+            [
+                'admin_role' => '%ROLE_ADMIN%',
+                'global_admin_role' => '%ROLE_GLOBAL_ADMIN%',
+            ]
+        );
+
+        return false === $adminId ? null : (int) $adminId;
+    }
+
+    /**
+     * Fast existence check with caching.
+     * Returns:
+     * - true/false if the query ran successfully
+     * - null if a DB error happened (caller should fallback to repository->find() to preserve behavior).
+     */
+    private function idExistsFast(string $table, int $id, array &$cache): ?bool
+    {
+        if ($id <= 0) {
+            return false;
+        }
+
+        if (\array_key_exists($id, $cache)) {
+            return $cache[$id];
+        }
+
+        try {
+            $exists = (bool) $this->connection->fetchOne(
+                "SELECT 1 FROM {$table} WHERE id = :id LIMIT 1",
+                ['id' => $id]
+            );
+        } catch (Throwable) {
+            // Do not cache failures. Fallback to the original ORM find() logic.
+            return null;
+        }
+
+        $cache[$id] = $exists;
+
+        return $exists;
+    }
+
+    private function userIdExistsFast(int $userId): ?bool
+    {
+        return $this->idExistsFast('user', $userId, $this->userExistsCache);
+    }
+
+    private function sessionIdExistsFast(int $sessionId): ?bool
+    {
+        return $this->idExistsFast('session', $sessionId, $this->sessionExistsCache);
+    }
+
+    private function groupIdExistsFast(int $groupId): ?bool
+    {
+        // Most Chamilo installs use "c_group". If your schema differs, adjust here.
+        return $this->idExistsFast('c_group', $groupId, $this->groupExistsCache);
+    }
+
+    private function generateFilePath(string $filename): string
+    {
+        $cacheDir = $this->container->get('kernel')->getCacheDir();
+
+        return $cacheDir.'/migration_'.$filename;
     }
 
     /**

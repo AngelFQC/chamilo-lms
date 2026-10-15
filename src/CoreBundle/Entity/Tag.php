@@ -64,8 +64,6 @@ class Tag
     }
 
     /**
-     * Get id.
-     *
      * @return int
      */
     public function getId()

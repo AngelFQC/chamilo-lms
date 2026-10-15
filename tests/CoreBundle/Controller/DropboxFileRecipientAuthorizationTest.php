@@ -29,6 +29,49 @@ final class DropboxFileRecipientAuthorizationTest extends WebTestCase
 {
     use ChamiloTestTrait;
 
+    public function testMetadataIsReturnedToTheUploaderAndTheRecipientOnly(): void
+    {
+        $ctx = $this->bootstrap('metadata');
+
+        $this->assertSame(Response::HTTP_OK, $this->get($ctx['client'], $ctx['uploader'], $ctx['file'], $ctx['course']));
+        $this->assertSame(Response::HTTP_OK, $this->get($ctx['client'], $ctx['recipient'], $ctx['file'], $ctx['course']));
+        $this->assertSame(Response::HTTP_NOT_FOUND, $this->get($ctx['client'], $ctx['classmate'], $ctx['file'], $ctx['course']));
+    }
+
+    public function testClassmateCannotReadTheFeedbackOfAFileSentToSomeoneElse(): void
+    {
+        $ctx = $this->bootstrap('feedback_list');
+
+        $this->assertSame(Response::HTTP_OK, $this->get($ctx['client'], $ctx['recipient'], $ctx['file'], $ctx['course'], '/feedback'));
+        $this->assertSame(Response::HTTP_NOT_FOUND, $this->get($ctx['client'], $ctx['classmate'], $ctx['file'], $ctx['course'], '/feedback'));
+    }
+
+    public function testFeedbackIsAcceptedFromTheRecipientOnly(): void
+    {
+        $ctx = $this->bootstrap('feedback_create');
+        $uri = '/dropbox/files/'.$ctx['file']->getIid().'/feedback?cid='.$ctx['course']->getId();
+
+        $ctx['client']->loginUser($ctx['classmate']);
+        $ctx['client']->request('POST', $uri, [], [], ['CONTENT_TYPE' => 'application/json', 'HTTP_SEC_FETCH_SITE' => 'same-origin'], '{"text":"from a classmate"}');
+        $this->assertSame(Response::HTTP_NOT_FOUND, $ctx['client']->getResponse()->getStatusCode());
+
+        $ctx['client']->loginUser($ctx['recipient']);
+        $ctx['client']->request('POST', $uri, [], [], ['CONTENT_TYPE' => 'application/json', 'HTTP_SEC_FETCH_SITE' => 'same-origin'], '{"text":"from the recipient"}');
+        $this->assertSame(Response::HTTP_CREATED, $ctx['client']->getResponse()->getStatusCode());
+    }
+
+    public function testDownloadIsRefusedBeforeLookingForTheFileOfAClassmate(): void
+    {
+        $ctx = $this->bootstrap('download');
+
+        // The fixture has no stored file, so whoever may download reaches "Resource file not found".
+        $this->assertSame(Response::HTTP_NOT_FOUND, $this->get($ctx['client'], $ctx['recipient'], $ctx['file'], $ctx['course'], '/download'));
+        $this->assertStringContainsString('Resource file not found', (string) $ctx['client']->getResponse()->getContent());
+
+        $this->assertSame(Response::HTTP_NOT_FOUND, $this->get($ctx['client'], $ctx['classmate'], $ctx['file'], $ctx['course'], '/download'));
+        $this->assertStringNotContainsString('Resource file not found', (string) $ctx['client']->getResponse()->getContent());
+    }
+
     /**
      * @return array{client: KernelBrowser, course: Course, uploader: User, recipient: User, classmate: User, file: CDropboxFile}
      */
@@ -89,48 +132,5 @@ final class DropboxFileRecipientAuthorizationTest extends WebTestCase
         $client->request('GET', '/dropbox/files/'.$file->getIid().$suffix.'?cid='.$course->getId());
 
         return $client->getResponse()->getStatusCode();
-    }
-
-    public function testMetadataIsReturnedToTheUploaderAndTheRecipientOnly(): void
-    {
-        $ctx = $this->bootstrap('metadata');
-
-        $this->assertSame(Response::HTTP_OK, $this->get($ctx['client'], $ctx['uploader'], $ctx['file'], $ctx['course']));
-        $this->assertSame(Response::HTTP_OK, $this->get($ctx['client'], $ctx['recipient'], $ctx['file'], $ctx['course']));
-        $this->assertSame(Response::HTTP_NOT_FOUND, $this->get($ctx['client'], $ctx['classmate'], $ctx['file'], $ctx['course']));
-    }
-
-    public function testClassmateCannotReadTheFeedbackOfAFileSentToSomeoneElse(): void
-    {
-        $ctx = $this->bootstrap('feedback_list');
-
-        $this->assertSame(Response::HTTP_OK, $this->get($ctx['client'], $ctx['recipient'], $ctx['file'], $ctx['course'], '/feedback'));
-        $this->assertSame(Response::HTTP_NOT_FOUND, $this->get($ctx['client'], $ctx['classmate'], $ctx['file'], $ctx['course'], '/feedback'));
-    }
-
-    public function testFeedbackIsAcceptedFromTheRecipientOnly(): void
-    {
-        $ctx = $this->bootstrap('feedback_create');
-        $uri = '/dropbox/files/'.$ctx['file']->getIid().'/feedback?cid='.$ctx['course']->getId();
-
-        $ctx['client']->loginUser($ctx['classmate']);
-        $ctx['client']->request('POST', $uri, [], [], ['CONTENT_TYPE' => 'application/json', 'HTTP_SEC_FETCH_SITE' => 'same-origin'], '{"text":"from a classmate"}');
-        $this->assertSame(Response::HTTP_NOT_FOUND, $ctx['client']->getResponse()->getStatusCode());
-
-        $ctx['client']->loginUser($ctx['recipient']);
-        $ctx['client']->request('POST', $uri, [], [], ['CONTENT_TYPE' => 'application/json', 'HTTP_SEC_FETCH_SITE' => 'same-origin'], '{"text":"from the recipient"}');
-        $this->assertSame(Response::HTTP_CREATED, $ctx['client']->getResponse()->getStatusCode());
-    }
-
-    public function testDownloadIsRefusedBeforeLookingForTheFileOfAClassmate(): void
-    {
-        $ctx = $this->bootstrap('download');
-
-        // The fixture has no stored file, so whoever may download reaches "Resource file not found".
-        $this->assertSame(Response::HTTP_NOT_FOUND, $this->get($ctx['client'], $ctx['recipient'], $ctx['file'], $ctx['course'], '/download'));
-        $this->assertStringContainsString('Resource file not found', (string) $ctx['client']->getResponse()->getContent());
-
-        $this->assertSame(Response::HTTP_NOT_FOUND, $this->get($ctx['client'], $ctx['classmate'], $ctx['file'], $ctx['course'], '/download'));
-        $this->assertStringNotContainsString('Resource file not found', (string) $ctx['client']->getResponse()->getContent());
     }
 }

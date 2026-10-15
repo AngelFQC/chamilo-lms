@@ -53,8 +53,6 @@ class CGroupRelUser
     }
 
     /**
-     * Get group.
-     *
      * @return CGroup
      */
     public function getGroup()
@@ -70,8 +68,6 @@ class CGroupRelUser
     }
 
     /**
-     * Get status.
-     *
      * @return int
      */
     public function getStatus()
@@ -99,8 +95,6 @@ class CGroupRelUser
     }
 
     /**
-     * Get role.
-     *
      * @return string
      */
     public function getRole()
@@ -109,8 +103,6 @@ class CGroupRelUser
     }
 
     /**
-     * Set cId.
-     *
      * @return CGroupRelUser
      */
     public function setCId(int $cId)
@@ -121,8 +113,6 @@ class CGroupRelUser
     }
 
     /**
-     * Get cId.
-     *
      * @return int
      */
     public function getCId()

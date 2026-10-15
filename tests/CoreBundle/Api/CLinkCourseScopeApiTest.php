@@ -25,94 +25,6 @@ final class CLinkCourseScopeApiTest extends AbstractApiTest
 {
     use ChamiloTestTrait;
 
-    /**
-     * @return array{
-     *     teacher: User,
-     *     course: Course,
-     *     foreignTeacher: User,
-     *     foreignCourse: Course,
-     *     foreignLinkId: int,
-     *     foreignCategoryId: int
-     * }
-     */
-    private function bootstrapScenario(string $suffix): array
-    {
-        /** @var CourseRepository $courseRepo */
-        $courseRepo = self::getContainer()->get(CourseRepository::class);
-
-        $course = $this->createCourse('CLSA'.$suffix);
-        $foreignCourse = $this->createCourse('CLSB'.$suffix);
-        $teacher = $this->createUser('cls_teacher_'.$suffix);
-        $foreignTeacher = $this->createUser('cls_fteacher_'.$suffix);
-
-        $course->addUserAsTeacher($teacher);
-        $courseRepo->update($course);
-        $foreignCourse->addUserAsTeacher($foreignTeacher);
-        $courseRepo->update($foreignCourse);
-
-        $foreignCategoryId = $this->createCategory($foreignTeacher, $foreignCourse, 'foreign category');
-        $foreignLinkId = $this->createLink($foreignTeacher, $foreignCourse, 'foreign link');
-
-        return [
-            'teacher' => $teacher,
-            'course' => $course,
-            'foreignTeacher' => $foreignTeacher,
-            'foreignCourse' => $foreignCourse,
-            'foreignLinkId' => $foreignLinkId,
-            'foreignCategoryId' => $foreignCategoryId,
-        ];
-    }
-
-    private function nodeId(Course $course): int
-    {
-        return (int) $course->getResourceNode()?->getId();
-    }
-
-    /**
-     * @return array<string, mixed>
-     */
-    private function linkPayload(int $parentNodeId, string $title, int $categoryId = 0): array
-    {
-        return [
-            'url' => 'https://example.com/'.$title,
-            'title' => $title,
-            'description' => '',
-            'category' => $categoryId,
-            'target' => '_blank',
-            'parentResourceNodeId' => $parentNodeId,
-            'resourceLinkList' => [['visibility' => 2]],
-        ];
-    }
-
-    private function createLink(User $teacher, Course $course, string $title, int $categoryId = 0): int
-    {
-        $response = $this->createClientWithCredentials($this->getUserTokenFromUser($teacher))->request(
-            'POST',
-            '/api/links?cid='.$course->getId().'&sid=0&gid=0',
-            ['json' => $this->linkPayload($this->nodeId($course), $title, $categoryId)],
-        );
-        $this->assertResponseStatusCodeSame(201);
-
-        return (int) $response->toArray()['iid'];
-    }
-
-    private function createCategory(User $teacher, Course $course, string $title): int
-    {
-        $response = $this->createClientWithCredentials($this->getUserTokenFromUser($teacher))->request(
-            'POST',
-            '/api/link_categories?cid='.$course->getId().'&sid=0&gid=0',
-            ['json' => [
-                'category_title' => $title,
-                'description' => '',
-                'parentResourceNodeId' => $this->nodeId($course),
-                'resourceLinkList' => json_encode([['visibility' => 2, 'cid' => (int) $course->getId()]]),
-            ]],
-        );
-        $this->assertResponseStatusCodeSame(201);
-
-        return (int) $response->toArray()['iid'];
-    }
-
     public function testTeacherCanManageLinksOfOwnCourse(): void
     {
         $ctx = $this->bootstrapScenario('own');
@@ -266,5 +178,93 @@ final class CLinkCourseScopeApiTest extends AbstractApiTest
             ]],
         );
         $this->assertResponseStatusCodeSame(403);
+    }
+
+    /**
+     * @return array{
+     *     teacher: User,
+     *     course: Course,
+     *     foreignTeacher: User,
+     *     foreignCourse: Course,
+     *     foreignLinkId: int,
+     *     foreignCategoryId: int
+     * }
+     */
+    private function bootstrapScenario(string $suffix): array
+    {
+        /** @var CourseRepository $courseRepo */
+        $courseRepo = self::getContainer()->get(CourseRepository::class);
+
+        $course = $this->createCourse('CLSA'.$suffix);
+        $foreignCourse = $this->createCourse('CLSB'.$suffix);
+        $teacher = $this->createUser('cls_teacher_'.$suffix);
+        $foreignTeacher = $this->createUser('cls_fteacher_'.$suffix);
+
+        $course->addUserAsTeacher($teacher);
+        $courseRepo->update($course);
+        $foreignCourse->addUserAsTeacher($foreignTeacher);
+        $courseRepo->update($foreignCourse);
+
+        $foreignCategoryId = $this->createCategory($foreignTeacher, $foreignCourse, 'foreign category');
+        $foreignLinkId = $this->createLink($foreignTeacher, $foreignCourse, 'foreign link');
+
+        return [
+            'teacher' => $teacher,
+            'course' => $course,
+            'foreignTeacher' => $foreignTeacher,
+            'foreignCourse' => $foreignCourse,
+            'foreignLinkId' => $foreignLinkId,
+            'foreignCategoryId' => $foreignCategoryId,
+        ];
+    }
+
+    private function nodeId(Course $course): int
+    {
+        return (int) $course->getResourceNode()?->getId();
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function linkPayload(int $parentNodeId, string $title, int $categoryId = 0): array
+    {
+        return [
+            'url' => 'https://example.com/'.$title,
+            'title' => $title,
+            'description' => '',
+            'category' => $categoryId,
+            'target' => '_blank',
+            'parentResourceNodeId' => $parentNodeId,
+            'resourceLinkList' => [['visibility' => 2]],
+        ];
+    }
+
+    private function createLink(User $teacher, Course $course, string $title, int $categoryId = 0): int
+    {
+        $response = $this->createClientWithCredentials($this->getUserTokenFromUser($teacher))->request(
+            'POST',
+            '/api/links?cid='.$course->getId().'&sid=0&gid=0',
+            ['json' => $this->linkPayload($this->nodeId($course), $title, $categoryId)],
+        );
+        $this->assertResponseStatusCodeSame(201);
+
+        return (int) $response->toArray()['iid'];
+    }
+
+    private function createCategory(User $teacher, Course $course, string $title): int
+    {
+        $response = $this->createClientWithCredentials($this->getUserTokenFromUser($teacher))->request(
+            'POST',
+            '/api/link_categories?cid='.$course->getId().'&sid=0&gid=0',
+            ['json' => [
+                'category_title' => $title,
+                'description' => '',
+                'parentResourceNodeId' => $this->nodeId($course),
+                'resourceLinkList' => json_encode([['visibility' => 2, 'cid' => (int) $course->getId()]]),
+            ]],
+        );
+        $this->assertResponseStatusCodeSame(201);
+
+        return (int) $response->toArray()['iid'];
     }
 }

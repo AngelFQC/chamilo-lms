@@ -35,8 +35,6 @@ class GradebookScoreDisplay
     protected float $scoreColorPercent;
 
     /**
-     * Get score.
-     *
      * @return float
      */
     public function getScore()
@@ -52,8 +50,6 @@ class GradebookScoreDisplay
     }
 
     /**
-     * Get display.
-     *
      * @return string
      */
     public function getDisplay()
@@ -81,8 +77,6 @@ class GradebookScoreDisplay
     }
 
     /**
-     * Get scoreColorPercent.
-     *
      * @return float
      */
     public function getScoreColorPercent()
@@ -98,8 +92,6 @@ class GradebookScoreDisplay
     }
 
     /**
-     * Get id.
-     *
      * @return int
      */
     public function getId()

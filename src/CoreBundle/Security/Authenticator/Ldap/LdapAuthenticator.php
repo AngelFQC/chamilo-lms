@@ -197,38 +197,6 @@ class LdapAuthenticator extends AbstractAuthenticator implements InteractiveAuth
         );
     }
 
-    private function getCredentials(stdClass $data): array
-    {
-        $credentials = [];
-
-        try {
-            $credentials['username'] = $data->username;
-
-            if (!\is_string($credentials['username'])) {
-                throw new BadRequestHttpException(\sprintf('The key "%s" must be a string.', 'username'));
-            }
-        } catch (AccessException $e) {
-            throw new BadRequestHttpException(\sprintf('The key "%s" must be provided.', 'username'), $e);
-        }
-
-        try {
-            $credentials['password'] = $data->password;
-            $data->password = null;
-
-            if (!\is_string($credentials['password'])) {
-                throw new BadRequestHttpException(\sprintf('The key "%s" must be a string.', 'password'));
-            }
-        } catch (AccessException $e) {
-            throw new BadRequestHttpException(\sprintf('The key "%s" must be provided.', 'password'), $e);
-        }
-
-        if ('' === $credentials['username'] || '' === $credentials['password']) {
-            trigger_deprecation('symfony/security', '6.2', 'Passing an empty string as username or password parameter is deprecated.');
-        }
-
-        return $credentials;
-    }
-
     public function createUser(LdapUser $ldapUser): User
     {
         $currentAccessUrl = $this->accessUrlHelper->getCurrent();
@@ -295,6 +263,48 @@ class LdapAuthenticator extends AbstractAuthenticator implements InteractiveAuth
         return $user;
     }
 
+    public function isInteractive(): bool
+    {
+        return true;
+    }
+
+    public function getUserProvider(): LdapUserProvider
+    {
+        return $this->userProvider;
+    }
+
+    private function getCredentials(stdClass $data): array
+    {
+        $credentials = [];
+
+        try {
+            $credentials['username'] = $data->username;
+
+            if (!\is_string($credentials['username'])) {
+                throw new BadRequestHttpException(\sprintf('The key "%s" must be a string.', 'username'));
+            }
+        } catch (AccessException $e) {
+            throw new BadRequestHttpException(\sprintf('The key "%s" must be provided.', 'username'), $e);
+        }
+
+        try {
+            $credentials['password'] = $data->password;
+            $data->password = null;
+
+            if (!\is_string($credentials['password'])) {
+                throw new BadRequestHttpException(\sprintf('The key "%s" must be a string.', 'password'));
+            }
+        } catch (AccessException $e) {
+            throw new BadRequestHttpException(\sprintf('The key "%s" must be provided.', 'password'), $e);
+        }
+
+        if ('' === $credentials['username'] || '' === $credentials['password']) {
+            trigger_deprecation('symfony/security', '6.2', 'Passing an empty string as username or password parameter is deprecated.');
+        }
+
+        return $credentials;
+    }
+
     private function syncExtraFields(User $user, Entry $ldapEntry): void
     {
         foreach ($this->dataCorrespondence as $key => $ldapAttr) {
@@ -315,15 +325,5 @@ class LdapAuthenticator extends AbstractAuthenticator implements InteractiveAuth
                 : ($ldapEntry->getAttribute($ldapAttrStr) ?? [])[0] ?? null;
             $this->extraFieldValuesRepo->updateItemData($extraField, $user, $value);
         }
-    }
-
-    public function isInteractive(): bool
-    {
-        return true;
-    }
-
-    public function getUserProvider(): LdapUserProvider
-    {
-        return $this->userProvider;
     }
 }

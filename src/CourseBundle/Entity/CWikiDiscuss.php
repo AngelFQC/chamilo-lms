@@ -46,8 +46,6 @@ class CWikiDiscuss
     }
 
     /**
-     * Get publicationId.
-     *
      * @return int
      */
     public function getPublicationId()
@@ -56,8 +54,6 @@ class CWikiDiscuss
     }
 
     /**
-     * Set publicationId.
-     *
      * @return CWikiDiscuss
      */
     public function setPublicationId(int $publicationId)
@@ -68,8 +64,6 @@ class CWikiDiscuss
     }
 
     /**
-     * Get usercId.
-     *
      * @return int
      */
     public function getUsercId()
@@ -78,8 +72,6 @@ class CWikiDiscuss
     }
 
     /**
-     * Set usercId.
-     *
      * @return CWikiDiscuss
      */
     public function setUsercId(int $usercId)
@@ -90,8 +82,6 @@ class CWikiDiscuss
     }
 
     /**
-     * Get comment.
-     *
      * @return string
      */
     public function getComment()
@@ -100,8 +90,6 @@ class CWikiDiscuss
     }
 
     /**
-     * Set comment.
-     *
      * @return CWikiDiscuss
      */
     public function setComment(string $comment)
@@ -112,8 +100,6 @@ class CWikiDiscuss
     }
 
     /**
-     * Get pScore.
-     *
      * @return string
      */
     public function getPScore()
@@ -122,8 +108,6 @@ class CWikiDiscuss
     }
 
     /**
-     * Set pScore.
-     *
      * @return CWikiDiscuss
      */
     public function setPScore(string $pScore)
@@ -134,8 +118,6 @@ class CWikiDiscuss
     }
 
     /**
-     * Get dtime.
-     *
      * @return DateTime
      */
     public function getDtime()
@@ -144,8 +126,6 @@ class CWikiDiscuss
     }
 
     /**
-     * Set dtime.
-     *
      * @return CWikiDiscuss
      */
     public function setDtime(DateTime $dtime)
@@ -156,8 +136,6 @@ class CWikiDiscuss
     }
 
     /**
-     * Get cId.
-     *
      * @return int
      */
     public function getCId()
@@ -166,8 +144,6 @@ class CWikiDiscuss
     }
 
     /**
-     * Set cId.
-     *
      * @return CWikiDiscuss
      */
     public function setCId(int $cId)

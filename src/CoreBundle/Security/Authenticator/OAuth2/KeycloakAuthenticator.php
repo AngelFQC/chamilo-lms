@@ -29,8 +29,7 @@ class KeycloakAuthenticator extends AbstractAuthenticator
         $resourceOwner = $this->client->fetchUserFromToken($accessToken);
 
         $user = $this->userRepository->findOneBy(['username' => $resourceOwner->getUsername()])
-            ?:
-            $this->userRepository->findOneBy(['username' => $resourceOwner->getId()]);
+            ?: $this->userRepository->findOneBy(['username' => $resourceOwner->getId()]);
 
         if (!$user) {
             $user = (new User())

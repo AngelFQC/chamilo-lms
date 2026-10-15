@@ -1135,7 +1135,7 @@ final readonly class SurveyReportingProvider implements ProviderInterface
     {
         return array_values(array_filter(
             $this->getReportableQuestions($survey),
-            fn (CSurveyQuestion $question): bool => !str_contains($question->getSurveyQuestion(), '{{')
+            static fn (CSurveyQuestion $question): bool => !str_contains($question->getSurveyQuestion(), '{{')
         ));
     }
 

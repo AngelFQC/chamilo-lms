@@ -15,9 +15,6 @@ use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 
-/**
- * @author Julio Montoya <gugli100@gmail.com>.
- */
 #[Route('/news')]
 class NewsController extends BaseController
 {

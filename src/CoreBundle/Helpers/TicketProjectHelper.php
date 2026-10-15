@@ -122,6 +122,6 @@ class TicketProjectHelper
         $roleIds = $data['permissions'][$projectId];
 
         // Transform role IDs into role names using the defined mapping
-        return array_map(fn ($roleId) => $roleMap[$roleId] ?? "$roleId", $roleIds);
+        return array_map(static fn ($roleId) => $roleMap[$roleId] ?? "$roleId", $roleIds);
     }
 }

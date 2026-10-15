@@ -53,7 +53,7 @@ final class CCalendarEventRepository extends ResourceRepository
 
             if (\is_array($sendTo['groups']) && !empty($sendTo['groups'])) {
                 $sendTo['groups'] = array_map(
-                    fn ($groupId) => $em->find(CGroup::class, $groupId),
+                    static fn ($groupId) => $em->find(CGroup::class, $groupId),
                     $sendTo['groups']
                 );
                 $sendTo['groups'] = array_filter($sendTo['groups']);
@@ -64,7 +64,7 @@ final class CCalendarEventRepository extends ResourceRepository
             // Storing the selected users.
             if (\is_array($sendTo['users'])) {
                 $sendTo['users'] = array_map(
-                    fn ($userId) => $em->find(User::class, $userId),
+                    static fn ($userId) => $em->find(User::class, $userId),
                     $sendTo['users']
                 );
                 $sendTo['users'] = array_filter($sendTo['users']);

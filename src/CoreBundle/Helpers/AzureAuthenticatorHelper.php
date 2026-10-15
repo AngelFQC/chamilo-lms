@@ -172,30 +172,6 @@ readonly class AzureAuthenticatorHelper
         return $user;
     }
 
-    private function getOrganizationEmailField(): ExtraField
-    {
-        return $this->extraFieldRepo->findByVariable(
-            ExtraField::USER_FIELD_TYPE,
-            self::EXTRA_FIELD_ORGANISATION_EMAIL
-        );
-    }
-
-    private function getAzureIdField(): ExtraField
-    {
-        return $this->extraFieldRepo->findByVariable(
-            ExtraField::USER_FIELD_TYPE,
-            self::EXTRA_FIELD_AZURE_ID
-        );
-    }
-
-    private function getAzureUidField(): ExtraField
-    {
-        return $this->extraFieldRepo->findByVariable(
-            ExtraField::USER_FIELD_TYPE,
-            self::EXTRA_FIELD_AZURE_UID
-        );
-    }
-
     public function getUserByVerificationOrder(array $azureUserData): ?User
     {
         $selectedOrder = $this->getExistingUserVerificationOrder();
@@ -239,7 +215,7 @@ readonly class AzureAuthenticatorHelper
         $selectedOrder = array_map('intval', $selectedOrder);
         $selectedOrder = array_filter(
             $selectedOrder,
-            fn ($position): bool => \in_array($position, $defaultOrder)
+            static fn ($position): bool => \in_array($position, $defaultOrder)
         );
 
         if ($selectedOrder) {
@@ -247,6 +223,64 @@ readonly class AzureAuthenticatorHelper
         }
 
         return $defaultOrder;
+    }
+
+    /**
+     * The keys are the user roles, as defined for the group_ip parameter in the authentication.yaml file for Azure.
+     *
+     * @return array<string, callable>
+     */
+    public function getUpdateActionByRole(): array
+    {
+        return [
+            'admin' => static function (User $user): void {
+                $user
+                    ->setStatus(COURSEMANAGER)
+                    ->addRole('ROLE_ADMIN')
+                    ->setRoleFromStatus(COURSEMANAGER)
+                ;
+            },
+            'session_admin' => static function (User $user): void {
+                $user
+                    ->setStatus(SESSIONADMIN)
+                    ->setRoleFromStatus(SESSIONADMIN)
+                ;
+
+                $user->removeUserAsAdmin();
+            },
+            'teacher' => static function (User $user): void {
+                $user
+                    ->setStatus(COURSEMANAGER)
+                    ->setRoleFromStatus(COURSEMANAGER)
+                ;
+
+                $user->removeUserAsAdmin();
+            },
+        ];
+    }
+
+    private function getOrganizationEmailField(): ExtraField
+    {
+        return $this->extraFieldRepo->findByVariable(
+            ExtraField::USER_FIELD_TYPE,
+            self::EXTRA_FIELD_ORGANISATION_EMAIL
+        );
+    }
+
+    private function getAzureIdField(): ExtraField
+    {
+        return $this->extraFieldRepo->findByVariable(
+            ExtraField::USER_FIELD_TYPE,
+            self::EXTRA_FIELD_AZURE_ID
+        );
+    }
+
+    private function getAzureUidField(): ExtraField
+    {
+        return $this->extraFieldRepo->findByVariable(
+            ExtraField::USER_FIELD_TYPE,
+            self::EXTRA_FIELD_AZURE_UID
+        );
     }
 
     private function formatUserData(array $azureUserData): array
@@ -291,40 +325,6 @@ readonly class AzureAuthenticatorHelper
             $active,
             $extra,
             $preferredLanguage,
-        ];
-    }
-
-    /**
-     * The keys are the user roles, as defined for the group_ip parameter in the authentication.yaml file for Azure.
-     *
-     * @return array<string, callable>
-     */
-    public function getUpdateActionByRole(): array
-    {
-        return [
-            'admin' => function (User $user): void {
-                $user
-                    ->setStatus(COURSEMANAGER)
-                    ->addRole('ROLE_ADMIN')
-                    ->setRoleFromStatus(COURSEMANAGER)
-                ;
-            },
-            'session_admin' => function (User $user): void {
-                $user
-                    ->setStatus(SESSIONADMIN)
-                    ->setRoleFromStatus(SESSIONADMIN)
-                ;
-
-                $user->removeUserAsAdmin();
-            },
-            'teacher' => function (User $user): void {
-                $user
-                    ->setStatus(COURSEMANAGER)
-                    ->setRoleFromStatus(COURSEMANAGER)
-                ;
-
-                $user->removeUserAsAdmin();
-            },
         ];
     }
 

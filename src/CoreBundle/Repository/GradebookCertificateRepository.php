@@ -111,57 +111,6 @@ class GradebookCertificateRepository extends ResourceRepository
     }
 
     /**
-     * Computes and sets the certificate's expiry date when its category has a
-     * certificateValidityPeriod configured (expiry = createdAt + N days, so
-     * regeneration on the same day is idempotent and the stored expiry stays
-     * coherent with the issue date printed on the document). When no validity
-     * period is configured, this never writes anything — preserving a teacher's
-     * manually-set expiry date, or leaving it null.
-     */
-    private function applyValidityPeriodExpiry(GradebookCertificate $cert, ?GradebookCategory $category): void
-    {
-        $days = (int) ($category?->getCertificateValidityPeriod() ?? 0);
-        if ($days <= 0) {
-            return;
-        }
-
-        $cert->setExpiryDate((new DateTime($cert->getCreatedAt()->format('Y-m-d')))->modify("+{$days} days"));
-    }
-
-    /**
-     * Helper: resolve the ResourceType 'files' from the Tool 'files' (personal space).
-     *
-     * @throws RuntimeException if not found
-     */
-    private function getPersonalFilesResourceType(): ResourceType
-    {
-        $em = $this->getEntityManager();
-
-        $qb = $em->createQueryBuilder()
-            ->select('rt')
-            ->from(ResourceType::class, 'rt')
-            ->join('rt.tool', 't')
-            ->where('rt.title = :rtTitle')
-            ->andWhere('t.title = :toolTitle')
-            ->setParameter('rtTitle', 'files')
-            ->setParameter('toolTitle', 'files')
-            ->setMaxResults(1)
-        ;
-
-        $rt = $qb->getQuery()->getOneOrNullResult();
-        if ($rt instanceof ResourceType) {
-            return $rt;
-        }
-
-        $rt = $em->getRepository(ResourceType::class)->findOneBy(['title' => 'files']);
-        if (!$rt) {
-            throw new RuntimeException("ResourceType 'files' not found.");
-        }
-
-        return $rt;
-    }
-
-    /**
      * Create or update a certificate as a Resource using ResourceType 'files' (personal files tool).
      * We avoid calling parent::createNodeForResource() to not depend on $this->slugify.
      */
@@ -253,54 +202,6 @@ class GradebookCertificateRepository extends ResourceRepository
         }
 
         return $cert;
-    }
-
-    /**
-     * Create a ResourceNode avoiding the slugify service.
-     * Generates a basic slug locally and wires parent/creator/type relationships.
-     */
-    private function createNodeForCertificateWithoutSlugify(
-        GradebookCertificate $resource,
-        User $creator,
-        ResourceNode $parentNode,
-        ResourceType $resourceType,
-        string $titleForNode
-    ): void {
-        $em = $this->getEntityManager();
-
-        $slug = $this->basicSlug($titleForNode);
-
-        $node = new ResourceNode();
-        $node
-            ->setTitle($titleForNode)
-            ->setSlug($slug)
-            ->setResourceType($resourceType)
-            ->setCreator($creator)
-        ;
-
-        // Parent-child relationship
-        $parentNode?->addChild($node);
-
-        // Wire resource <-> node
-        $resource->setResourceNode($node);
-
-        // Persist
-        $em->persist($node);
-        $em->persist($resource);
-    }
-
-    /**
-     * Very small local slugger (ASCII-only fallback).
-     */
-    private function basicSlug(string $text): string
-    {
-        $text = iconv('UTF-8', 'ASCII//TRANSLIT//IGNORE', $text);
-        $text = preg_replace('~[^\pL\d]+~u', '-', $text ?? '');
-        $text = trim((string) $text, '-');
-        $text = preg_replace('~[^-a-z0-9]+~i', '', $text);
-        $text = strtolower($text);
-
-        return $text ?: 'resource';
     }
 
     /**
@@ -519,5 +420,104 @@ class GradebookCertificateRepository extends ResourceRepository
         ;
 
         return $qb->getQuery()->getResult();
+    }
+
+    /**
+     * Computes and sets the certificate's expiry date when its category has a
+     * certificateValidityPeriod configured (expiry = createdAt + N days, so
+     * regeneration on the same day is idempotent and the stored expiry stays
+     * coherent with the issue date printed on the document). When no validity
+     * period is configured, this never writes anything — preserving a teacher's
+     * manually-set expiry date, or leaving it null.
+     */
+    private function applyValidityPeriodExpiry(GradebookCertificate $cert, ?GradebookCategory $category): void
+    {
+        $days = (int) ($category?->getCertificateValidityPeriod() ?? 0);
+        if ($days <= 0) {
+            return;
+        }
+
+        $cert->setExpiryDate((new DateTime($cert->getCreatedAt()->format('Y-m-d')))->modify("+{$days} days"));
+    }
+
+    /**
+     * Helper: resolve the ResourceType 'files' from the Tool 'files' (personal space).
+     *
+     * @throws RuntimeException if not found
+     */
+    private function getPersonalFilesResourceType(): ResourceType
+    {
+        $em = $this->getEntityManager();
+
+        $qb = $em->createQueryBuilder()
+            ->select('rt')
+            ->from(ResourceType::class, 'rt')
+            ->join('rt.tool', 't')
+            ->where('rt.title = :rtTitle')
+            ->andWhere('t.title = :toolTitle')
+            ->setParameter('rtTitle', 'files')
+            ->setParameter('toolTitle', 'files')
+            ->setMaxResults(1)
+        ;
+
+        $rt = $qb->getQuery()->getOneOrNullResult();
+        if ($rt instanceof ResourceType) {
+            return $rt;
+        }
+
+        $rt = $em->getRepository(ResourceType::class)->findOneBy(['title' => 'files']);
+        if (!$rt) {
+            throw new RuntimeException("ResourceType 'files' not found.");
+        }
+
+        return $rt;
+    }
+
+    /**
+     * Create a ResourceNode avoiding the slugify service.
+     * Generates a basic slug locally and wires parent/creator/type relationships.
+     */
+    private function createNodeForCertificateWithoutSlugify(
+        GradebookCertificate $resource,
+        User $creator,
+        ResourceNode $parentNode,
+        ResourceType $resourceType,
+        string $titleForNode
+    ): void {
+        $em = $this->getEntityManager();
+
+        $slug = $this->basicSlug($titleForNode);
+
+        $node = new ResourceNode();
+        $node
+            ->setTitle($titleForNode)
+            ->setSlug($slug)
+            ->setResourceType($resourceType)
+            ->setCreator($creator)
+        ;
+
+        // Parent-child relationship
+        $parentNode?->addChild($node);
+
+        // Wire resource <-> node
+        $resource->setResourceNode($node);
+
+        // Persist
+        $em->persist($node);
+        $em->persist($resource);
+    }
+
+    /**
+     * Very small local slugger (ASCII-only fallback).
+     */
+    private function basicSlug(string $text): string
+    {
+        $text = iconv('UTF-8', 'ASCII//TRANSLIT//IGNORE', $text);
+        $text = preg_replace('~[^\pL\d]+~u', '-', $text ?? '');
+        $text = trim((string) $text, '-');
+        $text = preg_replace('~[^-a-z0-9]+~i', '', $text);
+        $text = strtolower($text);
+
+        return $text ?: 'resource';
     }
 }

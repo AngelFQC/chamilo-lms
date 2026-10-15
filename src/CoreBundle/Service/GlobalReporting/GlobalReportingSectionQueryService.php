@@ -1223,8 +1223,8 @@ final readonly class GlobalReportingSectionQueryService
             $targetUser instanceof User
             && $this->loginAsAuthorizationChecker->canLoginAs($context->currentUser, $targetUser)
         ) {
-            $loginAsUrl = '/admin/user-list-login-as?user_id='.$userId.'&sec_token='.
-                rawurlencode($this->csrfTokenManager->getToken('login_as')->getValue());
+            $loginAsUrl = '/admin/user-list-login-as?user_id='.$userId.'&sec_token='
+                .rawurlencode($this->csrfTokenManager->getToken('login_as')->getValue());
         }
         $courseCount = \count($rows);
         $courseDetail = null;
@@ -1954,8 +1954,8 @@ final readonly class GlobalReportingSectionQueryService
         $learningPaths = $this->learningPathDetailRows($userId, $courseId, $sessionId);
         foreach ($learningPaths as &$learningPath) {
             $learningPath['detailsUrl'] = (int) ($learningPath['resourceNodeId'] ?? 0) > 0
-                ? '/resources/lp/'.(int) $learningPath['resourceNodeId'].'/'.(int) $learningPath['id'].
-                    '/reporting?'.http_build_query([
+                ? '/resources/lp/'.(int) $learningPath['resourceNodeId'].'/'.(int) $learningPath['id']
+                    .'/reporting?'.http_build_query([
                         'cid' => $courseId,
                         'sid' => $sessionId,
                         'studentId' => $userId,
@@ -2270,8 +2270,8 @@ final readonly class GlobalReportingSectionQueryService
             $latestAttemptUrl = null;
             $allAttemptsUrl = null;
             if ($resourceNodeId > 0 && (int) $userStats['bestAttemptId'] > 0) {
-                $latestAttemptUrl = '/resources/exercise/'.$resourceNodeId.'/'.$quizId.'/result/'.
-                    (int) $userStats['bestAttemptId'].'?'.http_build_query([
+                $latestAttemptUrl = '/resources/exercise/'.$resourceNodeId.'/'.$quizId.'/result/'
+                    .(int) $userStats['bestAttemptId'].'?'.http_build_query([
                         'cid' => $courseId,
                         'sid' => $sessionId,
                         'gid' => 0,
@@ -4345,8 +4345,8 @@ final readonly class GlobalReportingSectionQueryService
                 'SELECT DISTINCT YEAR(certificate.created_at) AS certificateYear
                    FROM gradebook_certificate certificate
                    INNER JOIN gradebook_category category ON category.id = certificate.cat_id
-                  WHERE '.implode(' AND ', $yearWhere).
-                ' ORDER BY certificateYear DESC',
+                  WHERE '.implode(' AND ', $yearWhere)
+                .' ORDER BY certificateYear DESC',
                 $yearParameters,
                 $yearTypes,
             );
@@ -4519,8 +4519,8 @@ final readonly class GlobalReportingSectionQueryService
                     course.title AS course,
                     certificate.created_at AS createdAt,
                     certificate.path_certificate AS certificatePath'
-            .$from.
-            ' ORDER BY certificate.created_at DESC, certificate.id DESC
+            .$from
+            .' ORDER BY certificate.created_at DESC, certificate.id DESC
                LIMIT :limit OFFSET :offset',
             [
                 ...$parameters,

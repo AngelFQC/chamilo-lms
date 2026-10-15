@@ -48,12 +48,11 @@ use const MB_CASE_LOWER;
  */
 class UserRepository extends ResourceRepository implements PasswordUpgraderInterface
 {
-    protected ?UserPasswordHasherInterface $hasher = null;
-
     public const int USER_IMAGE_SIZE_SMALL = 1;
     public const int USER_IMAGE_SIZE_MEDIUM = 2;
     public const int USER_IMAGE_SIZE_BIG = 3;
     public const int USER_IMAGE_SIZE_ORIGINAL = 4;
+    protected ?UserPasswordHasherInterface $hasher = null;
 
     public function __construct(
         ManagerRegistry $registry,
@@ -231,250 +230,6 @@ class UserRepository extends ResourceRepository implements PasswordUpgraderInter
 
             throw $e;
         }
-    }
-
-    /**
-     * Reassigns resources and related data from a deleted user to a fallback user in the database.
-     *
-     * @param mixed $connection
-     */
-    protected function reassignUserResourcesToFallbackSQL(User $userToDelete, User $fallbackUser, $connection): void
-    {
-        // Update resource nodes created by the user
-        $connection->executeStatement(
-            'UPDATE resource_node SET creator_id = :fallbackUserId WHERE creator_id = :userId',
-            ['fallbackUserId' => $fallbackUser->getId(), 'userId' => $userToDelete->getId()]
-        );
-
-        // Update child resource nodes
-        $connection->executeStatement(
-            'UPDATE resource_node SET parent_id = :fallbackParentId WHERE parent_id = :userParentId',
-            [
-                'fallbackParentId' => $fallbackUser->getResourceNode()?->getId(),
-                'userParentId' => $userToDelete->getResourceNode()->getId(),
-            ]
-        );
-
-        // Relations to update or delete
-        $relations = $this->getRelations();
-
-        foreach ($relations as $relation) {
-            $table = $relation['table'];
-            $field = $relation['field'];
-            $action = $relation['action'];
-
-            if ('delete' === $action) {
-                $connection->executeStatement(
-                    "DELETE FROM $table WHERE $field = :userId",
-                    ['userId' => $userToDelete->getId()]
-                );
-            } elseif ('update' === $action) {
-                $connection->executeStatement(
-                    "UPDATE $table SET $field = :fallbackUserId WHERE $field = :userId",
-                    [
-                        'fallbackUserId' => $fallbackUser->getId(),
-                        'userId' => $userToDelete->getId(),
-                    ]
-                );
-            }
-        }
-    }
-
-    /**
-     * Provides a list of database table relations and their respective actions
-     * (update or delete) for handling user resource reassignment or deletion.
-     *
-     * Any new database table that stores references to users and requires updates
-     * or deletions when a user is removed should be added to this list. This ensures
-     * proper handling of dependencies and avoids orphaned data.
-     */
-    protected function getRelations(): array
-    {
-        return [
-            ['table' => 'access_url_rel_user', 'field' => 'user_id', 'action' => 'delete'],
-            ['table' => 'attempt_feedback', 'field' => 'user_id', 'action' => 'update'],
-            ['table' => 'chat', 'field' => 'to_user', 'action' => 'update'],
-            ['table' => 'chat_video', 'field' => 'to_user', 'action' => 'update'],
-            ['table' => 'course_rel_user', 'field' => 'user_id', 'action' => 'delete'],
-            ['table' => 'course_rel_user_catalogue', 'field' => 'user_id', 'action' => 'delete'],
-            ['table' => 'course_request', 'field' => 'user_id', 'action' => 'update'],
-            ['table' => 'c_attendance_result', 'field' => 'user_id', 'action' => 'delete'],
-            ['table' => 'c_attendance_result_comment', 'field' => 'user_id', 'action' => 'update'],
-            ['table' => 'c_attendance_sheet', 'field' => 'user_id', 'action' => 'delete'],
-            ['table' => 'c_attendance_sheet_log', 'field' => 'lastedit_user_id', 'action' => 'delete'],
-            ['table' => 'c_chat_connected', 'field' => 'user_id', 'action' => 'delete'],
-            ['table' => 'c_dropbox_category', 'field' => 'user_id', 'action' => 'update'],
-            ['table' => 'c_dropbox_feedback', 'field' => 'author_user_id', 'action' => 'update'],
-            ['table' => 'c_dropbox_person', 'field' => 'user_id', 'action' => 'update'],
-            ['table' => 'c_dropbox_post', 'field' => 'dest_user_id', 'action' => 'update'],
-            ['table' => 'c_forum_mailcue', 'field' => 'user_id', 'action' => 'delete'],
-            ['table' => 'c_forum_notification', 'field' => 'user_id', 'action' => 'delete'],
-            ['table' => 'c_forum_post', 'field' => 'poster_id', 'action' => 'update'],
-            ['table' => 'c_forum_thread', 'field' => 'thread_poster_id', 'action' => 'update'],
-            ['table' => 'c_forum_thread_qualify', 'field' => 'user_id', 'action' => 'update'],
-            ['table' => 'c_forum_thread_qualify_log', 'field' => 'user_id', 'action' => 'update'],
-            ['table' => 'c_group_rel_tutor', 'field' => 'user_id', 'action' => 'update'],
-            ['table' => 'c_group_rel_user', 'field' => 'user_id', 'action' => 'update'],
-            ['table' => 'c_lp_category_rel_user', 'field' => 'user_id', 'action' => 'delete'],
-            ['table' => 'c_lp_rel_user', 'field' => 'user_id', 'action' => 'delete'],
-            ['table' => 'c_lp_view', 'field' => 'user_id', 'action' => 'delete'],
-            ['table' => 'c_student_publication_comment', 'field' => 'user_id', 'action' => 'delete'],
-            ['table' => 'c_student_publication_rel_user', 'field' => 'user_id', 'action' => 'delete'],
-            ['table' => 'c_survey_invitation', 'field' => 'user_id', 'action' => 'update'],
-            ['table' => 'c_wiki', 'field' => 'user_id', 'action' => 'update'],
-            ['table' => 'c_wiki_mailcue', 'field' => 'user_id', 'action' => 'delete'],
-            ['table' => 'extra_field_saved_search', 'field' => 'user_id', 'action' => 'delete'],
-            ['table' => 'gradebook_category', 'field' => 'user_id', 'action' => 'update'],
-            ['table' => 'gradebook_certificate', 'field' => 'user_id', 'action' => 'delete'],
-            ['table' => 'gradebook_comment', 'field' => 'user_id', 'action' => 'update'],
-            ['table' => 'gradebook_linkeval_log', 'field' => 'user_id_log', 'action' => 'delete'],
-            ['table' => 'gradebook_result', 'field' => 'user_id', 'action' => 'delete'],
-            ['table' => 'gradebook_result_log', 'field' => 'user_id', 'action' => 'delete'],
-            ['table' => 'gradebook_score_log', 'field' => 'user_id', 'action' => 'delete'],
-            ['table' => 'message', 'field' => 'user_sender_id', 'action' => 'update'],
-            ['table' => 'message_rel_user', 'field' => 'user_id', 'action' => 'delete'],
-            ['table' => 'message_tag', 'field' => 'user_id', 'action' => 'delete'],
-            ['table' => 'notification', 'field' => 'dest_user_id', 'action' => 'delete'],
-            ['table' => 'page_category', 'field' => 'creator_id', 'action' => 'update'],
-            ['table' => 'portfolio_category', 'field' => 'user_id', 'action' => 'update'],
-            ['table' => 'resource_comment', 'field' => 'author_id', 'action' => 'update'],
-            ['table' => 'sequence_value', 'field' => 'user_id', 'action' => 'update'],
-            ['table' => 'session_rel_course_rel_user', 'field' => 'user_id', 'action' => 'delete'],
-            ['table' => 'session_rel_user', 'field' => 'user_id', 'action' => 'delete'],
-            ['table' => 'skill_rel_item_rel_user', 'field' => 'user_id', 'action' => 'delete'],
-            ['table' => 'skill_rel_user', 'field' => 'user_id', 'action' => 'delete'],
-            ['table' => 'skill_rel_user_comment', 'field' => 'feedback_giver_id', 'action' => 'delete'],
-            ['table' => 'social_post', 'field' => 'sender_id', 'action' => 'update'],
-            ['table' => 'social_post', 'field' => 'user_receiver_id', 'action' => 'update'],
-            ['table' => 'social_post_attachments', 'field' => 'sys_insert_user_id', 'action' => 'update'],
-            ['table' => 'social_post_attachments', 'field' => 'sys_lastedit_user_id', 'action' => 'update'],
-            ['table' => 'social_post_feedback', 'field' => 'user_id', 'action' => 'update'],
-            ['table' => 'templates', 'field' => 'user_id', 'action' => 'update'],
-            ['table' => 'ticket_assigned_log', 'field' => 'user_id', 'action' => 'update'],
-            ['table' => 'ticket_assigned_log', 'field' => 'sys_insert_user_id', 'action' => 'update'],
-            ['table' => 'ticket_category', 'field' => 'sys_insert_user_id', 'action' => 'update'],
-            ['table' => 'ticket_category', 'field' => 'sys_lastedit_user_id', 'action' => 'update'],
-            ['table' => 'ticket_category_rel_user', 'field' => 'user_id', 'action' => 'delete'],
-            ['table' => 'ticket_message', 'field' => 'sys_insert_user_id', 'action' => 'update'],
-            ['table' => 'ticket_message', 'field' => 'sys_lastedit_user_id', 'action' => 'update'],
-            ['table' => 'ticket_message_attachments', 'field' => 'sys_insert_user_id', 'action' => 'update'],
-            ['table' => 'ticket_message_attachments', 'field' => 'sys_lastedit_user_id', 'action' => 'update'],
-            ['table' => 'ticket_priority', 'field' => 'sys_insert_user_id', 'action' => 'update'],
-            ['table' => 'ticket_priority', 'field' => 'sys_lastedit_user_id', 'action' => 'update'],
-            ['table' => 'ticket_project', 'field' => 'sys_insert_user_id', 'action' => 'update'],
-            ['table' => 'ticket_project', 'field' => 'sys_lastedit_user_id', 'action' => 'update'],
-            ['table' => 'track_e_access', 'field' => 'access_user_id', 'action' => 'delete'],
-            ['table' => 'track_e_access_complete', 'field' => 'user_id', 'action' => 'delete'],
-            ['table' => 'track_e_attempt', 'field' => 'user_id', 'action' => 'delete'],
-            ['table' => 'track_e_course_access', 'field' => 'user_id', 'action' => 'delete'],
-            ['table' => 'track_e_default', 'field' => 'default_user_id', 'action' => 'update'],
-            ['table' => 'track_e_downloads', 'field' => 'down_user_id', 'action' => 'delete'],
-            ['table' => 'track_e_exercises', 'field' => 'exe_user_id', 'action' => 'delete'],
-            ['table' => 'track_e_exercise_confirmation', 'field' => 'user_id', 'action' => 'delete'],
-            ['table' => 'track_e_hotpotatoes', 'field' => 'exe_user_id', 'action' => 'delete'],
-            ['table' => 'track_e_hotspot', 'field' => 'hotspot_user_id', 'action' => 'delete'],
-            ['table' => 'track_e_lastaccess', 'field' => 'access_user_id', 'action' => 'delete'],
-            ['table' => 'track_e_links', 'field' => 'links_user_id', 'action' => 'delete'],
-            ['table' => 'track_e_login', 'field' => 'login_user_id', 'action' => 'delete'],
-            ['table' => 'track_e_online', 'field' => 'login_user_id', 'action' => 'delete'],
-            ['table' => 'track_e_uploads', 'field' => 'upload_user_id', 'action' => 'delete'],
-            ['table' => 'usergroup_rel_user', 'field' => 'user_id', 'action' => 'update'],
-            ['table' => 'user_rel_tag', 'field' => 'user_id', 'action' => 'delete'],
-            ['table' => 'user_rel_user', 'field' => 'user_id', 'action' => 'delete'],
-        ];
-    }
-
-    /**
-     * Delete assignment submission resource trees owned by the user before the raw user deletion.
-     *
-     * Student submissions are course resources. Removing only c_student_publication rows would
-     * leave ResourceFile storage objects orphaned, so we remove the ResourceNode tree instead.
-     * Root assignment folders are kept, because they usually belong to the course activity itself.
-     */
-    private function deleteUserStudentPublicationFiles(User $user): void
-    {
-        $userId = $user->getId();
-        if (null === $userId) {
-            return;
-        }
-
-        $em = $this->getEntityManager();
-        $qb = $em->createQueryBuilder();
-
-        $rows = $qb
-            ->select('DISTINCT resourceNode.id AS id')
-            ->from(CStudentPublication::class, 'publication')
-            ->innerJoin('publication.resourceNode', 'resourceNode')
-            ->where('IDENTITY(publication.user) = :userId')
-            ->andWhere(
-                $qb->expr()->orX(
-                    'publication.publicationParent IS NOT NULL',
-                    'publication.filetype = :filetype'
-                )
-            )
-            ->setParameter('userId', $userId, Types::INTEGER)
-            ->setParameter('filetype', 'file')
-            ->getQuery()
-            ->getScalarResult()
-        ;
-
-        if ([] === $rows) {
-            return;
-        }
-
-        $visitedNodeIds = [];
-
-        foreach ($rows as $row) {
-            $resourceNodeId = (int) ($row['id'] ?? 0);
-            if (0 === $resourceNodeId || isset($visitedNodeIds[$resourceNodeId])) {
-                continue;
-            }
-
-            $resourceNode = $em->find(ResourceNode::class, $resourceNodeId);
-            if (!$resourceNode instanceof ResourceNode) {
-                continue;
-            }
-
-            $this->removeResourceNodeTree($resourceNode, $visitedNodeIds);
-        }
-
-        $em->flush();
-    }
-
-    /**
-     * Remove a resource node tree through Doctrine so ResourceFile preRemove handlers
-     * delete the physical files from storage.
-     *
-     * @param array<int, bool> $visitedNodeIds
-     */
-    private function removeResourceNodeTree(ResourceNode $resourceNode, array &$visitedNodeIds): void
-    {
-        $resourceNodeId = $resourceNode->getId();
-        if (null !== $resourceNodeId) {
-            if (isset($visitedNodeIds[$resourceNodeId])) {
-                return;
-            }
-
-            $visitedNodeIds[$resourceNodeId] = true;
-        }
-
-        $em = $this->getEntityManager();
-
-        foreach (iterator_to_array($resourceNode->getChildren()) as $childNode) {
-            if ($childNode instanceof ResourceNode) {
-                $this->removeResourceNodeTree($childNode, $visitedNodeIds);
-            }
-        }
-
-        foreach (iterator_to_array($resourceNode->getResourceFiles()) as $resourceFile) {
-            $em->remove($resourceFile);
-        }
-
-        foreach (iterator_to_array($resourceNode->getResourceLinks()) as $resourceLink) {
-            $em->remove($resourceLink);
-        }
-
-        $em->remove($resourceNode);
     }
 
     /**
@@ -968,77 +723,6 @@ class UserRepository extends ResourceRepository implements PasswordUpgraderInter
         $qb
             ->andWhere('u.expirationDate IS NULL OR u.expirationDate > :now')
             ->setParameter('now', new Datetime(), Types::DATETIME_MUTABLE)
-        ;
-
-        return $qb;
-    }
-
-    private function addRoleQueryBuilder(string $role, ?QueryBuilder $qb = null): QueryBuilder
-    {
-        $qb = $this->getOrCreateQueryBuilder($qb, 'u');
-        $qb
-            ->andWhere('u.roles LIKE :roles')
-            ->setParameter('roles', '%"'.$role.'"%', Types::STRING)
-        ;
-
-        return $qb;
-    }
-
-    private function addSearchByKeywordQueryBuilder(string $keyword, ?QueryBuilder $qb = null): QueryBuilder
-    {
-        $qb = $this->getOrCreateQueryBuilder($qb, 'u');
-        $qb
-            ->andWhere('
-                u.firstname LIKE :keyword OR
-                u.lastname LIKE :keyword OR
-                u.email LIKE :keyword OR
-                u.username LIKE :keyword
-            ')
-            ->setParameter('keyword', "%$keyword%", Types::STRING)
-            ->orderBy('u.firstname', Criteria::ASC)
-        ;
-
-        return $qb;
-    }
-
-    private function addUserRelUserQueryBuilder(int $userId, int $relationType, ?QueryBuilder $qb = null): QueryBuilder
-    {
-        $qb = $this->getOrCreateQueryBuilder($qb, 'u');
-        $qb->leftJoin('u.friends', 'relations');
-        $qb
-            ->andWhere('relations.relationType = :relationType')
-            ->andWhere('relations.user = :userRelation AND relations.friend <> :userRelation')
-            ->setParameter('relationType', $relationType)
-            ->setParameter('userRelation', $userId)
-        ;
-
-        return $qb;
-    }
-
-    private function addOnlyMyFriendsQueryBuilder(int $userId, ?QueryBuilder $qb = null): QueryBuilder
-    {
-        $qb = $this->getOrCreateQueryBuilder($qb, 'u');
-        $qb
-            ->leftJoin('u.friends', 'relations')
-            ->andWhere(
-                $qb->expr()->notIn(
-                    'relations.relationType',
-                    [UserRelUser::USER_RELATION_TYPE_DELETED, UserRelUser::USER_RELATION_TYPE_RRHH]
-                )
-            )
-            ->andWhere('relations.user = :user AND relations.friend <> :user')
-            ->setParameter('user', $userId, Types::INTEGER)
-        ;
-
-        return $qb;
-    }
-
-    private function addNotCurrentUserQueryBuilder(int $userId, ?QueryBuilder $qb = null): QueryBuilder
-    {
-        $qb = $this->getOrCreateQueryBuilder($qb, 'u');
-        $qb
-            ->andWhere('u.id <> :id')
-            ->setParameter('id', $userId, Types::INTEGER)
         ;
 
         return $qb;
@@ -1555,5 +1239,320 @@ class UserRepository extends ResourceRepository implements PasswordUpgraderInter
             'username' => 'admin',
             'email' => 'admin@example.com',
         ];
+    }
+
+    /**
+     * Reassigns resources and related data from a deleted user to a fallback user in the database.
+     *
+     * @param mixed $connection
+     */
+    protected function reassignUserResourcesToFallbackSQL(User $userToDelete, User $fallbackUser, $connection): void
+    {
+        // Update resource nodes created by the user
+        $connection->executeStatement(
+            'UPDATE resource_node SET creator_id = :fallbackUserId WHERE creator_id = :userId',
+            ['fallbackUserId' => $fallbackUser->getId(), 'userId' => $userToDelete->getId()]
+        );
+
+        // Update child resource nodes
+        $connection->executeStatement(
+            'UPDATE resource_node SET parent_id = :fallbackParentId WHERE parent_id = :userParentId',
+            [
+                'fallbackParentId' => $fallbackUser->getResourceNode()?->getId(),
+                'userParentId' => $userToDelete->getResourceNode()->getId(),
+            ]
+        );
+
+        // Relations to update or delete
+        $relations = $this->getRelations();
+
+        foreach ($relations as $relation) {
+            $table = $relation['table'];
+            $field = $relation['field'];
+            $action = $relation['action'];
+
+            if ('delete' === $action) {
+                $connection->executeStatement(
+                    "DELETE FROM $table WHERE $field = :userId",
+                    ['userId' => $userToDelete->getId()]
+                );
+            } elseif ('update' === $action) {
+                $connection->executeStatement(
+                    "UPDATE $table SET $field = :fallbackUserId WHERE $field = :userId",
+                    [
+                        'fallbackUserId' => $fallbackUser->getId(),
+                        'userId' => $userToDelete->getId(),
+                    ]
+                );
+            }
+        }
+    }
+
+    /**
+     * Provides a list of database table relations and their respective actions
+     * (update or delete) for handling user resource reassignment or deletion.
+     *
+     * Any new database table that stores references to users and requires updates
+     * or deletions when a user is removed should be added to this list. This ensures
+     * proper handling of dependencies and avoids orphaned data.
+     */
+    protected function getRelations(): array
+    {
+        return [
+            ['table' => 'access_url_rel_user', 'field' => 'user_id', 'action' => 'delete'],
+            ['table' => 'attempt_feedback', 'field' => 'user_id', 'action' => 'update'],
+            ['table' => 'chat', 'field' => 'to_user', 'action' => 'update'],
+            ['table' => 'chat_video', 'field' => 'to_user', 'action' => 'update'],
+            ['table' => 'course_rel_user', 'field' => 'user_id', 'action' => 'delete'],
+            ['table' => 'course_rel_user_catalogue', 'field' => 'user_id', 'action' => 'delete'],
+            ['table' => 'course_request', 'field' => 'user_id', 'action' => 'update'],
+            ['table' => 'c_attendance_result', 'field' => 'user_id', 'action' => 'delete'],
+            ['table' => 'c_attendance_result_comment', 'field' => 'user_id', 'action' => 'update'],
+            ['table' => 'c_attendance_sheet', 'field' => 'user_id', 'action' => 'delete'],
+            ['table' => 'c_attendance_sheet_log', 'field' => 'lastedit_user_id', 'action' => 'delete'],
+            ['table' => 'c_chat_connected', 'field' => 'user_id', 'action' => 'delete'],
+            ['table' => 'c_dropbox_category', 'field' => 'user_id', 'action' => 'update'],
+            ['table' => 'c_dropbox_feedback', 'field' => 'author_user_id', 'action' => 'update'],
+            ['table' => 'c_dropbox_person', 'field' => 'user_id', 'action' => 'update'],
+            ['table' => 'c_dropbox_post', 'field' => 'dest_user_id', 'action' => 'update'],
+            ['table' => 'c_forum_mailcue', 'field' => 'user_id', 'action' => 'delete'],
+            ['table' => 'c_forum_notification', 'field' => 'user_id', 'action' => 'delete'],
+            ['table' => 'c_forum_post', 'field' => 'poster_id', 'action' => 'update'],
+            ['table' => 'c_forum_thread', 'field' => 'thread_poster_id', 'action' => 'update'],
+            ['table' => 'c_forum_thread_qualify', 'field' => 'user_id', 'action' => 'update'],
+            ['table' => 'c_forum_thread_qualify_log', 'field' => 'user_id', 'action' => 'update'],
+            ['table' => 'c_group_rel_tutor', 'field' => 'user_id', 'action' => 'update'],
+            ['table' => 'c_group_rel_user', 'field' => 'user_id', 'action' => 'update'],
+            ['table' => 'c_lp_category_rel_user', 'field' => 'user_id', 'action' => 'delete'],
+            ['table' => 'c_lp_rel_user', 'field' => 'user_id', 'action' => 'delete'],
+            ['table' => 'c_lp_view', 'field' => 'user_id', 'action' => 'delete'],
+            ['table' => 'c_student_publication_comment', 'field' => 'user_id', 'action' => 'delete'],
+            ['table' => 'c_student_publication_rel_user', 'field' => 'user_id', 'action' => 'delete'],
+            ['table' => 'c_survey_invitation', 'field' => 'user_id', 'action' => 'update'],
+            ['table' => 'c_wiki', 'field' => 'user_id', 'action' => 'update'],
+            ['table' => 'c_wiki_mailcue', 'field' => 'user_id', 'action' => 'delete'],
+            ['table' => 'extra_field_saved_search', 'field' => 'user_id', 'action' => 'delete'],
+            ['table' => 'gradebook_category', 'field' => 'user_id', 'action' => 'update'],
+            ['table' => 'gradebook_certificate', 'field' => 'user_id', 'action' => 'delete'],
+            ['table' => 'gradebook_comment', 'field' => 'user_id', 'action' => 'update'],
+            ['table' => 'gradebook_linkeval_log', 'field' => 'user_id_log', 'action' => 'delete'],
+            ['table' => 'gradebook_result', 'field' => 'user_id', 'action' => 'delete'],
+            ['table' => 'gradebook_result_log', 'field' => 'user_id', 'action' => 'delete'],
+            ['table' => 'gradebook_score_log', 'field' => 'user_id', 'action' => 'delete'],
+            ['table' => 'message', 'field' => 'user_sender_id', 'action' => 'update'],
+            ['table' => 'message_rel_user', 'field' => 'user_id', 'action' => 'delete'],
+            ['table' => 'message_tag', 'field' => 'user_id', 'action' => 'delete'],
+            ['table' => 'notification', 'field' => 'dest_user_id', 'action' => 'delete'],
+            ['table' => 'page_category', 'field' => 'creator_id', 'action' => 'update'],
+            ['table' => 'portfolio_category', 'field' => 'user_id', 'action' => 'update'],
+            ['table' => 'resource_comment', 'field' => 'author_id', 'action' => 'update'],
+            ['table' => 'sequence_value', 'field' => 'user_id', 'action' => 'update'],
+            ['table' => 'session_rel_course_rel_user', 'field' => 'user_id', 'action' => 'delete'],
+            ['table' => 'session_rel_user', 'field' => 'user_id', 'action' => 'delete'],
+            ['table' => 'skill_rel_item_rel_user', 'field' => 'user_id', 'action' => 'delete'],
+            ['table' => 'skill_rel_user', 'field' => 'user_id', 'action' => 'delete'],
+            ['table' => 'skill_rel_user_comment', 'field' => 'feedback_giver_id', 'action' => 'delete'],
+            ['table' => 'social_post', 'field' => 'sender_id', 'action' => 'update'],
+            ['table' => 'social_post', 'field' => 'user_receiver_id', 'action' => 'update'],
+            ['table' => 'social_post_attachments', 'field' => 'sys_insert_user_id', 'action' => 'update'],
+            ['table' => 'social_post_attachments', 'field' => 'sys_lastedit_user_id', 'action' => 'update'],
+            ['table' => 'social_post_feedback', 'field' => 'user_id', 'action' => 'update'],
+            ['table' => 'templates', 'field' => 'user_id', 'action' => 'update'],
+            ['table' => 'ticket_assigned_log', 'field' => 'user_id', 'action' => 'update'],
+            ['table' => 'ticket_assigned_log', 'field' => 'sys_insert_user_id', 'action' => 'update'],
+            ['table' => 'ticket_category', 'field' => 'sys_insert_user_id', 'action' => 'update'],
+            ['table' => 'ticket_category', 'field' => 'sys_lastedit_user_id', 'action' => 'update'],
+            ['table' => 'ticket_category_rel_user', 'field' => 'user_id', 'action' => 'delete'],
+            ['table' => 'ticket_message', 'field' => 'sys_insert_user_id', 'action' => 'update'],
+            ['table' => 'ticket_message', 'field' => 'sys_lastedit_user_id', 'action' => 'update'],
+            ['table' => 'ticket_message_attachments', 'field' => 'sys_insert_user_id', 'action' => 'update'],
+            ['table' => 'ticket_message_attachments', 'field' => 'sys_lastedit_user_id', 'action' => 'update'],
+            ['table' => 'ticket_priority', 'field' => 'sys_insert_user_id', 'action' => 'update'],
+            ['table' => 'ticket_priority', 'field' => 'sys_lastedit_user_id', 'action' => 'update'],
+            ['table' => 'ticket_project', 'field' => 'sys_insert_user_id', 'action' => 'update'],
+            ['table' => 'ticket_project', 'field' => 'sys_lastedit_user_id', 'action' => 'update'],
+            ['table' => 'track_e_access', 'field' => 'access_user_id', 'action' => 'delete'],
+            ['table' => 'track_e_access_complete', 'field' => 'user_id', 'action' => 'delete'],
+            ['table' => 'track_e_attempt', 'field' => 'user_id', 'action' => 'delete'],
+            ['table' => 'track_e_course_access', 'field' => 'user_id', 'action' => 'delete'],
+            ['table' => 'track_e_default', 'field' => 'default_user_id', 'action' => 'update'],
+            ['table' => 'track_e_downloads', 'field' => 'down_user_id', 'action' => 'delete'],
+            ['table' => 'track_e_exercises', 'field' => 'exe_user_id', 'action' => 'delete'],
+            ['table' => 'track_e_exercise_confirmation', 'field' => 'user_id', 'action' => 'delete'],
+            ['table' => 'track_e_hotpotatoes', 'field' => 'exe_user_id', 'action' => 'delete'],
+            ['table' => 'track_e_hotspot', 'field' => 'hotspot_user_id', 'action' => 'delete'],
+            ['table' => 'track_e_lastaccess', 'field' => 'access_user_id', 'action' => 'delete'],
+            ['table' => 'track_e_links', 'field' => 'links_user_id', 'action' => 'delete'],
+            ['table' => 'track_e_login', 'field' => 'login_user_id', 'action' => 'delete'],
+            ['table' => 'track_e_online', 'field' => 'login_user_id', 'action' => 'delete'],
+            ['table' => 'track_e_uploads', 'field' => 'upload_user_id', 'action' => 'delete'],
+            ['table' => 'usergroup_rel_user', 'field' => 'user_id', 'action' => 'update'],
+            ['table' => 'user_rel_tag', 'field' => 'user_id', 'action' => 'delete'],
+            ['table' => 'user_rel_user', 'field' => 'user_id', 'action' => 'delete'],
+        ];
+    }
+
+    /**
+     * Delete assignment submission resource trees owned by the user before the raw user deletion.
+     *
+     * Student submissions are course resources. Removing only c_student_publication rows would
+     * leave ResourceFile storage objects orphaned, so we remove the ResourceNode tree instead.
+     * Root assignment folders are kept, because they usually belong to the course activity itself.
+     */
+    private function deleteUserStudentPublicationFiles(User $user): void
+    {
+        $userId = $user->getId();
+        if (null === $userId) {
+            return;
+        }
+
+        $em = $this->getEntityManager();
+        $qb = $em->createQueryBuilder();
+
+        $rows = $qb
+            ->select('DISTINCT resourceNode.id AS id')
+            ->from(CStudentPublication::class, 'publication')
+            ->innerJoin('publication.resourceNode', 'resourceNode')
+            ->where('IDENTITY(publication.user) = :userId')
+            ->andWhere(
+                $qb->expr()->orX(
+                    'publication.publicationParent IS NOT NULL',
+                    'publication.filetype = :filetype'
+                )
+            )
+            ->setParameter('userId', $userId, Types::INTEGER)
+            ->setParameter('filetype', 'file')
+            ->getQuery()
+            ->getScalarResult()
+        ;
+
+        if ([] === $rows) {
+            return;
+        }
+
+        $visitedNodeIds = [];
+
+        foreach ($rows as $row) {
+            $resourceNodeId = (int) ($row['id'] ?? 0);
+            if (0 === $resourceNodeId || isset($visitedNodeIds[$resourceNodeId])) {
+                continue;
+            }
+
+            $resourceNode = $em->find(ResourceNode::class, $resourceNodeId);
+            if (!$resourceNode instanceof ResourceNode) {
+                continue;
+            }
+
+            $this->removeResourceNodeTree($resourceNode, $visitedNodeIds);
+        }
+
+        $em->flush();
+    }
+
+    /**
+     * Remove a resource node tree through Doctrine so ResourceFile preRemove handlers
+     * delete the physical files from storage.
+     *
+     * @param array<int, bool> $visitedNodeIds
+     */
+    private function removeResourceNodeTree(ResourceNode $resourceNode, array &$visitedNodeIds): void
+    {
+        $resourceNodeId = $resourceNode->getId();
+        if (null !== $resourceNodeId) {
+            if (isset($visitedNodeIds[$resourceNodeId])) {
+                return;
+            }
+
+            $visitedNodeIds[$resourceNodeId] = true;
+        }
+
+        $em = $this->getEntityManager();
+
+        foreach (iterator_to_array($resourceNode->getChildren()) as $childNode) {
+            if ($childNode instanceof ResourceNode) {
+                $this->removeResourceNodeTree($childNode, $visitedNodeIds);
+            }
+        }
+
+        foreach (iterator_to_array($resourceNode->getResourceFiles()) as $resourceFile) {
+            $em->remove($resourceFile);
+        }
+
+        foreach (iterator_to_array($resourceNode->getResourceLinks()) as $resourceLink) {
+            $em->remove($resourceLink);
+        }
+
+        $em->remove($resourceNode);
+    }
+
+    private function addRoleQueryBuilder(string $role, ?QueryBuilder $qb = null): QueryBuilder
+    {
+        $qb = $this->getOrCreateQueryBuilder($qb, 'u');
+        $qb
+            ->andWhere('u.roles LIKE :roles')
+            ->setParameter('roles', '%"'.$role.'"%', Types::STRING)
+        ;
+
+        return $qb;
+    }
+
+    private function addSearchByKeywordQueryBuilder(string $keyword, ?QueryBuilder $qb = null): QueryBuilder
+    {
+        $qb = $this->getOrCreateQueryBuilder($qb, 'u');
+        $qb
+            ->andWhere('
+                u.firstname LIKE :keyword OR
+                u.lastname LIKE :keyword OR
+                u.email LIKE :keyword OR
+                u.username LIKE :keyword
+            ')
+            ->setParameter('keyword', "%$keyword%", Types::STRING)
+            ->orderBy('u.firstname', Criteria::ASC)
+        ;
+
+        return $qb;
+    }
+
+    private function addUserRelUserQueryBuilder(int $userId, int $relationType, ?QueryBuilder $qb = null): QueryBuilder
+    {
+        $qb = $this->getOrCreateQueryBuilder($qb, 'u');
+        $qb->leftJoin('u.friends', 'relations');
+        $qb
+            ->andWhere('relations.relationType = :relationType')
+            ->andWhere('relations.user = :userRelation AND relations.friend <> :userRelation')
+            ->setParameter('relationType', $relationType)
+            ->setParameter('userRelation', $userId)
+        ;
+
+        return $qb;
+    }
+
+    private function addOnlyMyFriendsQueryBuilder(int $userId, ?QueryBuilder $qb = null): QueryBuilder
+    {
+        $qb = $this->getOrCreateQueryBuilder($qb, 'u');
+        $qb
+            ->leftJoin('u.friends', 'relations')
+            ->andWhere(
+                $qb->expr()->notIn(
+                    'relations.relationType',
+                    [UserRelUser::USER_RELATION_TYPE_DELETED, UserRelUser::USER_RELATION_TYPE_RRHH]
+                )
+            )
+            ->andWhere('relations.user = :user AND relations.friend <> :user')
+            ->setParameter('user', $userId, Types::INTEGER)
+        ;
+
+        return $qb;
+    }
+
+    private function addNotCurrentUserQueryBuilder(int $userId, ?QueryBuilder $qb = null): QueryBuilder
+    {
+        $qb = $this->getOrCreateQueryBuilder($qb, 'u');
+        $qb
+            ->andWhere('u.id <> :id')
+            ->setParameter('id', $userId, Types::INTEGER)
+        ;
+
+        return $qb;
     }
 }

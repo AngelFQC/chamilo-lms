@@ -59,8 +59,6 @@ class CAttendanceSheetLog
     }
 
     /**
-     * Get lasteditType.
-     *
      * @return string
      */
     public function getLasteditType()
@@ -76,8 +74,6 @@ class CAttendanceSheetLog
     }
 
     /**
-     * Get calendarDateValue.
-     *
      * @return DateTime
      */
     public function getCalendarDateValue()

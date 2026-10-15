@@ -25,6 +25,18 @@ class GlobalEventFilter extends AbstractFilter
         parent::__construct($managerRegistry, $logger, $properties, $nameConverter);
     }
 
+    public function getDescription(string $resourceClass): array
+    {
+        return [
+            'type' => [
+                'property' => 'type',
+                'type' => 'string',
+                'required' => false,
+                'description' => 'Filter events by type. Use "global" to get global events.',
+            ],
+        ];
+    }
+
     protected function filterProperty(
         string $property,
         $value,
@@ -50,17 +62,5 @@ class GlobalEventFilter extends AbstractFilter
             ->andWhere("$resourceLinkAlias.group IS NULL")
             ->andWhere("$resourceLinkAlias.user IS NULL")
         ;
-    }
-
-    public function getDescription(string $resourceClass): array
-    {
-        return [
-            'type' => [
-                'property' => 'type',
-                'type' => 'string',
-                'required' => false,
-                'description' => 'Filter events by type. Use "global" to get global events.',
-            ],
-        ];
     }
 }

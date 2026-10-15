@@ -25,51 +25,6 @@ final class UserRolesApiSecurityTest extends AbstractApiTest
 {
     use ChamiloTestTrait;
 
-    private function createUserOnUrl(string $username, AccessUrl $url, string $role = ''): User
-    {
-        /** @var UserRepository $repo */
-        $repo = self::getContainer()->get(UserRepository::class);
-        $admin = $this->getAdmin();
-
-        $user = $repo->createUser()
-            ->setLastname($username)
-            ->setFirstname($username)
-            ->setUsername($username)
-            ->setStatus(1)
-            ->setPlainPassword($username)
-            ->setEmail($username.'@example.com')
-            ->setCreator($admin)
-            ->setCurrentUrl($url)
-            ->addAuthSourceByAuthentication(UserAuthSource::PLATFORM, $url)
-        ;
-
-        if ('' !== $role) {
-            $user->addRole($role);
-        }
-
-        $repo->updateUser($user);
-
-        return $user;
-    }
-
-    private function createChildUrl(): AccessUrl
-    {
-        /** @var AccessUrlRepository $urlRepo */
-        $urlRepo = self::getContainer()->get(AccessUrlRepository::class);
-        $admin = $this->getAdmin();
-        $root = $this->getAccessUrl();
-
-        $child = (new AccessUrl())
-            ->setUrl('https://user-roles-security-'.uniqid().'.example.org/')
-            ->setActive(1)
-            ->setCreator($admin)
-            ->setSuperior($root)
-        ;
-        $urlRepo->create($child);
-
-        return $child;
-    }
-
     public function testPlainAdminCannotGrantGlobalAdminRoleToSelf(): void
     {
         $plainAdmin = $this->createUserOnUrl('roles_sec_plain_admin', $this->getAccessUrl(), 'ROLE_ADMIN');
@@ -150,5 +105,50 @@ final class UserRolesApiSecurityTest extends AbstractApiTest
         );
 
         $this->assertResponseIsSuccessful();
+    }
+
+    private function createUserOnUrl(string $username, AccessUrl $url, string $role = ''): User
+    {
+        /** @var UserRepository $repo */
+        $repo = self::getContainer()->get(UserRepository::class);
+        $admin = $this->getAdmin();
+
+        $user = $repo->createUser()
+            ->setLastname($username)
+            ->setFirstname($username)
+            ->setUsername($username)
+            ->setStatus(1)
+            ->setPlainPassword($username)
+            ->setEmail($username.'@example.com')
+            ->setCreator($admin)
+            ->setCurrentUrl($url)
+            ->addAuthSourceByAuthentication(UserAuthSource::PLATFORM, $url)
+        ;
+
+        if ('' !== $role) {
+            $user->addRole($role);
+        }
+
+        $repo->updateUser($user);
+
+        return $user;
+    }
+
+    private function createChildUrl(): AccessUrl
+    {
+        /** @var AccessUrlRepository $urlRepo */
+        $urlRepo = self::getContainer()->get(AccessUrlRepository::class);
+        $admin = $this->getAdmin();
+        $root = $this->getAccessUrl();
+
+        $child = (new AccessUrl())
+            ->setUrl('https://user-roles-security-'.uniqid().'.example.org/')
+            ->setActive(1)
+            ->setCreator($admin)
+            ->setSuperior($root)
+        ;
+        $urlRepo->create($child);
+
+        return $child;
     }
 }

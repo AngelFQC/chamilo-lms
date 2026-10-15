@@ -78,8 +78,6 @@ class Promotion
     }
 
     /**
-     * Get id.
-     *
      * @return int
      */
     public function getId()
@@ -100,8 +98,6 @@ class Promotion
     }
 
     /**
-     * Get description.
-     *
      * @return string
      */
     public function getDescription()
@@ -129,8 +125,6 @@ class Promotion
     }
 
     /**
-     * Get status.
-     *
      * @return int
      */
     public function getStatus()

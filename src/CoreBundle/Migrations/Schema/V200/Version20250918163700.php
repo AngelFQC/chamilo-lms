@@ -42,7 +42,7 @@ final class Version20250918163700 extends AbstractMigrationChamilo
                 }
 
                 $upper = array_values(array_unique(array_map(
-                    fn ($r) => strtoupper(trim((string) $r)),
+                    static fn ($r) => strtoupper(trim((string) $r)),
                     $roles
                 )));
 
@@ -111,7 +111,7 @@ final class Version20250918163700 extends AbstractMigrationChamilo
 
                 [$roles, $format] = $this->decodeRoles($raw);
                 $upper = array_values(array_unique(array_map(
-                    fn ($r) => strtoupper(trim((string) $r)),
+                    static fn ($r) => strtoupper(trim((string) $r)),
                     $roles
                 )));
 
@@ -237,7 +237,7 @@ final class Version20250918163700 extends AbstractMigrationChamilo
         }
 
         $fields = array_keys($data);
-        $placeholders = array_map(fn ($f) => ':'.$f, $fields);
+        $placeholders = array_map(static fn ($f) => ':'.$f, $fields);
         $sql = 'INSERT INTO role ('.implode(',', $fields).') VALUES ('.implode(',', $placeholders).')';
         $conn->executeStatement($sql, $data);
 
@@ -255,7 +255,7 @@ final class Version20250918163700 extends AbstractMigrationChamilo
 
         $sm = $conn->createSchemaManager();
         $cols = array_change_key_case(
-            array_map(fn ($c) => $c->getName(), $sm->listTableColumns('permission')),
+            array_map(static fn ($c) => $c->getName(), $sm->listTableColumns('permission')),
             CASE_UPPER
         );
 
@@ -270,7 +270,7 @@ final class Version20250918163700 extends AbstractMigrationChamilo
         }
 
         $fields = array_keys($data);
-        $place = array_map(fn ($f) => ':'.$f, $fields);
+        $place = array_map(static fn ($f) => ':'.$f, $fields);
         $sql = 'INSERT INTO permission ('.implode(',', $fields).') VALUES ('.implode(',', $place).')';
         $conn->executeStatement($sql, $data);
 

@@ -37,8 +37,6 @@ class TrackEDownloads
     protected ?ResourceLink $resourceLink = null;
 
     /**
-     * Get downDocPath.
-     *
      * @return string
      */
     public function getDownDocPath()
@@ -47,8 +45,6 @@ class TrackEDownloads
     }
 
     /**
-     * Set downDocPath.
-     *
      * @return TrackEDownloads
      */
     public function setDownDocPath(string $downDocPath)
@@ -59,8 +55,6 @@ class TrackEDownloads
     }
 
     /**
-     * Get downId.
-     *
      * @return int
      */
     public function getDownId()
@@ -69,8 +63,6 @@ class TrackEDownloads
     }
 
     /**
-     * Get downUserId.
-     *
      * @return int
      */
     public function getDownUserId()
@@ -79,8 +71,6 @@ class TrackEDownloads
     }
 
     /**
-     * Set downUserId.
-     *
      * @return TrackEDownloads
      */
     public function setDownUserId(int $downUserId)
@@ -91,8 +81,6 @@ class TrackEDownloads
     }
 
     /**
-     * Get downDate.
-     *
      * @return DateTime
      */
     public function getDownDate()
@@ -101,8 +89,6 @@ class TrackEDownloads
     }
 
     /**
-     * Set downDate.
-     *
      * @return TrackEDownloads
      */
     public function setDownDate(DateTime $downDate)
@@ -112,9 +98,6 @@ class TrackEDownloads
         return $this;
     }
 
-    /**
-     * Set resourceLink.
-     */
     public function setResourceLink(?ResourceLink $resourceLink): self
     {
         $this->resourceLink = $resourceLink;

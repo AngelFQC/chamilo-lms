@@ -26,6 +26,59 @@ readonly class ResourceAclHelper
     /**
      * @param iterable<int, ResourceRight> $rights
      */
+    public function isAllowed(
+        string $attribute,
+        ResourceLink $resourceLink,
+        iterable $rights,
+    ): bool {
+        $acl = $this->init($resourceLink, $rights);
+
+        $askedMask = (string) self::getPermissionMask([$attribute]);
+
+        if ($this->security->getToken() instanceof NullToken) {
+            return (bool) $acl->isAllowed('IS_AUTHENTICATED_ANONYMOUSLY', (string) $resourceLink->getId(), $askedMask);
+        }
+
+        $user = $this->security->getUser();
+
+        $roles = $user instanceof UserInterface ? $user->getRoles() : [];
+
+        foreach ($roles as $role) {
+            // init() only ever registers a small fixed set of resource-permission
+            // roles (ROLE_USER, ROLE_STUDENT, ROLE_CURRENT_COURSE_TEACHER, ...).
+            // $user->getRoles() returns the user's FULL Symfony role set, which
+            // for an admin using "Login as" also includes roles like
+            // ROLE_SESSION_MANAGER, ROLE_PREVIOUS_ADMIN or ROLE_ALLOWED_TO_SWITCH -
+            // none of which the ACL knows about. Laminas throws
+            // InvalidArgumentException for any role it hasn't registered, so
+            // without this guard a single unrelated role crashes the whole
+            // permission check instead of just being irrelevant to it.
+            if (!$acl->hasRole($role)) {
+                continue;
+            }
+
+            if ($acl->isAllowed($role, (string) $resourceLink->getId(), $askedMask)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    public static function getPermissionMask(array $attributes): int
+    {
+        $builder = new MaskBuilder();
+
+        foreach ($attributes as $attribute) {
+            $builder->add($attribute);
+        }
+
+        return $builder->get();
+    }
+
+    /**
+     * @param iterable<int, ResourceRight> $rights
+     */
     private function init(
         ResourceLink $resourceLink,
         iterable $rights,
@@ -89,58 +142,5 @@ readonly class ResourceAclHelper
         }
 
         return $acl;
-    }
-
-    /**
-     * @param iterable<int, ResourceRight> $rights
-     */
-    public function isAllowed(
-        string $attribute,
-        ResourceLink $resourceLink,
-        iterable $rights,
-    ): bool {
-        $acl = $this->init($resourceLink, $rights);
-
-        $askedMask = (string) self::getPermissionMask([$attribute]);
-
-        if ($this->security->getToken() instanceof NullToken) {
-            return (bool) $acl->isAllowed('IS_AUTHENTICATED_ANONYMOUSLY', (string) $resourceLink->getId(), $askedMask);
-        }
-
-        $user = $this->security->getUser();
-
-        $roles = $user instanceof UserInterface ? $user->getRoles() : [];
-
-        foreach ($roles as $role) {
-            // init() only ever registers a small fixed set of resource-permission
-            // roles (ROLE_USER, ROLE_STUDENT, ROLE_CURRENT_COURSE_TEACHER, ...).
-            // $user->getRoles() returns the user's FULL Symfony role set, which
-            // for an admin using "Login as" also includes roles like
-            // ROLE_SESSION_MANAGER, ROLE_PREVIOUS_ADMIN or ROLE_ALLOWED_TO_SWITCH -
-            // none of which the ACL knows about. Laminas throws
-            // InvalidArgumentException for any role it hasn't registered, so
-            // without this guard a single unrelated role crashes the whole
-            // permission check instead of just being irrelevant to it.
-            if (!$acl->hasRole($role)) {
-                continue;
-            }
-
-            if ($acl->isAllowed($role, (string) $resourceLink->getId(), $askedMask)) {
-                return true;
-            }
-        }
-
-        return false;
-    }
-
-    public static function getPermissionMask(array $attributes): int
-    {
-        $builder = new MaskBuilder();
-
-        foreach ($attributes as $attribute) {
-            $builder->add($attribute);
-        }
-
-        return $builder->get();
     }
 }

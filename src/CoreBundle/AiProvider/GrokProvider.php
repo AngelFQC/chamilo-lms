@@ -378,6 +378,232 @@ final class GrokProvider implements AiProviderInterface, AiImageProviderInterfac
         );
     }
 
+    public function generateVideo(string $prompt, string $toolName, ?array $options = []): array|string|null
+    {
+        if ('' === $this->videoApiUrl || '' === $this->videoModel) {
+            error_log('[AI][Grok][Video] Video is not configured for this provider.');
+
+            return null;
+        }
+
+        $userId = $this->getUserId();
+        if (!$userId) {
+            return 'Error: User is not authenticated.';
+        }
+
+        $prompt = trim($prompt);
+        if ('' === $prompt) {
+            return 'Error: Empty prompt.';
+        }
+
+        $toolName = trim($toolName);
+        if ('' === $toolName) {
+            $toolName = 'video';
+        }
+
+        $opts = \is_array($options) ? $options : [];
+        $merged = array_merge($this->videoDefaultOptions, $opts);
+
+        // Controller sends "seconds" and "size".
+        if (isset($merged['seconds']) && !isset($merged['duration'])) {
+            $merged['duration'] = (int) $merged['seconds'];
+        }
+        if (isset($merged['size'])) {
+            $this->applySizeHintsToVideoOptions((string) $merged['size'], $merged);
+        }
+
+        $duration = (int) ($merged['duration'] ?? 8);
+        if ($duration < 1) {
+            $duration = 1;
+        }
+        if ($duration > 15) {
+            $duration = 15;
+        }
+
+        $aspectRatio = (string) ($merged['aspect_ratio'] ?? '16:9');
+        $resolution = (string) ($merged['resolution'] ?? '480p');
+
+        $payload = [
+            'model' => $this->videoModel,
+            'prompt' => $prompt,
+            'duration' => $duration,
+            'aspect_ratio' => $aspectRatio,
+            'resolution' => $resolution,
+        ];
+
+        try {
+            $response = $this->httpClient->request('POST', $this->videoApiUrl, [
+                'headers' => [
+                    'Authorization' => 'Bearer '.$this->apiKey,
+                    'Content-Type' => 'application/json',
+                    'Accept' => 'application/json',
+                ],
+                'json' => $payload,
+                'timeout' => 30,
+                'max_duration' => 60,
+            ]);
+
+            $status = $response->getStatusCode();
+            $rawBody = (string) $response->getContent(false);
+            $data = json_decode($rawBody, true);
+
+            if ($status < 200 || $status >= 300 || !\is_array($data)) {
+                error_log('[AI][Grok][Video] Invalid response (status='.$status.'). Raw: '.mb_substr($rawBody, 0, 800));
+
+                return 'Error: Invalid response from Grok video API.';
+            }
+
+            if (isset($data['error'])) {
+                $msg = $data['error']['message'] ?? 'Grok returned an error response.';
+                $msg = \is_string($msg) ? trim($msg) : 'Grok returned an error response.';
+
+                return 'Error: '.$msg;
+            }
+
+            $requestId = (string) ($data['request_id'] ?? '');
+            $requestId = trim($requestId);
+
+            if ('' === $requestId) {
+                return 'Error: Missing request_id from Grok video API.';
+            }
+
+            $this->logRequest($userId, $toolName, $prompt, 0, 0, 0, 'grok');
+
+            return [
+                'id' => $requestId,
+                'status' => 'pending',
+                'is_base64' => false,
+                'content' => null,
+                'url' => null,
+                'content_type' => 'video/mp4',
+                'revised_prompt' => null,
+            ];
+        } catch (Exception $e) {
+            error_log('[AI][Grok][Video] Exception: '.$e->getMessage());
+
+            return 'Error: '.$e->getMessage();
+        }
+    }
+
+    public function getVideoJobStatus(string $jobId): ?array
+    {
+        $jobId = trim($jobId);
+        if ('' === $jobId) {
+            return null;
+        }
+
+        $url = 'https://api.x.ai/v1/videos/'.rawurlencode($jobId);
+
+        try {
+            $resp = $this->httpClient->request('GET', $url, [
+                'headers' => [
+                    'Authorization' => 'Bearer '.$this->apiKey,
+                    'Accept' => 'application/json',
+                ],
+                'timeout' => 20,
+                'max_duration' => 40,
+            ]);
+
+            $statusCode = $resp->getStatusCode();
+            $rawBody = (string) $resp->getContent(false);
+            $data = json_decode($rawBody, true);
+
+            if ($statusCode < 200 || $statusCode >= 300 || !\is_array($data)) {
+                return [
+                    'id' => $jobId,
+                    'status' => 'error',
+                    'error' => 'Failed to fetch Grok video status.',
+                    'job' => $rawBody,
+                ];
+            }
+
+            $status = (string) ($data['status'] ?? '');
+            $status = trim($status);
+
+            $err = null;
+            if (isset($data['error'])) {
+                $msg = $data['error']['message'] ?? 'Grok returned an error response.';
+                $err = \is_string($msg) ? trim($msg) : 'Grok returned an error response.';
+            }
+
+            return [
+                'id' => $jobId,
+                'status' => '' !== $status ? $status : 'pending',
+                'error' => $err,
+                'job' => $data,
+            ];
+        } catch (Exception $e) {
+            return [
+                'id' => $jobId,
+                'status' => 'error',
+                'error' => $e->getMessage(),
+                'job' => null,
+            ];
+        }
+    }
+
+    public function getVideoJobContentAsBase64(string $jobId, int $maxBytes = 15728640): ?array
+    {
+        $job = $this->getVideoJobStatus($jobId);
+        if (!\is_array($job)) {
+            return null;
+        }
+
+        $raw = $job['job'] ?? null;
+        if (!\is_array($raw)) {
+            return [
+                'is_base64' => false,
+                'content' => null,
+                'url' => null,
+                'content_type' => 'video/mp4',
+                'error' => (string) ($job['error'] ?? 'Missing job payload.'),
+            ];
+        }
+
+        $status = strtolower(trim((string) ($job['status'] ?? '')));
+        if (!\in_array($status, ['done', 'completed', 'succeeded'], true)) {
+            return [
+                'is_base64' => false,
+                'content' => null,
+                'url' => null,
+                'content_type' => 'video/mp4',
+                'error' => null,
+            ];
+        }
+
+        $videoUrl = (string) ($raw['video']['url'] ?? ($raw['url'] ?? ''));
+        $videoUrl = trim($videoUrl);
+
+        if ('' === $videoUrl) {
+            return [
+                'is_base64' => false,
+                'content' => null,
+                'url' => null,
+                'content_type' => 'video/mp4',
+                'error' => 'No video URL returned by Grok.',
+            ];
+        }
+
+        $dl = $this->downloadBinaryWithLimit($videoUrl, $maxBytes, 'video/mp4');
+        if (null === $dl) {
+            return [
+                'is_base64' => false,
+                'content' => null,
+                'url' => $videoUrl,
+                'content_type' => 'video/mp4',
+                'error' => 'Failed to download video bytes (or exceeded size limit).',
+            ];
+        }
+
+        return [
+            'is_base64' => true,
+            'content' => base64_encode($dl['bytes']),
+            'url' => null,
+            'content_type' => $dl['content_type'],
+            'error' => null,
+        ];
+    }
+
     private function buildTextFailureMessage(string $provider): string
     {
         $detail = trim((string) $this->lastTextError);
@@ -788,232 +1014,6 @@ final class GrokProvider implements AiProviderInterface, AiImageProviderInterfac
         }
 
         return $usage;
-    }
-
-    public function generateVideo(string $prompt, string $toolName, ?array $options = []): array|string|null
-    {
-        if ('' === $this->videoApiUrl || '' === $this->videoModel) {
-            error_log('[AI][Grok][Video] Video is not configured for this provider.');
-
-            return null;
-        }
-
-        $userId = $this->getUserId();
-        if (!$userId) {
-            return 'Error: User is not authenticated.';
-        }
-
-        $prompt = trim($prompt);
-        if ('' === $prompt) {
-            return 'Error: Empty prompt.';
-        }
-
-        $toolName = trim($toolName);
-        if ('' === $toolName) {
-            $toolName = 'video';
-        }
-
-        $opts = \is_array($options) ? $options : [];
-        $merged = array_merge($this->videoDefaultOptions, $opts);
-
-        // Controller sends "seconds" and "size".
-        if (isset($merged['seconds']) && !isset($merged['duration'])) {
-            $merged['duration'] = (int) $merged['seconds'];
-        }
-        if (isset($merged['size'])) {
-            $this->applySizeHintsToVideoOptions((string) $merged['size'], $merged);
-        }
-
-        $duration = (int) ($merged['duration'] ?? 8);
-        if ($duration < 1) {
-            $duration = 1;
-        }
-        if ($duration > 15) {
-            $duration = 15;
-        }
-
-        $aspectRatio = (string) ($merged['aspect_ratio'] ?? '16:9');
-        $resolution = (string) ($merged['resolution'] ?? '480p');
-
-        $payload = [
-            'model' => $this->videoModel,
-            'prompt' => $prompt,
-            'duration' => $duration,
-            'aspect_ratio' => $aspectRatio,
-            'resolution' => $resolution,
-        ];
-
-        try {
-            $response = $this->httpClient->request('POST', $this->videoApiUrl, [
-                'headers' => [
-                    'Authorization' => 'Bearer '.$this->apiKey,
-                    'Content-Type' => 'application/json',
-                    'Accept' => 'application/json',
-                ],
-                'json' => $payload,
-                'timeout' => 30,
-                'max_duration' => 60,
-            ]);
-
-            $status = $response->getStatusCode();
-            $rawBody = (string) $response->getContent(false);
-            $data = json_decode($rawBody, true);
-
-            if ($status < 200 || $status >= 300 || !\is_array($data)) {
-                error_log('[AI][Grok][Video] Invalid response (status='.$status.'). Raw: '.mb_substr($rawBody, 0, 800));
-
-                return 'Error: Invalid response from Grok video API.';
-            }
-
-            if (isset($data['error'])) {
-                $msg = $data['error']['message'] ?? 'Grok returned an error response.';
-                $msg = \is_string($msg) ? trim($msg) : 'Grok returned an error response.';
-
-                return 'Error: '.$msg;
-            }
-
-            $requestId = (string) ($data['request_id'] ?? '');
-            $requestId = trim($requestId);
-
-            if ('' === $requestId) {
-                return 'Error: Missing request_id from Grok video API.';
-            }
-
-            $this->logRequest($userId, $toolName, $prompt, 0, 0, 0, 'grok');
-
-            return [
-                'id' => $requestId,
-                'status' => 'pending',
-                'is_base64' => false,
-                'content' => null,
-                'url' => null,
-                'content_type' => 'video/mp4',
-                'revised_prompt' => null,
-            ];
-        } catch (Exception $e) {
-            error_log('[AI][Grok][Video] Exception: '.$e->getMessage());
-
-            return 'Error: '.$e->getMessage();
-        }
-    }
-
-    public function getVideoJobStatus(string $jobId): ?array
-    {
-        $jobId = trim($jobId);
-        if ('' === $jobId) {
-            return null;
-        }
-
-        $url = 'https://api.x.ai/v1/videos/'.rawurlencode($jobId);
-
-        try {
-            $resp = $this->httpClient->request('GET', $url, [
-                'headers' => [
-                    'Authorization' => 'Bearer '.$this->apiKey,
-                    'Accept' => 'application/json',
-                ],
-                'timeout' => 20,
-                'max_duration' => 40,
-            ]);
-
-            $statusCode = $resp->getStatusCode();
-            $rawBody = (string) $resp->getContent(false);
-            $data = json_decode($rawBody, true);
-
-            if ($statusCode < 200 || $statusCode >= 300 || !\is_array($data)) {
-                return [
-                    'id' => $jobId,
-                    'status' => 'error',
-                    'error' => 'Failed to fetch Grok video status.',
-                    'job' => $rawBody,
-                ];
-            }
-
-            $status = (string) ($data['status'] ?? '');
-            $status = trim($status);
-
-            $err = null;
-            if (isset($data['error'])) {
-                $msg = $data['error']['message'] ?? 'Grok returned an error response.';
-                $err = \is_string($msg) ? trim($msg) : 'Grok returned an error response.';
-            }
-
-            return [
-                'id' => $jobId,
-                'status' => '' !== $status ? $status : 'pending',
-                'error' => $err,
-                'job' => $data,
-            ];
-        } catch (Exception $e) {
-            return [
-                'id' => $jobId,
-                'status' => 'error',
-                'error' => $e->getMessage(),
-                'job' => null,
-            ];
-        }
-    }
-
-    public function getVideoJobContentAsBase64(string $jobId, int $maxBytes = 15728640): ?array
-    {
-        $job = $this->getVideoJobStatus($jobId);
-        if (!\is_array($job)) {
-            return null;
-        }
-
-        $raw = $job['job'] ?? null;
-        if (!\is_array($raw)) {
-            return [
-                'is_base64' => false,
-                'content' => null,
-                'url' => null,
-                'content_type' => 'video/mp4',
-                'error' => (string) ($job['error'] ?? 'Missing job payload.'),
-            ];
-        }
-
-        $status = strtolower(trim((string) ($job['status'] ?? '')));
-        if (!\in_array($status, ['done', 'completed', 'succeeded'], true)) {
-            return [
-                'is_base64' => false,
-                'content' => null,
-                'url' => null,
-                'content_type' => 'video/mp4',
-                'error' => null,
-            ];
-        }
-
-        $videoUrl = (string) ($raw['video']['url'] ?? ($raw['url'] ?? ''));
-        $videoUrl = trim($videoUrl);
-
-        if ('' === $videoUrl) {
-            return [
-                'is_base64' => false,
-                'content' => null,
-                'url' => null,
-                'content_type' => 'video/mp4',
-                'error' => 'No video URL returned by Grok.',
-            ];
-        }
-
-        $dl = $this->downloadBinaryWithLimit($videoUrl, $maxBytes, 'video/mp4');
-        if (null === $dl) {
-            return [
-                'is_base64' => false,
-                'content' => null,
-                'url' => $videoUrl,
-                'content_type' => 'video/mp4',
-                'error' => 'Failed to download video bytes (or exceeded size limit).',
-            ];
-        }
-
-        return [
-            'is_base64' => true,
-            'content' => base64_encode($dl['bytes']),
-            'url' => null,
-            'content_type' => $dl['content_type'],
-            'error' => null,
-        ];
     }
 
     /**

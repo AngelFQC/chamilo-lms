@@ -41,8 +41,8 @@ final class Version20260512120000 extends AbstractMigrationChamilo
     private function upsertCertificateSearchSetting(string $table): void
     {
         $this->addSql(
-            'INSERT INTO '.$table.' (variable, category, title, comment, selected_value, access_url_changeable) '.
-            'SELECT ?, ?, ?, ?, ?, 0 WHERE NOT EXISTS (SELECT 1 FROM '.$table.' WHERE variable = ?)',
+            'INSERT INTO '.$table.' (variable, category, title, comment, selected_value, access_url_changeable) '
+            .'SELECT ?, ?, ?, ?, ?, 0 WHERE NOT EXISTS (SELECT 1 FROM '.$table.' WHERE variable = ?)',
             [
                 'allow_certificates_search',
                 'certificate',

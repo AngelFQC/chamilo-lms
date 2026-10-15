@@ -98,7 +98,8 @@ SELECT COUNT(DISTINCT variable)
 FROM %s
 WHERE category = 'forum'
   AND variable IN (?, ?)
-SQL,
+SQL
+                    ,
                     $table
                 ),
                 [
@@ -148,7 +149,8 @@ SET selected_value = CASE variable
 END
 WHERE category = 'forum'
   AND variable IN (?, ?)
-SQL,
+SQL
+                        ,
                         $table
                     ),
                     [
@@ -172,7 +174,8 @@ WHERE category = 'forum'
       OR
       (variable = ? AND selected_value <> ?)
   )
-SQL,
+SQL
+                        ,
                         $table
                     ),
                     [

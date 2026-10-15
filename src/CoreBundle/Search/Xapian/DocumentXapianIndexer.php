@@ -458,8 +458,8 @@ final class DocumentXapianIndexer
 
             if ('[object Object]' === $raw) {
                 error_log(
-                    '[Xapian] extractSearchFieldValuesFromRequest: searchFieldValues arrived as "[object Object]". '.
-                    'Frontend must JSON.stringify() or send searchFieldValues[code]=...'
+                    '[Xapian] extractSearchFieldValuesFromRequest: searchFieldValues arrived as "[object Object]". '
+                    .'Frontend must JSON.stringify() or send searchFieldValues[code]=...'
                 );
 
                 return [];

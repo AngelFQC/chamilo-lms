@@ -40,6 +40,8 @@ final class Version20251024173200 extends AbstractMigrationChamilo
         $this->processHtmlDocuments($certItems, $documentRepo, $resourceNodeRepo, 'certificate');
     }
 
+    public function down(Schema $schema): void {}
+
     /**
      * Iterate over candidate documents and update only those that are text/html,
      * replacing legacy asset paths in their HTML content.
@@ -128,6 +130,4 @@ final class Version20251024173200 extends AbstractMigrationChamilo
         // Fallback replacement to catch any remaining occurrences (absolute local paths only)
         return str_replace('/main/img/', '/img/', $updated);
     }
-
-    public function down(Schema $schema): void {}
 }

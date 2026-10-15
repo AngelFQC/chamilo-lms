@@ -23,7 +23,9 @@ use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 
-/** @implements ProcessorInterface<mixed, JsonResponse> */
+/**
+ * @implements ProcessorInterface<mixed, JsonResponse>
+ */
 final readonly class LearningPathScormImportProcessor implements ProcessorInterface
 {
     use LearningPathStateHelperTrait;

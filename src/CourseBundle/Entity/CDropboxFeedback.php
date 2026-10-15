@@ -49,8 +49,6 @@ class CDropboxFeedback
     }
 
     /**
-     * Set fileId.
-     *
      * @return CDropboxFeedback
      */
     public function setFileId(int $fileId)
@@ -61,8 +59,6 @@ class CDropboxFeedback
     }
 
     /**
-     * Get fileId.
-     *
      * @return int
      */
     public function getFileId()
@@ -71,8 +67,6 @@ class CDropboxFeedback
     }
 
     /**
-     * Set authorUserId.
-     *
      * @return CDropboxFeedback
      */
     public function setAuthorUserId(int $authorUserId)
@@ -83,8 +77,6 @@ class CDropboxFeedback
     }
 
     /**
-     * Get authorUserId.
-     *
      * @return int
      */
     public function getAuthorUserId()
@@ -93,8 +85,6 @@ class CDropboxFeedback
     }
 
     /**
-     * Set feedback.
-     *
      * @return CDropboxFeedback
      */
     public function setFeedback(string $feedback)
@@ -105,8 +95,6 @@ class CDropboxFeedback
     }
 
     /**
-     * Get feedback.
-     *
      * @return string
      */
     public function getFeedback()
@@ -115,8 +103,6 @@ class CDropboxFeedback
     }
 
     /**
-     * Set feedbackDate.
-     *
      * @return CDropboxFeedback
      */
     public function setFeedbackDate(DateTime $feedbackDate)
@@ -127,8 +113,6 @@ class CDropboxFeedback
     }
 
     /**
-     * Get feedbackDate.
-     *
      * @return DateTime
      */
     public function getFeedbackDate()
@@ -137,8 +121,6 @@ class CDropboxFeedback
     }
 
     /**
-     * Set feedbackId.
-     *
      * @return CDropboxFeedback
      */
     public function setFeedbackId(int $feedbackId)
@@ -149,8 +131,6 @@ class CDropboxFeedback
     }
 
     /**
-     * Get feedbackId.
-     *
      * @return int
      */
     public function getFeedbackId()
@@ -159,8 +139,6 @@ class CDropboxFeedback
     }
 
     /**
-     * Set cId.
-     *
      * @return CDropboxFeedback
      */
     public function setCId(int $cId)
@@ -171,8 +149,6 @@ class CDropboxFeedback
     }
 
     /**
-     * Get cId.
-     *
      * @return int
      */
     public function getCId()

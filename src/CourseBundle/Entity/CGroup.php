@@ -313,7 +313,7 @@ class CGroup extends AbstractResource implements ResourceInterface, Stringable
         if (!$this->hasMembers()) {
             return false;
         }
-        $list = $this->members->filter(fn (CGroupRelUser $member) => $member->getUser()->getId() === $user->getId());
+        $list = $this->members->filter(static fn (CGroupRelUser $member) => $member->getUser()->getId() === $user->getId());
 
         return $list->count() > 0;
     }
@@ -322,7 +322,7 @@ class CGroup extends AbstractResource implements ResourceInterface, Stringable
         if (!$this->hasTutors()) {
             return false;
         }
-        $list = $this->tutors->filter(fn (CGroupRelTutor $tutor) => $tutor->getUser()->getId() === $user->getId());
+        $list = $this->tutors->filter(static fn (CGroupRelTutor $tutor) => $tutor->getUser()->getId() === $user->getId());
 
         return $list->count() > 0;
     }

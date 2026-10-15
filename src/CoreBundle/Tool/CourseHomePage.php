@@ -30,7 +30,6 @@ class CourseHomePage extends AbstractTool implements ToolInterface
 
     public function getResourceTypes(): ?array
     {
-        return [
-        ];
+        return [];
     }
 }

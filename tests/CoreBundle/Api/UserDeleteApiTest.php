@@ -32,7 +32,7 @@ class UserDeleteApiTest extends AbstractApiTest
         $seen = [];
         self::getContainer()->get('event_dispatcher')->addListener(
             Events::USER_DELETED,
-            function (UserDeletedEvent $event) use (&$seen): void {
+            static function (UserDeletedEvent $event) use (&$seen): void {
                 $seen[] = $event->getDeleteType();
             }
         );

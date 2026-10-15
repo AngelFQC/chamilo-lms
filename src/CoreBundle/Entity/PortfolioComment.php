@@ -53,6 +53,11 @@ class PortfolioComment extends AbstractResource implements ResourceInterface, St
         $this->visibility = self::VISIBILITY_VISIBLE;
     }
 
+    public function __toString(): string
+    {
+        return $this->getContent();
+    }
+
     public function getItem(): Portfolio
     {
         return $this->item;
@@ -140,11 +145,6 @@ class PortfolioComment extends AbstractResource implements ResourceInterface, St
     public function setResourceName(string $name): static
     {
         return $this->setContent($name);
-    }
-
-    public function __toString(): string
-    {
-        return $this->getContent();
     }
 
     public function getContent(): string

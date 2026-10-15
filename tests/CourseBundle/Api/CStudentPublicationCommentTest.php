@@ -31,93 +31,6 @@ final class CStudentPublicationCommentTest extends AbstractApiTest
 {
     use ChamiloTestTrait;
 
-    /**
-     * Builds a private (REGISTERED) course with a teacher and a student
-     * subscribed to it, creates an assignment (parent publication) owned by
-     * the teacher, and a submission (child publication) authored by the
-     * student. Also returns an attacker user with no relation to the course.
-     *
-     * @return array{
-     *     course: Course,
-     *     teacher: User,
-     *     student: User,
-     *     attacker: User,
-     *     assignment: CStudentPublication,
-     *     submission: CStudentPublication
-     * }
-     */
-    private function bootstrapSubmissionScenario(string $suffix): array
-    {
-        /** @var CourseRepository $courseRepo */
-        $courseRepo = self::getContainer()->get(CourseRepository::class);
-
-        $course = $this->createCourse('Work Sec Course '.$suffix);
-        // REGISTERED → only enrolled users get ROLE_CURRENT_COURSE_* via CourseVoter.
-        $course->setVisibility(Course::REGISTERED);
-
-        $teacher = $this->createUser('work_sec_teacher_'.$suffix);
-        $student = $this->createUser('work_sec_student_'.$suffix);
-        $attacker = $this->createUser('work_sec_attacker_'.$suffix);
-
-        $course->addUserAsTeacher($teacher);
-        $course->addUserAsStudent($student);
-        $courseRepo->update($course);
-
-        $em = $this->getEntityManager();
-
-        $assignment = (new CStudentPublication())
-            ->setTitle('Victim Assignment '.$suffix)
-            ->setParent($course)
-            ->setFiletype('folder')
-            ->setWeight(100)
-            ->setCreator($teacher)
-            ->setActive(1)
-            ->addCourseLink($course)
-        ;
-        $em->persist($assignment);
-
-        $submission = (new CStudentPublication())
-            ->setTitle('Victim Submission '.$suffix)
-            ->setDescription('victim body')
-            ->setPublicationParent($assignment)
-            ->setParent($assignment)
-            ->setFiletype('file')
-            ->setWeight(100)
-            ->setCreator($student)
-            ->setUser($student)
-            ->setActive(1)
-            ->setAccepted(true)
-            ->setSentDate(new DateTime())
-            ->setQualification(0.0)
-            ->setQualificatorId(0)
-            ->setDateOfQualification(new DateTime())
-            ->addCourseLink($course)
-        ;
-        $em->persist($submission);
-        $em->flush();
-
-        return [
-            'course' => $course,
-            'teacher' => $teacher,
-            'student' => $student,
-            'attacker' => $attacker,
-            'assignment' => $assignment,
-            'submission' => $submission,
-        ];
-    }
-
-    /**
-     * Reloads the submission from the database to assert untouched grading
-     * fields without hitting stale identity-map entities.
-     */
-    private function reloadSubmission(int $submissionIid): ?CStudentPublication
-    {
-        $em = $this->getEntityManager();
-        $em->clear();
-
-        return $em->getRepository(CStudentPublication::class)->find($submissionIid);
-    }
-
     // -------------------------------------------------------------------------
     // Attacker — qualification-only payload
     // -------------------------------------------------------------------------
@@ -299,5 +212,92 @@ final class CStudentPublicationCommentTest extends AbstractApiTest
         $fresh = $this->reloadSubmission($ctx['submission']->getIid());
         $this->assertNotNull($fresh);
         $this->assertSame(50.0, $fresh->getQualification());
+    }
+
+    /**
+     * Builds a private (REGISTERED) course with a teacher and a student
+     * subscribed to it, creates an assignment (parent publication) owned by
+     * the teacher, and a submission (child publication) authored by the
+     * student. Also returns an attacker user with no relation to the course.
+     *
+     * @return array{
+     *     course: Course,
+     *     teacher: User,
+     *     student: User,
+     *     attacker: User,
+     *     assignment: CStudentPublication,
+     *     submission: CStudentPublication
+     * }
+     */
+    private function bootstrapSubmissionScenario(string $suffix): array
+    {
+        /** @var CourseRepository $courseRepo */
+        $courseRepo = self::getContainer()->get(CourseRepository::class);
+
+        $course = $this->createCourse('Work Sec Course '.$suffix);
+        // REGISTERED → only enrolled users get ROLE_CURRENT_COURSE_* via CourseVoter.
+        $course->setVisibility(Course::REGISTERED);
+
+        $teacher = $this->createUser('work_sec_teacher_'.$suffix);
+        $student = $this->createUser('work_sec_student_'.$suffix);
+        $attacker = $this->createUser('work_sec_attacker_'.$suffix);
+
+        $course->addUserAsTeacher($teacher);
+        $course->addUserAsStudent($student);
+        $courseRepo->update($course);
+
+        $em = $this->getEntityManager();
+
+        $assignment = (new CStudentPublication())
+            ->setTitle('Victim Assignment '.$suffix)
+            ->setParent($course)
+            ->setFiletype('folder')
+            ->setWeight(100)
+            ->setCreator($teacher)
+            ->setActive(1)
+            ->addCourseLink($course)
+        ;
+        $em->persist($assignment);
+
+        $submission = (new CStudentPublication())
+            ->setTitle('Victim Submission '.$suffix)
+            ->setDescription('victim body')
+            ->setPublicationParent($assignment)
+            ->setParent($assignment)
+            ->setFiletype('file')
+            ->setWeight(100)
+            ->setCreator($student)
+            ->setUser($student)
+            ->setActive(1)
+            ->setAccepted(true)
+            ->setSentDate(new DateTime())
+            ->setQualification(0.0)
+            ->setQualificatorId(0)
+            ->setDateOfQualification(new DateTime())
+            ->addCourseLink($course)
+        ;
+        $em->persist($submission);
+        $em->flush();
+
+        return [
+            'course' => $course,
+            'teacher' => $teacher,
+            'student' => $student,
+            'attacker' => $attacker,
+            'assignment' => $assignment,
+            'submission' => $submission,
+        ];
+    }
+
+    /**
+     * Reloads the submission from the database to assert untouched grading
+     * fields without hitting stale identity-map entities.
+     */
+    private function reloadSubmission(int $submissionIid): ?CStudentPublication
+    {
+        $em = $this->getEntityManager();
+        $em->clear();
+
+        return $em->getRepository(CStudentPublication::class)->find($submissionIid);
     }
 }

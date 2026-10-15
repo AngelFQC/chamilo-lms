@@ -126,8 +126,6 @@ class CAnnouncement extends AbstractResource implements ResourceInterface, Strin
     }
 
     /**
-     * Get emailSent.
-     *
      * @return bool
      */
     public function getEmailSent()

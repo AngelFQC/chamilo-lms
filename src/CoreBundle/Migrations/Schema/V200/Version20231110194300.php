@@ -19,40 +19,6 @@ final class Version20231110194300 extends AbstractMigrationChamilo
         return 'Copy custom theme folder to assets and update webpack.config';
     }
 
-    private function getDefaultThemeNames(): array
-    {
-        return [
-            'academica',
-            'chamilo',
-            'chamilo_red',
-            'cosmic_campus',
-            'holi',
-            'readable',
-            'sober_brown',
-            'baby_orange',
-            'chamilo_electric_blue',
-            'chamilo_sport_red',
-            'delicious_bordeaux',
-            'journal',
-            'royal_purple',
-            'spacelab',
-            'beach',
-            'chamilo_green',
-            'cool_blue',
-            'empire_green',
-            'kiddy',
-            'silver_line',
-            'steel_grey',
-            'blue_lagoon',
-            'chamilo_orange',
-            'corporate',
-            'fruity_orange',
-            'medical',
-            'simplex',
-            'tasty_olive',
-        ];
-    }
-
     public function up(Schema $schema): void
     {
         $kernel = $this->container->get('kernel');
@@ -96,5 +62,39 @@ final class Version20231110194300 extends AbstractMigrationChamilo
                 $filesystem->write($newFileRelativePathname, $fileContents);
             }
         }
+    }
+
+    private function getDefaultThemeNames(): array
+    {
+        return [
+            'academica',
+            'chamilo',
+            'chamilo_red',
+            'cosmic_campus',
+            'holi',
+            'readable',
+            'sober_brown',
+            'baby_orange',
+            'chamilo_electric_blue',
+            'chamilo_sport_red',
+            'delicious_bordeaux',
+            'journal',
+            'royal_purple',
+            'spacelab',
+            'beach',
+            'chamilo_green',
+            'cool_blue',
+            'empire_green',
+            'kiddy',
+            'silver_line',
+            'steel_grey',
+            'blue_lagoon',
+            'chamilo_orange',
+            'corporate',
+            'fruity_orange',
+            'medical',
+            'simplex',
+            'tasty_olive',
+        ];
     }
 }

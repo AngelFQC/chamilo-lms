@@ -13,11 +13,6 @@ final class Version20260216144100 extends AbstractMigrationChamilo
 {
     private const bool DEBUG = false;
 
-    public function getDescription(): string
-    {
-        return 'Fix title/comment for course_catalog_published (publish catalogue for anonymous users).';
-    }
-
     private const array UPDATES = [
         'course_catalog_published' => [
             'title' => 'Publish course catalogue',
@@ -25,6 +20,11 @@ final class Version20260216144100 extends AbstractMigrationChamilo
             'category' => 'catalog',
         ],
     ];
+
+    public function getDescription(): string
+    {
+        return 'Fix title/comment for course_catalog_published (publish catalogue for anonymous users).';
+    }
 
     public function up(Schema $schema): void
     {

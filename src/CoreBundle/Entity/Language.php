@@ -205,9 +205,6 @@ class Language
         return $this;
     }
 
-    /**
-     * Get id.
-     */
     public function getId(): ?int
     {
         return $this->id;

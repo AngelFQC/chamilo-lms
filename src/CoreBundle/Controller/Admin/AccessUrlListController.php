@@ -59,16 +59,6 @@ class AccessUrlListController extends AbstractController
         private readonly UserHelper $userHelper,
     ) {}
 
-    private function currentUser(): User
-    {
-        $user = $this->userHelper->getCurrent();
-        if (null === $user) {
-            throw $this->createAccessDeniedException();
-        }
-
-        return $user;
-    }
-
     #[Route('', name: 'admin_urls_data', methods: ['GET'])]
     public function list(): JsonResponse
     {
@@ -964,6 +954,16 @@ class AccessUrlListController extends AbstractController
             'uniqueCounts' => $uniqueCounts,
             'scoped' => null !== $managedUrlIds,
         ]);
+    }
+
+    private function currentUser(): User
+    {
+        $user = $this->userHelper->getCurrent();
+        if (null === $user) {
+            throw $this->createAccessDeniedException();
+        }
+
+        return $user;
     }
 
     private function parseDate(?string $value, DateTimeImmutable $default): DateTimeImmutable

@@ -42,8 +42,6 @@ class TrackEHotpotatoes
     protected int $maxScore;
 
     /**
-     * Get title.
-     *
      * @return string
      */
     public function getTitle()
@@ -52,8 +50,6 @@ class TrackEHotpotatoes
     }
 
     /**
-     * Set title.
-     *
      * @return TrackEHotpotatoes
      */
     public function setTitle(string $title)
@@ -64,8 +60,6 @@ class TrackEHotpotatoes
     }
 
     /**
-     * Get exeUserId.
-     *
      * @return int
      */
     public function getExeUserId()
@@ -74,8 +68,6 @@ class TrackEHotpotatoes
     }
 
     /**
-     * Set exeUserId.
-     *
      * @return TrackEHotpotatoes
      */
     public function setExeUserId(int $exeUserId)
@@ -86,8 +78,6 @@ class TrackEHotpotatoes
     }
 
     /**
-     * Get exeDate.
-     *
      * @return DateTime
      */
     public function getExeDate()
@@ -96,8 +86,6 @@ class TrackEHotpotatoes
     }
 
     /**
-     * Set exeDate.
-     *
      * @return TrackEHotpotatoes
      */
     public function setExeDate(DateTime $exeDate)
@@ -108,8 +96,6 @@ class TrackEHotpotatoes
     }
 
     /**
-     * Get cId.
-     *
      * @return int
      */
     public function getCId()
@@ -118,8 +104,6 @@ class TrackEHotpotatoes
     }
 
     /**
-     * Set cId.
-     *
      * @return TrackEHotpotatoes
      */
     public function setCId(int $cId)
@@ -130,8 +114,6 @@ class TrackEHotpotatoes
     }
 
     /**
-     * Get id.
-     *
      * @return int
      */
     public function getId()

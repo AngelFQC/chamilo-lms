@@ -28,7 +28,9 @@ use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 use Throwable;
 
-/** @implements ProcessorInterface<LearningPathAiGenerator, LearningPathAiGenerator> */
+/**
+ * @implements ProcessorInterface<LearningPathAiGenerator, LearningPathAiGenerator>
+ */
 final readonly class LearningPathAiGeneratorProcessor implements ProcessorInterface
 {
     use LearningPathStateHelperTrait;

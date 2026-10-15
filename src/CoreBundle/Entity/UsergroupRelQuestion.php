@@ -30,8 +30,6 @@ class UsergroupRelQuestion
     protected ?float $coefficient = null;
 
     /**
-     * Get id.
-     *
      * @return int
      */
     public function getId()
@@ -40,8 +38,6 @@ class UsergroupRelQuestion
     }
 
     /**
-     * Get coefficient.
-     *
      * @return float
      */
     public function getCoefficient()

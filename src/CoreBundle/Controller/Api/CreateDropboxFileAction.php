@@ -243,7 +243,7 @@ final class CreateDropboxFileAction
             }
         }
 
-        return array_values(array_unique(array_filter($ids, fn ($v) => (int) $v > 0)));
+        return array_values(array_unique(array_filter($ids, static fn ($v) => (int) $v > 0)));
     }
 
     /**
@@ -267,7 +267,8 @@ final class CreateDropboxFileAction
             WHERE scru.c_id = :cid
               AND scru.session_id = :sid
               AND scru.status = :status
-            SQL,
+            SQL
+                ,
                 [
                     'cid' => $cid,
                     'sid' => $sid,
@@ -281,7 +282,8 @@ final class CreateDropboxFileAction
             FROM course_rel_user cru
             WHERE cru.c_id = :cid
               AND cru.status = :status
-            SQL,
+            SQL
+                ,
                 [
                     'cid' => $cid,
                     'status' => CourseRelUser::STUDENT,

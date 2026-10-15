@@ -72,7 +72,7 @@ class ResourceListener
          * Current authenticated user (may be null in CLI/migrations).
          * Always initialize to avoid "Undefined variable" warnings.
          *
-         * @var User|null $currentUser
+         * @var User|null
          */
         $currentUser = $this->security->getUser();
         if (!$currentUser instanceof User) {
@@ -441,6 +441,50 @@ class ResourceListener
         $resource->setResourceLinkArray([$context]);
     }
 
+    /**
+     * When updating a Resource.
+     */
+    public function preUpdate(AbstractResource $resource, PreUpdateEventArgs $eventArgs): void
+    {
+        $resourceNode = $resource->getResourceNode();
+
+        if (null === $resourceNode) {
+            return;
+        }
+
+        $parentResourceNode = $resource->getParent()?->resourceNode;
+
+        if ($parentResourceNode) {
+            $resourceNode->setParent($parentResourceNode);
+        }
+
+        $this->updateResourceName($resource);
+
+        $this->applyResourceLanguageFromRequest($resource, $eventArgs);
+
+        // error_log('Resource listener preUpdate');
+        // $this->setLinks($resource, $eventArgs->getEntityManager());
+    }
+
+    public function preRemove(AbstractResource $resource, LifecycleEventArgs $args): void
+    {
+        if (!$resource instanceof CDocument) {
+            return;
+        }
+
+        $em = $args->getObjectManager();
+        \assert($em instanceof EntityManagerInterface);
+        $em->createQueryBuilder()
+            ->delete(CLpItem::class, 'i')
+            ->where('i.path = :path')
+            ->andWhere('i.itemType = :type')
+            ->setParameter('path', $resource->getIid())
+            ->setParameter('type', 'document')
+            ->getQuery()
+            ->execute()
+        ;
+    }
+
     private function applyResourceLanguageFromRequest(AbstractResource $resource, LifecycleEventArgs $eventArgs): void
     {
         $currentRequest = $this->request->getCurrentRequest();
@@ -582,49 +626,5 @@ class ResourceListener
                 $em->persist($globalLink);
             }
         }
-    }
-
-    /**
-     * When updating a Resource.
-     */
-    public function preUpdate(AbstractResource $resource, PreUpdateEventArgs $eventArgs): void
-    {
-        $resourceNode = $resource->getResourceNode();
-
-        if (null === $resourceNode) {
-            return;
-        }
-
-        $parentResourceNode = $resource->getParent()?->resourceNode;
-
-        if ($parentResourceNode) {
-            $resourceNode->setParent($parentResourceNode);
-        }
-
-        $this->updateResourceName($resource);
-
-        $this->applyResourceLanguageFromRequest($resource, $eventArgs);
-
-        // error_log('Resource listener preUpdate');
-        // $this->setLinks($resource, $eventArgs->getEntityManager());
-    }
-
-    public function preRemove(AbstractResource $resource, LifecycleEventArgs $args): void
-    {
-        if (!$resource instanceof CDocument) {
-            return;
-        }
-
-        $em = $args->getObjectManager();
-        \assert($em instanceof EntityManagerInterface);
-        $em->createQueryBuilder()
-            ->delete(CLpItem::class, 'i')
-            ->where('i.path = :path')
-            ->andWhere('i.itemType = :type')
-            ->setParameter('path', $resource->getIid())
-            ->setParameter('type', 'document')
-            ->getQuery()
-            ->execute()
-        ;
     }
 }

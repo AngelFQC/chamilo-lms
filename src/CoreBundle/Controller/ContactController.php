@@ -36,8 +36,8 @@ class ContactController extends AbstractController
                 ->to($toEmail)
                 ->subject($contactData['subject'])
                 ->text(
-                    "Sender: {$contactData['email']}\n".
-                    "Message: {$contactData['message']}"
+                    "Sender: {$contactData['email']}\n"
+                    ."Message: {$contactData['message']}"
                 )
             ;
 

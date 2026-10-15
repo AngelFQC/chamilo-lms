@@ -988,62 +988,6 @@ final class ChatController extends AbstractController
         return new JsonResponse(['ok' => true, 'mode' => 'course']);
     }
 
-    private function normalizeAiSelectedTextContext(string $text): string
-    {
-        $text = trim(strip_tags($text));
-        if ('' === $text) {
-            return '';
-        }
-
-        $normalized = preg_replace('/[\s\x{00A0}]+/u', ' ', $text);
-        if (null === $normalized) {
-            $normalized = preg_replace('/\s+/', ' ', $text) ?? $text;
-        }
-
-        $normalized = trim($normalized);
-        if ('' === $normalized) {
-            return '';
-        }
-
-        if (mb_strlen($normalized, 'UTF-8') > self::AI_SELECTED_TEXT_CONTEXT_MAX_CHARS) {
-            return mb_substr($normalized, 0, self::AI_SELECTED_TEXT_CONTEXT_MAX_CHARS, 'UTF-8');
-        }
-
-        return $normalized;
-    }
-
-    private function normalizeAiCurrentPath(string $path): string
-    {
-        $path = trim($path);
-        if ('' === $path) {
-            return '';
-        }
-
-        $path = preg_replace('/[\x00-\x1F\x7F]/u', '', $path) ?? '';
-        if ('' === $path || !str_starts_with($path, '/') || str_starts_with($path, '//')) {
-            return '';
-        }
-
-        if (mb_strlen($path, 'UTF-8') > self::AI_CURRENT_PATH_MAX_CHARS) {
-            $path = mb_substr($path, 0, self::AI_CURRENT_PATH_MAX_CHARS, 'UTF-8');
-        }
-
-        return $path;
-    }
-
-    private function resolveCourseLanguage(Course $course): string
-    {
-        $tmpLang = '';
-        if (method_exists($course, 'getCourseLanguage')) {
-            $tmpLang = (string) ($course->getCourseLanguage() ?? '');
-        }
-        if ('' === $tmpLang && method_exists($course, 'getLanguage')) {
-            $tmpLang = (string) ($course->getLanguage() ?? '');
-        }
-
-        return $tmpLang;
-    }
-
     #[Route(path: '/account/chat/api/status', name: 'chamilo_core_chat_api_status', options: ['expose' => true], methods: ['POST'])]
     public function globalStatus(Request $req): JsonResponse
     {
@@ -1496,6 +1440,62 @@ final class ChatController extends AbstractController
             'provider' => $providerKey,
             'reason' => null,
         ]);
+    }
+
+    private function normalizeAiSelectedTextContext(string $text): string
+    {
+        $text = trim(strip_tags($text));
+        if ('' === $text) {
+            return '';
+        }
+
+        $normalized = preg_replace('/[\s\x{00A0}]+/u', ' ', $text);
+        if (null === $normalized) {
+            $normalized = preg_replace('/\s+/', ' ', $text) ?? $text;
+        }
+
+        $normalized = trim($normalized);
+        if ('' === $normalized) {
+            return '';
+        }
+
+        if (mb_strlen($normalized, 'UTF-8') > self::AI_SELECTED_TEXT_CONTEXT_MAX_CHARS) {
+            return mb_substr($normalized, 0, self::AI_SELECTED_TEXT_CONTEXT_MAX_CHARS, 'UTF-8');
+        }
+
+        return $normalized;
+    }
+
+    private function normalizeAiCurrentPath(string $path): string
+    {
+        $path = trim($path);
+        if ('' === $path) {
+            return '';
+        }
+
+        $path = preg_replace('/[\x00-\x1F\x7F]/u', '', $path) ?? '';
+        if ('' === $path || !str_starts_with($path, '/') || str_starts_with($path, '//')) {
+            return '';
+        }
+
+        if (mb_strlen($path, 'UTF-8') > self::AI_CURRENT_PATH_MAX_CHARS) {
+            $path = mb_substr($path, 0, self::AI_CURRENT_PATH_MAX_CHARS, 'UTF-8');
+        }
+
+        return $path;
+    }
+
+    private function resolveCourseLanguage(Course $course): string
+    {
+        $tmpLang = '';
+        if (method_exists($course, 'getCourseLanguage')) {
+            $tmpLang = (string) ($course->getCourseLanguage() ?? '');
+        }
+        if ('' === $tmpLang && method_exists($course, 'getLanguage')) {
+            $tmpLang = (string) ($course->getLanguage() ?? '');
+        }
+
+        return $tmpLang;
     }
 
     /**

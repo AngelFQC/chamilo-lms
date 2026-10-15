@@ -21,7 +21,9 @@ use Chamilo\CourseBundle\Repository\CToolboxRepository;
 use Symfony\Bundle\SecurityBundle\Security;
 use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 
-/** @implements ProviderInterface<ToolboxCollection> */
+/**
+ * @implements ProviderInterface<ToolboxCollection>
+ */
 final readonly class ToolboxCollectionProvider implements ProviderInterface
 {
     use ToolboxAccessHelperTrait;

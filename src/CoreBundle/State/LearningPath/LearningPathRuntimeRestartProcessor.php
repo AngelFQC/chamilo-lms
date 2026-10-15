@@ -24,7 +24,9 @@ use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 use Symfony\Component\HttpKernel\Exception\ConflictHttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
-/** @implements ProcessorInterface<LearningPathRuntimeRestartInput, void> */
+/**
+ * @implements ProcessorInterface<LearningPathRuntimeRestartInput, void>
+ */
 final readonly class LearningPathRuntimeRestartProcessor implements ProcessorInterface
 {
     use LearningPathStateHelperTrait;

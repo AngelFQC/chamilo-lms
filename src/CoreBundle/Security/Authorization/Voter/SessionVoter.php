@@ -47,7 +47,7 @@ class SessionVoter extends Voter
     /**
      * Check if user has access to a session.
      *
-     * {@inheritdoc}
+     * {@inheritDoc}
      */
     protected function voteOnAttribute(string $attribute, $subject, TokenInterface $token, ?Vote $vote = null): bool
     {

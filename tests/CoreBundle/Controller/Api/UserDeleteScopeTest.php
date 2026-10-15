@@ -24,51 +24,6 @@ class UserDeleteScopeTest extends WebTestCase
 {
     use ChamiloTestTrait;
 
-    private function createUserOnUrl(string $username, AccessUrl $url, string $role = ''): User
-    {
-        /** @var UserRepository $repo */
-        $repo = static::getContainer()->get(UserRepository::class);
-        $admin = $this->getAdmin();
-
-        $user = $repo->createUser()
-            ->setLastname($username)
-            ->setFirstname($username)
-            ->setUsername($username)
-            ->setStatus(1)
-            ->setPlainPassword($username)
-            ->setEmail($username.'@example.com')
-            ->setCreator($admin)
-            ->setCurrentUrl($url)
-            ->addAuthSourceByAuthentication(UserAuthSource::PLATFORM, $url)
-        ;
-
-        if ('' !== $role) {
-            $user->addRole($role);
-        }
-
-        $repo->updateUser($user);
-
-        return $user;
-    }
-
-    private function createChildUrl(): AccessUrl
-    {
-        /** @var AccessUrlRepository $urlRepo */
-        $urlRepo = static::getContainer()->get(AccessUrlRepository::class);
-        $admin = $this->getAdmin();
-        $root = $this->getAccessUrl();
-
-        $child = (new AccessUrl())
-            ->setUrl('https://user-delete-scope-child-'.uniqid().'.example.org/')
-            ->setActive(1)
-            ->setCreator($admin)
-            ->setSuperior($root)
-        ;
-        $urlRepo->create($child);
-
-        return $child;
-    }
-
     public function testScopedAdminCannotDeleteAUserOutsideItsUrl(): void
     {
         $client = static::createClient();
@@ -174,5 +129,50 @@ class UserDeleteScopeTest extends WebTestCase
         );
 
         $this->assertResponseIsSuccessful();
+    }
+
+    private function createUserOnUrl(string $username, AccessUrl $url, string $role = ''): User
+    {
+        /** @var UserRepository $repo */
+        $repo = static::getContainer()->get(UserRepository::class);
+        $admin = $this->getAdmin();
+
+        $user = $repo->createUser()
+            ->setLastname($username)
+            ->setFirstname($username)
+            ->setUsername($username)
+            ->setStatus(1)
+            ->setPlainPassword($username)
+            ->setEmail($username.'@example.com')
+            ->setCreator($admin)
+            ->setCurrentUrl($url)
+            ->addAuthSourceByAuthentication(UserAuthSource::PLATFORM, $url)
+        ;
+
+        if ('' !== $role) {
+            $user->addRole($role);
+        }
+
+        $repo->updateUser($user);
+
+        return $user;
+    }
+
+    private function createChildUrl(): AccessUrl
+    {
+        /** @var AccessUrlRepository $urlRepo */
+        $urlRepo = static::getContainer()->get(AccessUrlRepository::class);
+        $admin = $this->getAdmin();
+        $root = $this->getAccessUrl();
+
+        $child = (new AccessUrl())
+            ->setUrl('https://user-delete-scope-child-'.uniqid().'.example.org/')
+            ->setActive(1)
+            ->setCreator($admin)
+            ->setSuperior($root)
+        ;
+        $urlRepo->create($child);
+
+        return $child;
     }
 }

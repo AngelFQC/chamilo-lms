@@ -145,6 +145,14 @@ readonly class LocaleSubscriber implements EventSubscriberInterface
         return $result;
     }
 
+    public static function getSubscribedEvents(): array
+    {
+        return [
+            // Must run before Symfony's default Locale listener
+            KernelEvents::REQUEST => [['onKernelRequest', 20]],
+        ];
+    }
+
     private function detectBrowserLanguage(Request $request): ?string
     {
         $acceptLanguage = $request->headers->get('Accept-Language', '');
@@ -173,13 +181,5 @@ readonly class LocaleSubscriber implements EventSubscriberInterface
         }
 
         return null;
-    }
-
-    public static function getSubscribedEvents(): array
-    {
-        return [
-            // Must run before Symfony's default Locale listener
-            KernelEvents::REQUEST => [['onKernelRequest', 20]],
-        ];
     }
 }

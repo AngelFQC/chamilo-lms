@@ -40,7 +40,7 @@ class RoomController extends BaseController
 
         $results = $qb->getQuery()->getArrayResult();
 
-        $data = array_map(function ($row) {
+        $data = array_map(static function ($row) {
             return [
                 'id' => $row['id'],
                 'title' => $row['title'],

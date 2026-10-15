@@ -93,9 +93,6 @@ class CQuizQuestionCategory extends AbstractResource implements ResourceInterfac
         return $this;
     }
 
-    /**
-     * Get description.
-     */
     public function getDescription(): ?string
     {
         return $this->description;

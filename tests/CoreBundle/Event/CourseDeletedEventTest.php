@@ -47,7 +47,7 @@ class CourseDeletedEventTest extends AbstractApiTest
 
         self::getContainer()->get('event_dispatcher')->addListener(
             Events::COURSE_DELETED,
-            function (CourseDeletedEvent $event) use (&$seen, $repo): void {
+            static function (CourseDeletedEvent $event) use (&$seen, $repo): void {
                 $seen[] = [
                     'id' => $event->getCourseId(),
                     'type' => $event->getType(),

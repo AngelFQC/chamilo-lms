@@ -439,35 +439,6 @@ final class TranslateHtmlLanguageService
         ];
     }
 
-    /**
-     * @param array{
-     *     hasMarkers: bool,
-     *     presentLanguages: list<string>,
-     *     ...
-     * } $inspection
-     */
-    private function languageAlreadyPresent(
-        array $inspection,
-        string $language,
-        string $sourceLanguageForWrap,
-        string $currentHtml,
-    ): bool {
-        if ($inspection['hasMarkers']) {
-            return $this->containsMatchingLanguage($inspection['presentLanguages'], $language);
-        }
-
-        // Unmarked non-empty content is treated as the wrap/source language (or sole language when wrap is omitted).
-        if ('' === trim($currentHtml)) {
-            return false;
-        }
-
-        if ('' === $sourceLanguageForWrap) {
-            return true;
-        }
-
-        return $this->languageCodesMatch($language, $sourceLanguageForWrap);
-    }
-
     public function buildLanguageBlock(string $language, string $html): string
     {
         $language = $this->normalizeLanguageCode($language);
@@ -505,6 +476,35 @@ final class TranslateHtmlLanguageService
         $words = preg_split('/\s+/u', $plainText, -1, PREG_SPLIT_NO_EMPTY);
 
         return \is_array($words) ? \count($words) : 0;
+    }
+
+    /**
+     * @param array{
+     *     hasMarkers: bool,
+     *     presentLanguages: list<string>,
+     *     ...
+     * } $inspection
+     */
+    private function languageAlreadyPresent(
+        array $inspection,
+        string $language,
+        string $sourceLanguageForWrap,
+        string $currentHtml,
+    ): bool {
+        if ($inspection['hasMarkers']) {
+            return $this->containsMatchingLanguage($inspection['presentLanguages'], $language);
+        }
+
+        // Unmarked non-empty content is treated as the wrap/source language (or sole language when wrap is omitted).
+        if ('' === trim($currentHtml)) {
+            return false;
+        }
+
+        if ('' === $sourceLanguageForWrap) {
+            return true;
+        }
+
+        return $this->languageCodesMatch($language, $sourceLanguageForWrap);
     }
 
     private function upsertWithoutMarkers(

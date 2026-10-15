@@ -286,9 +286,6 @@ final class Version20241010111200 extends AbstractMigrationChamilo
         }, $content);
     }
 
-    /**
-     * Replace old link URLs.
-     */
     private function replaceOldLinkURLs(string $content): string
     {
         $pattern = '/(href|src)=["\'](https?:\/\/[^\/]+)?\/main\/link\/link\.php\?([^"\']*)["\']/i';

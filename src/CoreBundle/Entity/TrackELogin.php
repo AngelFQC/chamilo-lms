@@ -50,8 +50,6 @@ class TrackELogin
     }
 
     /**
-     * Get loginDate.
-     *
      * @return DateTime
      */
     public function getLoginDate()
@@ -67,8 +65,6 @@ class TrackELogin
     }
 
     /**
-     * Get userIp.
-     *
      * @return string
      */
     public function getUserIp()
@@ -96,8 +92,6 @@ class TrackELogin
     }
 
     /**
-     * Get loginId.
-     *
      * @return int
      */
     public function getLoginId()

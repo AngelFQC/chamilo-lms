@@ -36,7 +36,7 @@ class CurriculumItemType extends AbstractType
             EntityType::class,
             [
                 'class' => 'Entity\CurriculumCategory',
-                'query_builder' => function ($repository) {
+                'query_builder' => static function ($repository) {
                     return $repository->createQueryBuilder('p')
                         ->orderBy('p.title', 'ASC')
                     ;

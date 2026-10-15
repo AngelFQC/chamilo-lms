@@ -180,17 +180,17 @@ class CToolIntro extends AbstractResource implements ResourceInterface, Resource
     #[ORM\Column(name: 'intro_text', type: 'text', nullable: false)]
     protected string $introText;
 
+    #[Groups(['c_tool_intro:read'])]
+    #[ORM\ManyToOne(targetEntity: CTool::class)]
+    #[ORM\JoinColumn(name: 'c_tool_id', referencedColumnName: 'iid', nullable: false, onDelete: 'CASCADE')]
+    protected CTool $courseTool;
+
     /**
      * Transient flag (not persisted): the active intro is inherited from the base
      * course, and editing it inside a session should create a session-specific fork.
      */
     #[Groups(['c_tool_intro:current'])]
     private bool $createInSession = false;
-
-    #[Groups(['c_tool_intro:read'])]
-    #[ORM\ManyToOne(targetEntity: CTool::class)]
-    #[ORM\JoinColumn(name: 'c_tool_id', referencedColumnName: 'iid', nullable: false, onDelete: 'CASCADE')]
-    protected CTool $courseTool;
 
     // Write-only and optional: CToolIntroStateProcessor falls back to
     // course_homepage when it is empty, so it must not be uninitialized either.

@@ -35,123 +35,6 @@ final class TrackEAttemptApiSecurityTest extends AbstractApiTest
 {
     use ChamiloTestTrait;
 
-    /**
-     * One course with a teacher and a student who took an exercise, plus an unrelated course
-     * whose own teacher must stay out.
-     *
-     * @return array{
-     *     course: Course,
-     *     teacher: User,
-     *     student: User,
-     *     foreignStudent: User,
-     *     foreignTeacher: User,
-     *     foreignCourse: Course,
-     *     trackExerciseId: int,
-     *     attemptId: int,
-     *     qualifyId: int
-     * }
-     */
-    private function bootstrapAttemptScenario(string $suffix): array
-    {
-        /** @var CourseRepository $courseRepo */
-        $courseRepo = self::getContainer()->get(CourseRepository::class);
-
-        $course = $this->createCourse('ATSC'.$suffix);
-        $foreignCourse = $this->createCourse('ATSF'.$suffix);
-
-        $teacher = $this->createUser('ats_teacher_'.$suffix);
-        $student = $this->createUser('ats_student_'.$suffix);
-        $foreignStudent = $this->createUser('ats_fstudent_'.$suffix);
-        $foreignTeacher = $this->createUser('ats_fteacher_'.$suffix);
-
-        $course->addUserAsTeacher($teacher);
-        $course->addUserAsStudent($student);
-        $courseRepo->update($course);
-
-        $foreignCourse->addUserAsTeacher($foreignTeacher);
-        $foreignCourse->addUserAsStudent($foreignStudent);
-        $courseRepo->update($foreignCourse);
-
-        $connection = $this->getEntityManager()->getConnection();
-
-        $connection->insert('track_e_exercises', [
-            'exe_user_id' => (int) $student->getId(),
-            'c_id' => (int) $course->getId(),
-            'session_id' => null,
-            'exe_exo_id' => null,
-            'exe_date' => '2026-01-01 10:00:00',
-            'score' => 5.0,
-            'max_score' => 10.0,
-            'user_ip' => '127.0.0.1',
-            'status' => '',
-            'data_tracking' => '',
-            'start_date' => '2026-01-01 09:00:00',
-            'steps_counter' => 0,
-            'orig_lp_id' => 0,
-            'orig_lp_item_id' => 0,
-            'exe_duration' => 60,
-            'orig_lp_item_view_id' => 0,
-            'questions_to_check' => '',
-        ]);
-        $trackExerciseId = (int) $connection->lastInsertId();
-
-        $connection->insert('track_e_attempt', [
-            'exe_id' => $trackExerciseId,
-            'user_id' => (int) $student->getId(),
-            'question_id' => 1,
-            'answer' => 'the answer under test',
-            'teacher_comment' => '',
-            'marks' => 5.0,
-            'tms' => '2026-01-01 10:00:00',
-            'seconds_spent' => 30,
-        ]);
-        $attemptId = (int) $connection->lastInsertId();
-
-        $connection->insert('track_e_attempt_qualify', [
-            'exe_id' => $trackExerciseId,
-            'question_id' => 1,
-            'marks' => 5.0,
-            'insert_date' => '2026-01-02 10:00:00',
-            'author' => (int) $teacher->getId(),
-            'teacher_comment' => 'graded under test',
-            'session_id' => 0,
-        ]);
-        $qualifyId = (int) $connection->lastInsertId();
-
-        return [
-            'course' => $course,
-            'teacher' => $teacher,
-            'student' => $student,
-            'foreignStudent' => $foreignStudent,
-            'foreignTeacher' => $foreignTeacher,
-            'foreignCourse' => $foreignCourse,
-            'trackExerciseId' => $trackExerciseId,
-            'attemptId' => $attemptId,
-            'qualifyId' => $qualifyId,
-        ];
-    }
-
-    /**
-     * Identifiers come from the @id IRI: track_e_attempt:read does not expose a plain `id`
-     * field, so reading one would silently yield an empty list and pass every "must not
-     * contain" assertion for the wrong reason.
-     *
-     * @param array<string, mixed> $payload
-     *
-     * @return int[]
-     */
-    private function extractIds(array $payload): array
-    {
-        $ids = [];
-        foreach ($payload['hydra:member'] ?? [] as $member) {
-            if (isset($member['@id']) && preg_match('#/(\d+)$#', (string) $member['@id'], $matches)) {
-                $ids[] = (int) $matches[1];
-            }
-        }
-
-        return $ids;
-    }
-
     // -------------------------------------------------------------------------
     // Item operation — TrackEAttempt
     // -------------------------------------------------------------------------
@@ -409,5 +292,122 @@ final class TrackEAttemptApiSecurityTest extends AbstractApiTest
 
         $this->assertResponseStatusCodeSame(200);
         $this->assertContains($ctx['qualifyId'], $this->extractIds($response->toArray()));
+    }
+
+    /**
+     * One course with a teacher and a student who took an exercise, plus an unrelated course
+     * whose own teacher must stay out.
+     *
+     * @return array{
+     *     course: Course,
+     *     teacher: User,
+     *     student: User,
+     *     foreignStudent: User,
+     *     foreignTeacher: User,
+     *     foreignCourse: Course,
+     *     trackExerciseId: int,
+     *     attemptId: int,
+     *     qualifyId: int
+     * }
+     */
+    private function bootstrapAttemptScenario(string $suffix): array
+    {
+        /** @var CourseRepository $courseRepo */
+        $courseRepo = self::getContainer()->get(CourseRepository::class);
+
+        $course = $this->createCourse('ATSC'.$suffix);
+        $foreignCourse = $this->createCourse('ATSF'.$suffix);
+
+        $teacher = $this->createUser('ats_teacher_'.$suffix);
+        $student = $this->createUser('ats_student_'.$suffix);
+        $foreignStudent = $this->createUser('ats_fstudent_'.$suffix);
+        $foreignTeacher = $this->createUser('ats_fteacher_'.$suffix);
+
+        $course->addUserAsTeacher($teacher);
+        $course->addUserAsStudent($student);
+        $courseRepo->update($course);
+
+        $foreignCourse->addUserAsTeacher($foreignTeacher);
+        $foreignCourse->addUserAsStudent($foreignStudent);
+        $courseRepo->update($foreignCourse);
+
+        $connection = $this->getEntityManager()->getConnection();
+
+        $connection->insert('track_e_exercises', [
+            'exe_user_id' => (int) $student->getId(),
+            'c_id' => (int) $course->getId(),
+            'session_id' => null,
+            'exe_exo_id' => null,
+            'exe_date' => '2026-01-01 10:00:00',
+            'score' => 5.0,
+            'max_score' => 10.0,
+            'user_ip' => '127.0.0.1',
+            'status' => '',
+            'data_tracking' => '',
+            'start_date' => '2026-01-01 09:00:00',
+            'steps_counter' => 0,
+            'orig_lp_id' => 0,
+            'orig_lp_item_id' => 0,
+            'exe_duration' => 60,
+            'orig_lp_item_view_id' => 0,
+            'questions_to_check' => '',
+        ]);
+        $trackExerciseId = (int) $connection->lastInsertId();
+
+        $connection->insert('track_e_attempt', [
+            'exe_id' => $trackExerciseId,
+            'user_id' => (int) $student->getId(),
+            'question_id' => 1,
+            'answer' => 'the answer under test',
+            'teacher_comment' => '',
+            'marks' => 5.0,
+            'tms' => '2026-01-01 10:00:00',
+            'seconds_spent' => 30,
+        ]);
+        $attemptId = (int) $connection->lastInsertId();
+
+        $connection->insert('track_e_attempt_qualify', [
+            'exe_id' => $trackExerciseId,
+            'question_id' => 1,
+            'marks' => 5.0,
+            'insert_date' => '2026-01-02 10:00:00',
+            'author' => (int) $teacher->getId(),
+            'teacher_comment' => 'graded under test',
+            'session_id' => 0,
+        ]);
+        $qualifyId = (int) $connection->lastInsertId();
+
+        return [
+            'course' => $course,
+            'teacher' => $teacher,
+            'student' => $student,
+            'foreignStudent' => $foreignStudent,
+            'foreignTeacher' => $foreignTeacher,
+            'foreignCourse' => $foreignCourse,
+            'trackExerciseId' => $trackExerciseId,
+            'attemptId' => $attemptId,
+            'qualifyId' => $qualifyId,
+        ];
+    }
+
+    /**
+     * Identifiers come from the @id IRI: track_e_attempt:read does not expose a plain `id`
+     * field, so reading one would silently yield an empty list and pass every "must not
+     * contain" assertion for the wrong reason.
+     *
+     * @param array<string, mixed> $payload
+     *
+     * @return int[]
+     */
+    private function extractIds(array $payload): array
+    {
+        $ids = [];
+        foreach ($payload['hydra:member'] ?? [] as $member) {
+            if (isset($member['@id']) && preg_match('#/(\d+)$#', (string) $member['@id'], $matches)) {
+                $ids[] = (int) $matches[1];
+            }
+        }
+
+        return $ids;
     }
 }

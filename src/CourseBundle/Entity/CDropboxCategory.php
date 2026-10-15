@@ -52,8 +52,6 @@ class CDropboxCategory
     }
 
     /**
-     * Set title.
-     *
      * @return CDropboxCategory
      */
     public function setTitle(string $title)
@@ -64,8 +62,6 @@ class CDropboxCategory
     }
 
     /**
-     * Get title.
-     *
      * @return string
      */
     public function getTitle()
@@ -74,8 +70,6 @@ class CDropboxCategory
     }
 
     /**
-     * Set received.
-     *
      * @return CDropboxCategory
      */
     public function setReceived(bool $received)
@@ -86,8 +80,6 @@ class CDropboxCategory
     }
 
     /**
-     * Get received.
-     *
      * @return bool
      */
     public function getReceived()
@@ -96,8 +88,6 @@ class CDropboxCategory
     }
 
     /**
-     * Set sent.
-     *
      * @return CDropboxCategory
      */
     public function setSent(bool $sent)
@@ -108,8 +98,6 @@ class CDropboxCategory
     }
 
     /**
-     * Get sent.
-     *
      * @return bool
      */
     public function getSent()
@@ -118,8 +106,6 @@ class CDropboxCategory
     }
 
     /**
-     * Set userId.
-     *
      * @return CDropboxCategory
      */
     public function setUserId(int $userId)
@@ -130,8 +116,6 @@ class CDropboxCategory
     }
 
     /**
-     * Get userId.
-     *
      * @return int
      */
     public function getUserId()
@@ -140,8 +124,6 @@ class CDropboxCategory
     }
 
     /**
-     * Set sessionId.
-     *
      * @return CDropboxCategory
      */
     public function setSessionId(int $sessionId)
@@ -152,8 +134,6 @@ class CDropboxCategory
     }
 
     /**
-     * Get sessionId.
-     *
      * @return int
      */
     public function getSessionId()
@@ -162,8 +142,6 @@ class CDropboxCategory
     }
 
     /**
-     * Set catId.
-     *
      * @return CDropboxCategory
      */
     public function setCatId(int $catId)
@@ -174,8 +152,6 @@ class CDropboxCategory
     }
 
     /**
-     * Get catId.
-     *
      * @return int
      */
     public function getCatId()
@@ -184,8 +160,6 @@ class CDropboxCategory
     }
 
     /**
-     * Set cId.
-     *
      * @return CDropboxCategory
      */
     public function setCId(int $cId)
@@ -196,8 +170,6 @@ class CDropboxCategory
     }
 
     /**
-     * Get cId.
-     *
      * @return int
      */
     public function getCId()

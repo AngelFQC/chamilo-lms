@@ -246,8 +246,8 @@ class SocialController extends AbstractController
 
         $dateTime = new DateTime('@'.$acceptedTime);
 
-        $isLatestAccepted =
-            $acceptedLanguageId === $latestLanguageId
+        $isLatestAccepted
+            = $acceptedLanguageId === $latestLanguageId
             && $acceptedVersion === $latestVersion;
 
         if (!$isLatestAccepted) {
@@ -611,7 +611,7 @@ class SocialController extends AbstractController
 
         $friends = $userRepository->getFriendsNotInGroup($userId, $groupId);
 
-        $friendsList = array_map(function ($friend) use ($illustrationRepository) {
+        $friendsList = array_map(static function ($friend) use ($illustrationRepository) {
             return [
                 'id' => $friend->getId(),
                 'name' => $friend->getFirstName().' '.$friend->getLastName(),
@@ -656,7 +656,7 @@ class SocialController extends AbstractController
 
         $invitedUsers = $usergroupRepository->getInvitedUsersByGroup($groupId);
 
-        $invitedUsersList = array_map(function ($user) {
+        $invitedUsersList = array_map(static function ($user) {
             return [
                 'id' => $user['id'],
                 'name' => $user['username'],
@@ -718,76 +718,6 @@ class SocialController extends AbstractController
         ];
 
         return $this->json($response);
-    }
-
-    private function getExtraFieldBlock(
-        int $userId,
-        UserRepository $userRepository,
-        SettingsManager $settingsManager,
-        ExtraFieldRepository $extraFieldRepository,
-        ExtraFieldOptionsRepository $extraFieldOptionsRepository
-    ): array {
-        $user = $userRepository->find($userId);
-        if (!$user) {
-            return [];
-        }
-
-        $fieldVisibilityConfig = $settingsManager->getSetting('profile.profile_fields_visibility');
-        $decoded = json_decode($fieldVisibilityConfig, true);
-        $fieldVisibility = (\is_array($decoded) && isset($decoded['options']))
-            ? $decoded['options']
-            : [];
-
-        $extraUserData = $userRepository->getExtraUserData($userId);
-        $extraFieldsFormatted = [];
-        foreach ($extraUserData as $key => $value) {
-            $fieldVariable = str_replace('extra_', '', $key);
-
-            $extraField = $extraFieldRepository->getHandlerFieldInfoByFieldVariable($fieldVariable, ExtraField::USER_FIELD_TYPE);
-            if (!$extraField || !isset($fieldVisibility[$fieldVariable]) || !$fieldVisibility[$fieldVariable]) {
-                continue;
-            }
-
-            $fieldValue = \is_array($value) ? implode(', ', $value) : $value;
-
-            switch ($extraField['type']) {
-                case ExtraField::FIELD_TYPE_RADIO:
-                case ExtraField::FIELD_TYPE_SELECT:
-                    $extraFieldOptions = $extraFieldOptionsRepository->getFieldOptionByFieldAndOption(
-                        $extraField['id'],
-                        $fieldValue,
-                        ExtraField::USER_FIELD_TYPE
-                    );
-                    if (!empty($extraFieldOptions)) {
-                        $fieldValue = implode(
-                            ', ',
-                            array_map(
-                                fn (ExtraFieldOptions $opt) => $opt->getDisplayText(),
-                                $extraFieldOptions
-                            )
-                        );
-                    }
-
-                    break;
-
-                case ExtraField::FIELD_TYPE_GEOLOCALIZATION_COORDINATES:
-                case ExtraField::FIELD_TYPE_GEOLOCALIZATION:
-                    $geoData = explode('::', $fieldValue ?: '');
-                    $locationName = $geoData[0];
-                    $coordinates = $geoData[1] ?? '';
-                    $fieldValue = $locationName;
-
-                    break;
-            }
-
-            $extraFieldsFormatted[] = [
-                'variable' => $fieldVariable,
-                'label' => $extraField['display_text'],
-                'value' => $fieldValue,
-            ];
-        }
-
-        return $extraFieldsFormatted;
     }
 
     #[Route('/invitations/{userId}', name: 'chamilo_core_social_invitations')]
@@ -1181,8 +1111,8 @@ class SocialController extends AbstractController
                         [],
                         'messages',
                         $receiverLocale
-                    ).' <a href="/resources/friends/invitations">'.
-                        $translator->trans(
+                    ).' <a href="/resources/friends/invitations">'
+                        .$translator->trans(
                             'here',
                             [],
                             'messages',
@@ -1215,8 +1145,8 @@ class SocialController extends AbstractController
                 case 'send_message':
                     $receiverLocale = $friendUser->getLocale() ?: null;
 
-                    $isFriendInvitationMessage =
-                        'You have a new friend request' === trim((string) $subject)
+                    $isFriendInvitationMessage
+                        = 'You have a new friend request' === trim((string) $subject)
                         && str_contains(
                             (string) $content,
                             'You have received a new friend request. Visit the invitations page to accept or reject the request.'
@@ -1235,8 +1165,8 @@ class SocialController extends AbstractController
                             [],
                             'messages',
                             $receiverLocale
-                        ).' <a href="/resources/friends/invitations">'.
-                            $translator->trans(
+                        ).' <a href="/resources/friends/invitations">'
+                            .$translator->trans(
                                 'here',
                                 [],
                                 'messages',
@@ -1274,27 +1204,6 @@ class SocialController extends AbstractController
         } catch (Exception $e) {
             return $this->json(['error' => $e->getMessage()], Response::HTTP_INTERNAL_SERVER_ERROR);
         }
-    }
-
-    private function canSendFriendInvitation(
-        User $sender,
-        User $receiver,
-        SettingsManager $settingsManager
-    ): bool {
-        $senderIsTeacherOrAdmin = $sender->isTeacher()
-            || $sender->isAdmin()
-            || $sender->isSuperAdmin()
-            || 'ROLE_TEACHER' === User::getRoleFromStatus($sender->getStatus());
-        $receiverIsStudent = $receiver->isStudent()
-            || 'ROLE_STUDENT' === User::getRoleFromStatus($receiver->getStatus());
-
-        if (!$senderIsTeacherOrAdmin || !$receiverIsStudent) {
-            return true;
-        }
-
-        $setting = strtolower(trim((string) $settingsManager->getSetting('social.social_make_teachers_friend_all')));
-
-        return \in_array($setting, ['1', 'true', 'yes', 'on'], true);
     }
 
     #[Route('/user-relation/{currentUserId}/{profileUserId}', name: 'chamilo_core_social_get_user_relation')]
@@ -1394,6 +1303,97 @@ class SocialController extends AbstractController
             'blockButton' => $blockButton,
             'infoMessage' => $infoMessage,
         ]);
+    }
+
+    private function getExtraFieldBlock(
+        int $userId,
+        UserRepository $userRepository,
+        SettingsManager $settingsManager,
+        ExtraFieldRepository $extraFieldRepository,
+        ExtraFieldOptionsRepository $extraFieldOptionsRepository
+    ): array {
+        $user = $userRepository->find($userId);
+        if (!$user) {
+            return [];
+        }
+
+        $fieldVisibilityConfig = $settingsManager->getSetting('profile.profile_fields_visibility');
+        $decoded = json_decode($fieldVisibilityConfig, true);
+        $fieldVisibility = (\is_array($decoded) && isset($decoded['options']))
+            ? $decoded['options']
+            : [];
+
+        $extraUserData = $userRepository->getExtraUserData($userId);
+        $extraFieldsFormatted = [];
+        foreach ($extraUserData as $key => $value) {
+            $fieldVariable = str_replace('extra_', '', $key);
+
+            $extraField = $extraFieldRepository->getHandlerFieldInfoByFieldVariable($fieldVariable, ExtraField::USER_FIELD_TYPE);
+            if (!$extraField || !isset($fieldVisibility[$fieldVariable]) || !$fieldVisibility[$fieldVariable]) {
+                continue;
+            }
+
+            $fieldValue = \is_array($value) ? implode(', ', $value) : $value;
+
+            switch ($extraField['type']) {
+                case ExtraField::FIELD_TYPE_RADIO:
+                case ExtraField::FIELD_TYPE_SELECT:
+                    $extraFieldOptions = $extraFieldOptionsRepository->getFieldOptionByFieldAndOption(
+                        $extraField['id'],
+                        $fieldValue,
+                        ExtraField::USER_FIELD_TYPE
+                    );
+                    if (!empty($extraFieldOptions)) {
+                        $fieldValue = implode(
+                            ', ',
+                            array_map(
+                                static fn (ExtraFieldOptions $opt) => $opt->getDisplayText(),
+                                $extraFieldOptions
+                            )
+                        );
+                    }
+
+                    break;
+
+                case ExtraField::FIELD_TYPE_GEOLOCALIZATION_COORDINATES:
+                case ExtraField::FIELD_TYPE_GEOLOCALIZATION:
+                    $geoData = explode('::', $fieldValue ?: '');
+                    $locationName = $geoData[0];
+                    $coordinates = $geoData[1] ?? '';
+                    $fieldValue = $locationName;
+
+                    break;
+            }
+
+            $extraFieldsFormatted[] = [
+                'variable' => $fieldVariable,
+                'label' => $extraField['display_text'],
+                'value' => $fieldValue,
+            ];
+        }
+
+        return $extraFieldsFormatted;
+    }
+
+    private function canSendFriendInvitation(
+        User $sender,
+        User $receiver,
+        SettingsManager $settingsManager
+    ): bool {
+        $senderIsTeacherOrAdmin = $sender->isTeacher()
+            || $sender->isAdmin()
+            || $sender->isSuperAdmin()
+            || 'ROLE_TEACHER' === User::getRoleFromStatus($sender->getStatus());
+        $receiverIsStudent = $receiver->isStudent()
+            || 'ROLE_STUDENT' === User::getRoleFromStatus($receiver->getStatus());
+
+        if (!$senderIsTeacherOrAdmin || !$receiverIsStudent) {
+            return true;
+        }
+
+        $setting = strtolower(trim((string) $settingsManager->getSetting('social.social_make_teachers_friend_all')));
+
+        return \in_array($setting, ['1', 'true', 'yes', 'on'], true);
     }
 
     /**

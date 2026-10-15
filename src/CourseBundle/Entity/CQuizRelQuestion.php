@@ -59,8 +59,6 @@ class CQuizRelQuestion
     }
 
     /**
-     * Get questionOrder.
-     *
      * @return int
      */
     public function getQuestionOrder()

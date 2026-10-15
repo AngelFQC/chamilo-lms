@@ -33,8 +33,6 @@ class SequenceCondition
     protected string $actFalse;
 
     /**
-     * Get id.
-     *
      * @return int
      */
     public function getId()

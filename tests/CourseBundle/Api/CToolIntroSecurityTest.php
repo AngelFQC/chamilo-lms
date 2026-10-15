@@ -31,6 +31,97 @@ final class CToolIntroSecurityTest extends AbstractApiTest
 {
     use ChamiloTestTrait;
 
+    public function testTeacherOfAnotherCourseCannotPatchIntroUsingOwnCid(): void
+    {
+        $ctx = $this->bootstrapScenario('foreign_teacher');
+
+        $this->patchIntro($ctx['teacherA'], $ctx['intro'], $ctx['courseA'], 'Overwritten by teacher A');
+
+        $this->assertResponseStatusCodeSame(403);
+        $this->assertSame('Original intro', $this->freshIntroText($ctx['intro']));
+    }
+
+    public function testTeacherOfTheIntroCourseCanPatchIt(): void
+    {
+        $ctx = $this->bootstrapScenario('own_teacher');
+
+        $this->patchIntro($ctx['teacherB'], $ctx['intro'], $ctx['courseB'], 'Edited by teacher B');
+
+        $this->assertResponseIsSuccessful();
+        $this->assertSame('Edited by teacher B', $this->freshIntroText($ctx['intro']));
+    }
+
+    public function testStudentOfTheIntroCourseCannotPatchIt(): void
+    {
+        $ctx = $this->bootstrapScenario('own_student');
+
+        $this->patchIntro($ctx['studentB'], $ctx['intro'], $ctx['courseB'], 'Edited by student B');
+
+        $this->assertResponseStatusCodeSame(403);
+        $this->assertSame('Original intro', $this->freshIntroText($ctx['intro']));
+    }
+
+    public function testFormerTeacherCreatorCannotPatchIntroOfTheCourseTheyLeft(): void
+    {
+        $ctx = $this->bootstrapScenario('former_own_cid');
+        $creator = $this->getEntityManager()->getRepository(User::class)->findOneBy(['username' => 'intro_sec_creator_former_own_cid']);
+
+        $this->patchIntro($creator, $ctx['intro'], $ctx['courseB'], 'Edited by former teacher');
+
+        $this->assertResponseStatusCodeSame(403);
+        $this->assertSame('Original intro', $this->freshIntroText($ctx['intro']));
+    }
+
+    public function testFormerTeacherCreatorCannotPatchIntroUsingTheCidOfAnotherCourse(): void
+    {
+        $ctx = $this->bootstrapScenario('former_other_cid');
+        $creator = $this->getEntityManager()->getRepository(User::class)->findOneBy(['username' => 'intro_sec_creator_former_other_cid']);
+        $courseA = $ctx['courseA'];
+        $courseA->addUserAsTeacher($creator);
+        self::getContainer()->get(CourseRepository::class)->update($courseA);
+
+        $this->patchIntro($creator, $ctx['intro'], $courseA, 'Edited by former teacher');
+
+        $this->assertResponseStatusCodeSame(403);
+        $this->assertSame('Original intro', $this->freshIntroText($ctx['intro']));
+    }
+
+    public function testSessionCoachCanPatchTheIntroOfTheirSession(): void
+    {
+        $ctx = $this->bootstrapScenario('session_own');
+        $sessionCtx = $this->createSessionIntro($ctx['courseB'], 'session_own');
+
+        $this->patchSessionIntro($sessionCtx['coach'], $sessionCtx['intro'], $ctx['courseB'], $sessionCtx['session'], 'Edited by coach');
+
+        $this->assertResponseIsSuccessful();
+        $this->assertSame('Edited by coach', $this->freshIntroText($sessionCtx['intro']));
+    }
+
+    public function testSessionCoachCannotPatchTheIntroOfAnotherSessionOfTheSameCourse(): void
+    {
+        $ctx = $this->bootstrapScenario('session_other');
+        $mine = $this->createSessionIntro($ctx['courseB'], 'session_other_mine');
+        $other = $this->createSessionIntro($ctx['courseB'], 'session_other_theirs');
+
+        // The coach holds the session teacher role for their own session, and names it in sid.
+        $this->patchSessionIntro($mine['coach'], $other['intro'], $ctx['courseB'], $mine['session'], 'Edited by wrong coach');
+
+        $this->assertResponseStatusCodeSame(403);
+        $this->assertSame('Original session intro', $this->freshIntroText($other['intro']));
+    }
+
+    public function testSessionCoachCannotPatchTheBaseCourseIntro(): void
+    {
+        $ctx = $this->bootstrapScenario('session_coach_base');
+        $sessionCtx = $this->createSessionIntro($ctx['courseB'], 'session_coach_base');
+
+        // The coach only holds the session teacher role, which must not reach the base course intro.
+        $this->patchSessionIntro($sessionCtx['coach'], $ctx['intro'], $ctx['courseB'], $sessionCtx['session'], 'Edited by coach');
+
+        $this->assertResponseStatusCodeSame(403);
+        $this->assertSame('Original intro', $this->freshIntroText($ctx['intro']));
+    }
+
     /**
      * Builds two private courses, each with its own teacher, plus a student of course B,
      * and one introduction in course B. The introduction's creator is a separate user so
@@ -153,96 +244,5 @@ final class CToolIntroSecurityTest extends AbstractApiTest
         $em->clear();
 
         return $em->getRepository(CToolIntro::class)->find($intro->getIid())?->getIntroText();
-    }
-
-    public function testTeacherOfAnotherCourseCannotPatchIntroUsingOwnCid(): void
-    {
-        $ctx = $this->bootstrapScenario('foreign_teacher');
-
-        $this->patchIntro($ctx['teacherA'], $ctx['intro'], $ctx['courseA'], 'Overwritten by teacher A');
-
-        $this->assertResponseStatusCodeSame(403);
-        $this->assertSame('Original intro', $this->freshIntroText($ctx['intro']));
-    }
-
-    public function testTeacherOfTheIntroCourseCanPatchIt(): void
-    {
-        $ctx = $this->bootstrapScenario('own_teacher');
-
-        $this->patchIntro($ctx['teacherB'], $ctx['intro'], $ctx['courseB'], 'Edited by teacher B');
-
-        $this->assertResponseIsSuccessful();
-        $this->assertSame('Edited by teacher B', $this->freshIntroText($ctx['intro']));
-    }
-
-    public function testStudentOfTheIntroCourseCannotPatchIt(): void
-    {
-        $ctx = $this->bootstrapScenario('own_student');
-
-        $this->patchIntro($ctx['studentB'], $ctx['intro'], $ctx['courseB'], 'Edited by student B');
-
-        $this->assertResponseStatusCodeSame(403);
-        $this->assertSame('Original intro', $this->freshIntroText($ctx['intro']));
-    }
-
-    public function testFormerTeacherCreatorCannotPatchIntroOfTheCourseTheyLeft(): void
-    {
-        $ctx = $this->bootstrapScenario('former_own_cid');
-        $creator = $this->getEntityManager()->getRepository(User::class)->findOneBy(['username' => 'intro_sec_creator_former_own_cid']);
-
-        $this->patchIntro($creator, $ctx['intro'], $ctx['courseB'], 'Edited by former teacher');
-
-        $this->assertResponseStatusCodeSame(403);
-        $this->assertSame('Original intro', $this->freshIntroText($ctx['intro']));
-    }
-
-    public function testFormerTeacherCreatorCannotPatchIntroUsingTheCidOfAnotherCourse(): void
-    {
-        $ctx = $this->bootstrapScenario('former_other_cid');
-        $creator = $this->getEntityManager()->getRepository(User::class)->findOneBy(['username' => 'intro_sec_creator_former_other_cid']);
-        $courseA = $ctx['courseA'];
-        $courseA->addUserAsTeacher($creator);
-        self::getContainer()->get(CourseRepository::class)->update($courseA);
-
-        $this->patchIntro($creator, $ctx['intro'], $courseA, 'Edited by former teacher');
-
-        $this->assertResponseStatusCodeSame(403);
-        $this->assertSame('Original intro', $this->freshIntroText($ctx['intro']));
-    }
-
-    public function testSessionCoachCanPatchTheIntroOfTheirSession(): void
-    {
-        $ctx = $this->bootstrapScenario('session_own');
-        $sessionCtx = $this->createSessionIntro($ctx['courseB'], 'session_own');
-
-        $this->patchSessionIntro($sessionCtx['coach'], $sessionCtx['intro'], $ctx['courseB'], $sessionCtx['session'], 'Edited by coach');
-
-        $this->assertResponseIsSuccessful();
-        $this->assertSame('Edited by coach', $this->freshIntroText($sessionCtx['intro']));
-    }
-
-    public function testSessionCoachCannotPatchTheIntroOfAnotherSessionOfTheSameCourse(): void
-    {
-        $ctx = $this->bootstrapScenario('session_other');
-        $mine = $this->createSessionIntro($ctx['courseB'], 'session_other_mine');
-        $other = $this->createSessionIntro($ctx['courseB'], 'session_other_theirs');
-
-        // The coach holds the session teacher role for their own session, and names it in sid.
-        $this->patchSessionIntro($mine['coach'], $other['intro'], $ctx['courseB'], $mine['session'], 'Edited by wrong coach');
-
-        $this->assertResponseStatusCodeSame(403);
-        $this->assertSame('Original session intro', $this->freshIntroText($other['intro']));
-    }
-
-    public function testSessionCoachCannotPatchTheBaseCourseIntro(): void
-    {
-        $ctx = $this->bootstrapScenario('session_coach_base');
-        $sessionCtx = $this->createSessionIntro($ctx['courseB'], 'session_coach_base');
-
-        // The coach only holds the session teacher role, which must not reach the base course intro.
-        $this->patchSessionIntro($sessionCtx['coach'], $ctx['intro'], $ctx['courseB'], $sessionCtx['session'], 'Edited by coach');
-
-        $this->assertResponseStatusCodeSame(403);
-        $this->assertSame('Original intro', $this->freshIntroText($ctx['intro']));
     }
 }

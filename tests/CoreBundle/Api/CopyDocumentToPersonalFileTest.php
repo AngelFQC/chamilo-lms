@@ -18,84 +18,6 @@ class CopyDocumentToPersonalFileTest extends AbstractApiTest
 {
     use ChamiloTestTrait;
 
-    /**
-     * Creates a file document in a course as admin and returns its iid.
-     * Requires $_SERVER['REMOTE_ADDR'] to be set before calling.
-     */
-    private function createFileDocument(int $courseId, int $parentNodeId): int
-    {
-        $adminToken = $this->getUserToken([]);
-        $file = $this->getUploadedFile();
-        $resourceLinkList = [['cid' => $courseId, 'visibility' => ResourceLink::VISIBILITY_PUBLISHED]];
-
-        $response = $this
-            ->createClientWithCredentials($adminToken)
-            ->request(
-                'POST',
-                '/api/documents?cid='.$courseId,
-                [
-                    'headers' => ['Content-Type' => 'multipart/form-data'],
-                    'extra' => ['files' => ['uploadFile' => $file]],
-                    'json' => [
-                        'filetype' => 'file',
-                        'size' => $file->getSize(),
-                        'parentResourceNodeId' => $parentNodeId,
-                        'resourceLinkList' => $resourceLinkList,
-                    ],
-                ]
-            )
-        ;
-
-        $this->assertResponseStatusCodeSame(201);
-
-        return json_decode($response->getContent())->iid;
-    }
-
-    /**
-     * Creates a folder document in a course as admin and returns its iid.
-     */
-    private function createFolderDocument(int $courseId, int $parentNodeId): int
-    {
-        $adminToken = $this->getUserToken([]);
-        $resourceLinkList = [['cid' => $courseId, 'visibility' => ResourceLink::VISIBILITY_PUBLISHED]];
-
-        $response = $this
-            ->createClientWithCredentials($adminToken)
-            ->request(
-                'POST',
-                '/api/documents?cid='.$courseId,
-                [
-                    'json' => [
-                        'title' => 'test-folder',
-                        'filetype' => 'folder',
-                        'parentResourceNodeId' => $parentNodeId,
-                        'resourceLinkList' => $resourceLinkList,
-                    ],
-                ]
-            )
-        ;
-
-        $this->assertResponseStatusCodeSame(201);
-
-        return json_decode($response->getContent())->iid;
-    }
-
-    /**
-     * Enrolls a user in a course with the given status (TEACHER or STUDENT).
-     */
-    private function enrollUserInCourse(User $user, Course $course, int $status): void
-    {
-        $em = $this->getEntityManager();
-        $enrollment = (new CourseRelUser())
-            ->setCourse($course)
-            ->setUser($user)
-            ->setStatus($status)
-            ->setRelationType(0)
-        ;
-        $em->persist($enrollment);
-        $em->flush();
-    }
-
     public function testCopyDocumentRequiresAuthentication(): void
     {
         global $_SERVER;
@@ -286,5 +208,83 @@ class CopyDocumentToPersonalFileTest extends AbstractApiTest
         );
 
         $this->assertResponseStatusCodeSame(201);
+    }
+
+    /**
+     * Creates a file document in a course as admin and returns its iid.
+     * Requires $_SERVER['REMOTE_ADDR'] to be set before calling.
+     */
+    private function createFileDocument(int $courseId, int $parentNodeId): int
+    {
+        $adminToken = $this->getUserToken([]);
+        $file = $this->getUploadedFile();
+        $resourceLinkList = [['cid' => $courseId, 'visibility' => ResourceLink::VISIBILITY_PUBLISHED]];
+
+        $response = $this
+            ->createClientWithCredentials($adminToken)
+            ->request(
+                'POST',
+                '/api/documents?cid='.$courseId,
+                [
+                    'headers' => ['Content-Type' => 'multipart/form-data'],
+                    'extra' => ['files' => ['uploadFile' => $file]],
+                    'json' => [
+                        'filetype' => 'file',
+                        'size' => $file->getSize(),
+                        'parentResourceNodeId' => $parentNodeId,
+                        'resourceLinkList' => $resourceLinkList,
+                    ],
+                ]
+            )
+        ;
+
+        $this->assertResponseStatusCodeSame(201);
+
+        return json_decode($response->getContent())->iid;
+    }
+
+    /**
+     * Creates a folder document in a course as admin and returns its iid.
+     */
+    private function createFolderDocument(int $courseId, int $parentNodeId): int
+    {
+        $adminToken = $this->getUserToken([]);
+        $resourceLinkList = [['cid' => $courseId, 'visibility' => ResourceLink::VISIBILITY_PUBLISHED]];
+
+        $response = $this
+            ->createClientWithCredentials($adminToken)
+            ->request(
+                'POST',
+                '/api/documents?cid='.$courseId,
+                [
+                    'json' => [
+                        'title' => 'test-folder',
+                        'filetype' => 'folder',
+                        'parentResourceNodeId' => $parentNodeId,
+                        'resourceLinkList' => $resourceLinkList,
+                    ],
+                ]
+            )
+        ;
+
+        $this->assertResponseStatusCodeSame(201);
+
+        return json_decode($response->getContent())->iid;
+    }
+
+    /**
+     * Enrolls a user in a course with the given status (TEACHER or STUDENT).
+     */
+    private function enrollUserInCourse(User $user, Course $course, int $status): void
+    {
+        $em = $this->getEntityManager();
+        $enrollment = (new CourseRelUser())
+            ->setCourse($course)
+            ->setUser($user)
+            ->setStatus($status)
+            ->setRelationType(0)
+        ;
+        $em->persist($enrollment);
+        $em->flush();
     }
 }

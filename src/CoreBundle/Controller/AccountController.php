@@ -37,9 +37,6 @@ use Symfony\Contracts\Translation\TranslatorInterface;
 
 use const OPENSSL_RAW_DATA;
 
-/**
- * @author Julio Montoya <gugli100@gmail.com>
- */
 #[Route('/account')]
 class AccountController extends BaseController
 {

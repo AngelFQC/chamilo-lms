@@ -154,8 +154,6 @@ class CGroupCategory extends AbstractResource implements ResourceInterface, Stri
     }
 
     /**
-     * Get docState.
-     *
      * @return bool
      */
     public function getDocState()
@@ -171,8 +169,6 @@ class CGroupCategory extends AbstractResource implements ResourceInterface, Stri
     }
 
     /**
-     * Get calendarState.
-     *
      * @return bool
      */
     public function getCalendarState()
@@ -188,8 +184,6 @@ class CGroupCategory extends AbstractResource implements ResourceInterface, Stri
     }
 
     /**
-     * Get workState.
-     *
      * @return bool
      */
     public function getWorkState()
@@ -205,8 +199,6 @@ class CGroupCategory extends AbstractResource implements ResourceInterface, Stri
     }
 
     /**
-     * Get announcementsState.
-     *
      * @return bool
      */
     public function getAnnouncementsState()
@@ -222,8 +214,6 @@ class CGroupCategory extends AbstractResource implements ResourceInterface, Stri
     }
 
     /**
-     * Get forumState.
-     *
      * @return bool
      */
     public function getForumState()
@@ -239,8 +229,6 @@ class CGroupCategory extends AbstractResource implements ResourceInterface, Stri
     }
 
     /**
-     * Get wikiState.
-     *
      * @return bool
      */
     public function getWikiState()
@@ -256,8 +244,6 @@ class CGroupCategory extends AbstractResource implements ResourceInterface, Stri
     }
 
     /**
-     * Get chatState.
-     *
      * @return bool
      */
     public function getChatState()
@@ -273,8 +259,6 @@ class CGroupCategory extends AbstractResource implements ResourceInterface, Stri
     }
 
     /**
-     * Get maxStudent.
-     *
      * @return int
      */
     public function getMaxStudent()
@@ -290,8 +274,6 @@ class CGroupCategory extends AbstractResource implements ResourceInterface, Stri
     }
 
     /**
-     * Get selfRegAllowed.
-     *
      * @return bool
      */
     public function getSelfRegAllowed()
@@ -307,8 +289,6 @@ class CGroupCategory extends AbstractResource implements ResourceInterface, Stri
     }
 
     /**
-     * Get selfUnregAllowed.
-     *
      * @return bool
      */
     public function getSelfUnregAllowed()
@@ -324,8 +304,6 @@ class CGroupCategory extends AbstractResource implements ResourceInterface, Stri
     }
 
     /**
-     * Get groupsPerUser.
-     *
      * @return int
      */
     public function getGroupsPerUser()

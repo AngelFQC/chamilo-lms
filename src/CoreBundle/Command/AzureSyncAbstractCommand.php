@@ -103,9 +103,9 @@ abstract class AzureSyncAbstractCommand extends Command
             $azureUsersInfo = $azureUsersRequest['value'] ?? [];
 
             foreach ($azureUsersInfo as $azureUserInfo) {
-                $azureUserInfo['mail'] = $azureUserInfo['mail'] ?? null;
-                $azureUserInfo['surname'] = $azureUserInfo['surname'] ?? null;
-                $azureUserInfo['givenName'] = $azureUserInfo['givenName'] ?? null;
+                $azureUserInfo['mail'] ??= null;
+                $azureUserInfo['surname'] ??= null;
+                $azureUserInfo['givenName'] ??= null;
 
                 yield $azureUserInfo;
             }

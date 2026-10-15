@@ -274,9 +274,6 @@ class Usergroup extends AbstractResource implements ResourceInterface, ResourceI
         }
     }
 
-    /**
-     * Get id.
-     */
     public function getId(): ?int
     {
         return $this->id;

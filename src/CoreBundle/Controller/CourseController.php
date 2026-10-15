@@ -85,9 +85,6 @@ use const ENT_QUOTES;
 use const ENT_SUBSTITUTE;
 use const PHP_QUERY_RFC3986;
 
-/**
- * @author Julio Montoya <gugli100@gmail.com>
- */
 #[Route('/course')]
 class CourseController extends ToolBaseController
 {
@@ -705,7 +702,7 @@ class CourseController extends ToolBaseController
             $timezoneId
         );
 
-        $buildItem = function (CThematicAdvance $advance, string $type, string $label) use ($dateFormatter): array {
+        $buildItem = static function (CThematicAdvance $advance, string $type, string $label) use ($dateFormatter): array {
             $thematic = $advance->getThematic();
 
             $startDate = $advance->getStartDate();
@@ -1135,91 +1132,6 @@ class CourseController extends ToolBaseController
         return $this->render('@ChamiloCore/Course/about.html.twig', $params);
     }
 
-    private function buildCourseRoomLocation(Course $course): ?array
-    {
-        $room = $course->getRoom();
-        if (null === $room) {
-            return null;
-        }
-
-        $geolocation = trim((string) $room->getGeolocation());
-        if ('' === $geolocation) {
-            return null;
-        }
-
-        $parts = array_map('trim', explode(',', $geolocation));
-        if (2 !== \count($parts) || !is_numeric($parts[0]) || !is_numeric($parts[1])) {
-            return null;
-        }
-
-        $latitude = (float) $parts[0];
-        $longitude = (float) $parts[1];
-
-        if ($latitude < -90.0 || $latitude > 90.0 || $longitude < -180.0 || $longitude > 180.0) {
-            return null;
-        }
-
-        $delta = 0.05;
-        $bbox = implode(',', [
-            $longitude - $delta,
-            $latitude - $delta,
-            $longitude + $delta,
-            $latitude + $delta,
-        ]);
-        $marker = $latitude.','.$longitude;
-
-        return [
-            'title' => $room->getTitle(),
-            'latitude' => $latitude,
-            'longitude' => $longitude,
-            'embed_url' => 'https://www.openstreetmap.org/export/embed.html?'.http_build_query(
-                [
-                    'bbox' => $bbox,
-                    'layer' => 'mapnik',
-                    'marker' => $marker,
-                ],
-                '',
-                '&',
-                PHP_QUERY_RFC3986,
-            ),
-        ];
-    }
-
-    private function buildCourseAboutDescriptionSection(CCourseDescription $description): ?array
-    {
-        $title = trim(strip_tags((string) $description->getTitle()));
-        $content = $this->sanitizeCourseAboutHtml((string) $description->getContent());
-
-        if ('' === $title && '' === strip_tags($content)) {
-            return null;
-        }
-
-        return [
-            'iid' => $description->getIid(),
-            'title' => $title,
-            'content' => $content,
-            'type' => $description->getDescriptionType(),
-            'progress' => $description->getProgress(),
-        ];
-    }
-
-    private function sanitizeCourseAboutHtml(string $content): string
-    {
-        $content = trim($content);
-
-        if ('' === $content) {
-            return '';
-        }
-
-        if (class_exists('Security')) {
-            $userStatus = \defined('STUDENT') ? \STUDENT : null;
-
-            return (string) \Security::remove_XSS($content, $userStatus);
-        }
-
-        return $content;
-    }
-
     #[Route('/{id}/welcome', name: 'chamilo_core_course_welcome')]
     public function welcome(Course $course): Response
     {
@@ -1493,46 +1405,6 @@ class CourseController extends ToolBaseController
         );
     }
 
-    private function isCourseCodeUniqueConstraintViolation(UniqueConstraintViolationException $exception): bool
-    {
-        $message = $exception->getMessage();
-
-        return str_contains($message, 'UNIQ_169E6FB977153098')
-            || str_contains($message, "for key 'code'")
-            || str_contains($message, 'for key "code"');
-    }
-
-    private function getDuplicateCourseCreationMessage(?string $wantedCode, TranslatorInterface $translator): string
-    {
-        if (null !== $wantedCode && '' !== trim($wantedCode)) {
-            return $translator->trans('This course code already exists, please choose another code.');
-        }
-
-        return $translator->trans('This course title already exists, please choose another title.');
-    }
-
-    private function createCourseCreationServerErrorResponse(
-        Throwable $exception,
-        TranslatorInterface $translator
-    ): JsonResponse {
-        error_log(
-            '[course.create] throwable='.
-            $exception::class.
-            ' message='.$exception->getMessage().
-            ' file='.$exception->getFile().
-            ' line='.(string) $exception->getLine().
-            ' peak='.memory_get_peak_usage(true)
-        );
-
-        return new JsonResponse(
-            [
-                'success' => false,
-                'message' => $translator->trans('An error occurred while creating the course.'),
-            ],
-            Response::HTTP_INTERNAL_SERVER_ERROR
-        );
-    }
-
     #[IsGranted('ROLE_USER')]
     #[Route('/create-capability', name: 'chamilo_core_course_create_capability', methods: ['GET'])]
     public function createCourseCapability(
@@ -1563,74 +1435,6 @@ class CourseController extends ToolBaseController
             'limitSource' => (string) ($status['limitSource'] ?? 'error'),
             'message' => (string) ($status['message'] ?? ''),
         ]);
-    }
-
-    private function resolveCourseCreateCapabilityStatus(
-        User $user,
-        TranslatorInterface $translator,
-        CourseHelper $courseHelper,
-    ): array {
-        if ($this->isGranted('ROLE_ADMIN')) {
-            return [
-                'canCreate' => true,
-                'currentCount' => 0,
-                'effectiveLimit' => 0,
-                'serviceLimit' => null,
-                'globalLimit' => 0,
-                'limitSource' => 'admin',
-                'message' => '',
-            ];
-        }
-
-        try {
-            $status = $courseHelper->resolveCourseCreationCapabilityForUser($user);
-
-            $canCreate = (bool) ($status['canCreate'] ?? true);
-            $currentCount = (int) ($status['currentCount'] ?? 0);
-            $effectiveLimit = (int) ($status['effectiveLimit'] ?? 0);
-            $limitSource = (string) ($status['limitSource'] ?? 'unlimited');
-
-            $message = '';
-            if (!$canCreate) {
-                if ('service' === $limitSource) {
-                    $message = \sprintf(
-                        $translator->trans(
-                            'You already manage %d courses and your active service allows up to %d. To create another course, you need a higher service limit or reduce your current active courses.'
-                        ),
-                        $currentCount,
-                        $effectiveLimit
-                    );
-                } elseif ('role' === $limitSource) {
-                    $message = $translator->trans('Only trainers and administrators can create courses.');
-                } elseif ('setting' === $limitSource) {
-                    $message = $translator->trans('Course creation by trainers is disabled on this platform.');
-                } else {
-                    $message = \sprintf(
-                        $translator->trans(
-                            'You already manage %d courses and the platform currently allows up to %d for your account. You cannot create more courses right now.'
-                        ),
-                        $currentCount,
-                        $effectiveLimit
-                    );
-                }
-            }
-
-            $status['message'] = $message;
-
-            return $status;
-        } catch (Throwable $exception) {
-            error_log('[Course] Failed to resolve course creation capability: '.$exception->getMessage());
-
-            return [
-                'canCreate' => true,
-                'currentCount' => 0,
-                'effectiveLimit' => 0,
-                'serviceLimit' => null,
-                'globalLimit' => 0,
-                'limitSource' => 'error',
-                'message' => $translator->trans('Unable to verify whether you can create a new course right now.'),
-            ];
-        }
     }
 
     #[Route('/{id}/getAutoLaunchExerciseId', name: 'chamilo_core_course_get_auto_launch_exercise_id', methods: ['GET'])]
@@ -1863,6 +1667,199 @@ class CourseController extends ToolBaseController
                 'lastAccess' => $studentInfoHelper->getLastAccessLabelForCourse($userId, (int) $course->getId(), $sessionId),
             ],
         ], Response::HTTP_OK);
+    }
+
+    private function buildCourseRoomLocation(Course $course): ?array
+    {
+        $room = $course->getRoom();
+        if (null === $room) {
+            return null;
+        }
+
+        $geolocation = trim((string) $room->getGeolocation());
+        if ('' === $geolocation) {
+            return null;
+        }
+
+        $parts = array_map('trim', explode(',', $geolocation));
+        if (2 !== \count($parts) || !is_numeric($parts[0]) || !is_numeric($parts[1])) {
+            return null;
+        }
+
+        $latitude = (float) $parts[0];
+        $longitude = (float) $parts[1];
+
+        if ($latitude < -90.0 || $latitude > 90.0 || $longitude < -180.0 || $longitude > 180.0) {
+            return null;
+        }
+
+        $delta = 0.05;
+        $bbox = implode(',', [
+            $longitude - $delta,
+            $latitude - $delta,
+            $longitude + $delta,
+            $latitude + $delta,
+        ]);
+        $marker = $latitude.','.$longitude;
+
+        return [
+            'title' => $room->getTitle(),
+            'latitude' => $latitude,
+            'longitude' => $longitude,
+            'embed_url' => 'https://www.openstreetmap.org/export/embed.html?'.http_build_query(
+                [
+                    'bbox' => $bbox,
+                    'layer' => 'mapnik',
+                    'marker' => $marker,
+                ],
+                '',
+                '&',
+                PHP_QUERY_RFC3986,
+            ),
+        ];
+    }
+
+    private function buildCourseAboutDescriptionSection(CCourseDescription $description): ?array
+    {
+        $title = trim(strip_tags((string) $description->getTitle()));
+        $content = $this->sanitizeCourseAboutHtml((string) $description->getContent());
+
+        if ('' === $title && '' === strip_tags($content)) {
+            return null;
+        }
+
+        return [
+            'iid' => $description->getIid(),
+            'title' => $title,
+            'content' => $content,
+            'type' => $description->getDescriptionType(),
+            'progress' => $description->getProgress(),
+        ];
+    }
+
+    private function sanitizeCourseAboutHtml(string $content): string
+    {
+        $content = trim($content);
+
+        if ('' === $content) {
+            return '';
+        }
+
+        if (class_exists('Security')) {
+            $userStatus = \defined('STUDENT') ? \STUDENT : null;
+
+            return (string) \Security::remove_XSS($content, $userStatus);
+        }
+
+        return $content;
+    }
+
+    private function isCourseCodeUniqueConstraintViolation(UniqueConstraintViolationException $exception): bool
+    {
+        $message = $exception->getMessage();
+
+        return str_contains($message, 'UNIQ_169E6FB977153098')
+            || str_contains($message, "for key 'code'")
+            || str_contains($message, 'for key "code"');
+    }
+
+    private function getDuplicateCourseCreationMessage(?string $wantedCode, TranslatorInterface $translator): string
+    {
+        if (null !== $wantedCode && '' !== trim($wantedCode)) {
+            return $translator->trans('This course code already exists, please choose another code.');
+        }
+
+        return $translator->trans('This course title already exists, please choose another title.');
+    }
+
+    private function createCourseCreationServerErrorResponse(
+        Throwable $exception,
+        TranslatorInterface $translator
+    ): JsonResponse {
+        error_log(
+            '[course.create] throwable='
+            .$exception::class
+            .' message='.$exception->getMessage()
+            .' file='.$exception->getFile()
+            .' line='.(string) $exception->getLine()
+            .' peak='.memory_get_peak_usage(true)
+        );
+
+        return new JsonResponse(
+            [
+                'success' => false,
+                'message' => $translator->trans('An error occurred while creating the course.'),
+            ],
+            Response::HTTP_INTERNAL_SERVER_ERROR
+        );
+    }
+
+    private function resolveCourseCreateCapabilityStatus(
+        User $user,
+        TranslatorInterface $translator,
+        CourseHelper $courseHelper,
+    ): array {
+        if ($this->isGranted('ROLE_ADMIN')) {
+            return [
+                'canCreate' => true,
+                'currentCount' => 0,
+                'effectiveLimit' => 0,
+                'serviceLimit' => null,
+                'globalLimit' => 0,
+                'limitSource' => 'admin',
+                'message' => '',
+            ];
+        }
+
+        try {
+            $status = $courseHelper->resolveCourseCreationCapabilityForUser($user);
+
+            $canCreate = (bool) ($status['canCreate'] ?? true);
+            $currentCount = (int) ($status['currentCount'] ?? 0);
+            $effectiveLimit = (int) ($status['effectiveLimit'] ?? 0);
+            $limitSource = (string) ($status['limitSource'] ?? 'unlimited');
+
+            $message = '';
+            if (!$canCreate) {
+                if ('service' === $limitSource) {
+                    $message = \sprintf(
+                        $translator->trans(
+                            'You already manage %d courses and your active service allows up to %d. To create another course, you need a higher service limit or reduce your current active courses.'
+                        ),
+                        $currentCount,
+                        $effectiveLimit
+                    );
+                } elseif ('role' === $limitSource) {
+                    $message = $translator->trans('Only trainers and administrators can create courses.');
+                } elseif ('setting' === $limitSource) {
+                    $message = $translator->trans('Course creation by trainers is disabled on this platform.');
+                } else {
+                    $message = \sprintf(
+                        $translator->trans(
+                            'You already manage %d courses and the platform currently allows up to %d for your account. You cannot create more courses right now.'
+                        ),
+                        $currentCount,
+                        $effectiveLimit
+                    );
+                }
+            }
+
+            $status['message'] = $message;
+
+            return $status;
+        } catch (Throwable $exception) {
+            error_log('[Course] Failed to resolve course creation capability: '.$exception->getMessage());
+
+            return [
+                'canCreate' => true,
+                'currentCount' => 0,
+                'effectiveLimit' => 0,
+                'serviceLimit' => null,
+                'globalLimit' => 0,
+                'limitSource' => 'error',
+                'message' => $translator->trans('Unable to verify whether you can create a new course right now.'),
+            ];
+        }
     }
 
     private function buildExerciseVueToolUrl(?int $exerciseId = null): ?string

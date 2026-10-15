@@ -252,9 +252,6 @@ class CGlossary extends AbstractResource implements ResourceInterface, ResourceS
         return $this;
     }
 
-    /**
-     * Get description.
-     */
     public function getDescription(): ?string
     {
         return $this->description;

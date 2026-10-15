@@ -172,7 +172,7 @@ final class LegacyListenerTest extends TestCase
         $settingsManager
             ->method('getSetting')
             ->willReturnCallback(
-                fn (string $variable): string => 'course.student_view_enabled' === $variable
+                static fn (string $variable): string => 'course.student_view_enabled' === $variable
                     ? ($studentViewEnabled ? 'true' : 'false')
                     : ''
             )
@@ -206,11 +206,11 @@ final class LegacyListenerTest extends TestCase
 
         $container = $this->createMock(ContainerInterface::class);
         $container->method('getParameter')->willReturnCallback(
-            fn (string $name): mixed => 'installed' === $name ? true : null
+            static fn (string $name): mixed => 'installed' === $name ? true : null
         );
         $container
             ->method('get')
-            ->willReturnCallback(fn (string $id): ?object => match ($id) {
+            ->willReturnCallback(static fn (string $id): ?object => match ($id) {
                 'doctrine' => $doctrine,
                 SettingsManager::class => $settingsManager,
                 default => null,

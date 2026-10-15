@@ -57,51 +57,6 @@ class DropboxController extends AbstractController
         private readonly CidReqHelper $cidReqHelper
     ) {}
 
-    private function humanSize(int $bytes): string
-    {
-        $units = ['B', 'KB', 'MB', 'GB', 'TB'];
-        $i = $bytes > 0 ? (int) floor(log($bytes, 1024)) : 0;
-
-        return \sprintf('%.1f %s', $bytes / (1024 ** $i), $units[$i]);
-    }
-
-    private function ago(DateTimeImmutable $dt): string
-    {
-        $diff = (new DateTimeImmutable())->getTimestamp() - $dt->getTimestamp();
-        if ($diff < 60) {
-            return 'just now';
-        }
-        if ($diff < 3600) {
-            return floor($diff / 60).' min ago';
-        }
-        if ($diff < 86400) {
-            return floor($diff / 3600).' h ago';
-        }
-
-        return floor($diff / 86400).' d ago';
-    }
-
-    /**
-     * Resolves the active course context (cid/sid/gid) from the session.
-     *
-     * cid/sid/gid travel in the query on every dropbox request, so CidReqListener has
-     * already resolved the course into the session and enforced CourseVoter::VIEW.
-     * Reading the authorized context from the helper keeps the listener as the single
-     * source of truth instead of trusting the raw query parameters.
-     */
-    private function context(): array
-    {
-        $course = $this->cidReqHelper->getDoctrineCourseEntity();
-        if (!$course instanceof Course) {
-            throw new BadRequestHttpException('Missing or invalid course context');
-        }
-
-        $sid = $this->cidReqHelper->getSessionId() ?: null;
-        $gid = $this->cidReqHelper->getGroupId() ?: null;
-
-        return [(int) $course->getId(), $sid, $gid];
-    }
-
     #[Route('/recipients', name: 'dropbox_recipients', methods: ['GET'])]
     public function recipients(): JsonResponse
     {
@@ -186,7 +141,7 @@ class DropboxController extends AbstractController
 
         $cats = $this->categoryRepo->findByContextAndArea($cid, $sid, $uid, $area);
 
-        $rows = array_map(fn (CDropboxCategory $c) => [
+        $rows = array_map(static fn (CDropboxCategory $c) => [
             'id' => $c->getCatId(),
             'title' => $c->getTitle(),
         ], $cats);
@@ -402,7 +357,8 @@ class DropboxController extends AbstractController
               AND f.session_id = :sid
               AND f.uploader_id = :uid
               AND f.cat_id = :cat
-            SQL,
+            SQL
+                ,
                 ['cid' => $cid, 'sid' => $sid, 'uid' => $uid, 'cat' => $id]
             );
 
@@ -434,7 +390,8 @@ class DropboxController extends AbstractController
         WHERE p.c_id = :cid
           AND p.user_id = :uid
           AND p.cat_id = :cat
-        SQL,
+        SQL
+            ,
             ['cid' => $cid, 'uid' => $uid, 'cat' => $id]
         );
 
@@ -501,7 +458,7 @@ class DropboxController extends AbstractController
 
         $size = (int) $resourceFile->getSize();
 
-        $response = new StreamedResponse(function () use ($stream): void {
+        $response = new StreamedResponse(static function () use ($stream): void {
             // Stream file in chunks
             while (!feof($stream)) {
                 $buffer = fread($stream, 8192);
@@ -775,6 +732,51 @@ class DropboxController extends AbstractController
         $resp->deleteFileAfterSend(true);
 
         return $resp;
+    }
+
+    private function humanSize(int $bytes): string
+    {
+        $units = ['B', 'KB', 'MB', 'GB', 'TB'];
+        $i = $bytes > 0 ? (int) floor(log($bytes, 1024)) : 0;
+
+        return \sprintf('%.1f %s', $bytes / (1024 ** $i), $units[$i]);
+    }
+
+    private function ago(DateTimeImmutable $dt): string
+    {
+        $diff = (new DateTimeImmutable())->getTimestamp() - $dt->getTimestamp();
+        if ($diff < 60) {
+            return 'just now';
+        }
+        if ($diff < 3600) {
+            return floor($diff / 60).' min ago';
+        }
+        if ($diff < 86400) {
+            return floor($diff / 3600).' h ago';
+        }
+
+        return floor($diff / 86400).' d ago';
+    }
+
+    /**
+     * Resolves the active course context (cid/sid/gid) from the session.
+     *
+     * cid/sid/gid travel in the query on every dropbox request, so CidReqListener has
+     * already resolved the course into the session and enforced CourseVoter::VIEW.
+     * Reading the authorized context from the helper keeps the listener as the single
+     * source of truth instead of trusting the raw query parameters.
+     */
+    private function context(): array
+    {
+        $course = $this->cidReqHelper->getDoctrineCourseEntity();
+        if (!$course instanceof Course) {
+            throw new BadRequestHttpException('Missing or invalid course context');
+        }
+
+        $sid = $this->cidReqHelper->getSessionId() ?: null;
+        $gid = $this->cidReqHelper->getGroupId() ?: null;
+
+        return [(int) $course->getId(), $sid, $gid];
     }
 
     /**

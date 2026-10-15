@@ -188,6 +188,8 @@ final class Version20201215072920 extends AbstractMigrationChamilo
         }
     }
 
+    public function down(Schema $schema): void {}
+
     /**
      * @param array<int, int> $oldNewEventIdMap
      */
@@ -231,6 +233,4 @@ final class Version20201215072920 extends AbstractMigrationChamilo
 
         return [$course, $admin];
     }
-
-    public function down(Schema $schema): void {}
 }

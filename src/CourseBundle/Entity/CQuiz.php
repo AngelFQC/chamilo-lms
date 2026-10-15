@@ -209,9 +209,9 @@ class CQuiz extends AbstractResource implements ResourceInterface, ResourceShowC
      */
     public function getQuestions(): Collection
     {
-        return $this->questions instanceof ArrayCollection ?
-            $this->questions :
-            new ArrayCollection($this->questions->toArray());
+        return $this->questions instanceof ArrayCollection
+            ? $this->questions
+            : new ArrayCollection($this->questions->toArray());
     }
 
     public function setTitle(string $title): self
@@ -234,8 +234,6 @@ class CQuiz extends AbstractResource implements ResourceInterface, ResourceShowC
     }
 
     /**
-     * Get description.
-     *
      * @return string
      */
     public function getDescription()
@@ -275,8 +273,6 @@ class CQuiz extends AbstractResource implements ResourceInterface, ResourceShowC
     }
 
     /**
-     * Get random.
-     *
      * @return int
      */
     public function getRandom()
@@ -387,9 +383,6 @@ class CQuiz extends AbstractResource implements ResourceInterface, ResourceShowC
         return $this;
     }
 
-    /**
-     * Get propagateNeg.
-     */
     public function getPropagateNeg(): int
     {
         return $this->propagateNeg;
@@ -414,9 +407,6 @@ class CQuiz extends AbstractResource implements ResourceInterface, ResourceShowC
         return $this;
     }
 
-    /**
-     * Get reviewAnswers.
-     */
     public function getReviewAnswers(): int
     {
         return $this->reviewAnswers;
@@ -429,9 +419,6 @@ class CQuiz extends AbstractResource implements ResourceInterface, ResourceShowC
         return $this;
     }
 
-    /**
-     * Get randomByCategory.
-     */
     public function getRandomByCategory(): int
     {
         return $this->randomByCategory;
@@ -486,9 +473,6 @@ class CQuiz extends AbstractResource implements ResourceInterface, ResourceShowC
         return $this;
     }
 
-    /**
-     * Get displayCategoryName.
-     */
     public function getDisplayCategoryName(): int
     {
         return $this->displayCategoryName;
@@ -501,9 +485,6 @@ class CQuiz extends AbstractResource implements ResourceInterface, ResourceShowC
         return $this;
     }
 
-    /**
-     * Get passPercentage.
-     */
     public function getPassPercentage(): ?int
     {
         return $this->passPercentage;
@@ -729,9 +710,9 @@ class CQuiz extends AbstractResource implements ResourceInterface, ResourceShowC
      */
     public function getQuestionsCategories(): Collection
     {
-        return $this->questionsCategories instanceof ArrayCollection ?
-            $this->questionsCategories :
-            new ArrayCollection($this->questionsCategories->toArray());
+        return $this->questionsCategories instanceof ArrayCollection
+            ? $this->questionsCategories
+            : new ArrayCollection($this->questionsCategories->toArray());
     }
 
     public function getDuration(): ?int

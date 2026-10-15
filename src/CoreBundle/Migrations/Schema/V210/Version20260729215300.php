@@ -329,10 +329,11 @@ WHERE iid BETWEEN :start_iid AND :end_iid
   AND compdate IS NOT NULL
   AND CAST(compdate AS CHAR) NOT IN ('', '0000-00-00', '0000-00-00 00:00:00')
   AND completion_date IS NULL
-SQL, [
-                'start_iid' => $start,
-                'end_iid' => $end,
-            ]);
+SQL
+                , [
+                                'start_iid' => $start,
+                                'end_iid' => $end,
+                            ]);
         }
     }
 
@@ -373,7 +374,8 @@ SET existing.field_value = source.lab_title,
 WHERE existing.field_id = :field_id
   AND source.lab_title IS NOT NULL
   AND TRIM(COALESCE(existing.field_value, '')) = ''
-SQL, ['field_id' => $labTitleFieldId]);
+SQL
+            , ['field_id' => $labTitleFieldId]);
         $this->addSql(<<<'SQL'
 INSERT INTO extra_field_values
     (field_id, field_value, item_id, created_at, updated_at)
@@ -389,7 +391,8 @@ LEFT JOIN extra_field_values existing
    AND existing.item_id = source.lp_iid
 WHERE source.lab_title IS NOT NULL
   AND existing.id IS NULL
-SQL, ['field_id' => $labTitleFieldId]);
+SQL
+            , ['field_id' => $labTitleFieldId]);
 
         $this->addSql(<<<'SQL'
 UPDATE extra_field_values existing
@@ -400,7 +403,8 @@ SET existing.field_value = source.lab_week,
 WHERE existing.field_id = :field_id
   AND source.lab_week IS NOT NULL
   AND TRIM(COALESCE(existing.field_value, '')) = ''
-SQL, ['field_id' => $labWeekFieldId]);
+SQL
+            , ['field_id' => $labWeekFieldId]);
         $this->addSql(<<<'SQL'
 INSERT INTO extra_field_values
     (field_id, field_value, item_id, created_at, updated_at)
@@ -416,7 +420,8 @@ LEFT JOIN extra_field_values existing
    AND existing.item_id = source.lp_iid
 WHERE source.lab_week IS NOT NULL
   AND existing.id IS NULL
-SQL, ['field_id' => $labWeekFieldId]);
+SQL
+            , ['field_id' => $labWeekFieldId]);
 
         $this->addSql(
             'DROP TEMPORARY TABLE IF EXISTS tmp_legacy_lab_metadata_values'
@@ -485,10 +490,11 @@ SET existing.field_value = :field_value,
     existing.updated_at = NOW()
 WHERE existing.field_id = :field_id
   AND TRIM(COALESCE(existing.field_value, '')) = ''
-SQL, [
-            'field_id' => $manualCompletionFieldId,
-            'field_value' => '1',
-        ]);
+SQL
+            , [
+                        'field_id' => $manualCompletionFieldId,
+                        'field_value' => '1',
+                    ]);
 
         if ($minIid > 0 && $maxIid >= $minIid) {
             for (
@@ -518,12 +524,13 @@ LEFT JOIN extra_field_values existing
    AND existing.item_id = source.item_id
 WHERE source.item_id BETWEEN :start_iid AND :end_iid
   AND existing.id IS NULL
-SQL, [
-                    'field_id' => $manualCompletionFieldId,
-                    'field_value' => '1',
-                    'start_iid' => $start,
-                    'end_iid' => $end,
-                ]);
+SQL
+                    , [
+                                        'field_id' => $manualCompletionFieldId,
+                                        'field_value' => '1',
+                                        'start_iid' => $start,
+                                        'end_iid' => $end,
+                                    ]);
             }
         }
 
@@ -610,7 +617,8 @@ FROM (
             END
         ) > 0
 ) conflicts
-SQL, $legacyColumn);
+SQL
+            , $legacyColumn);
 
         return (int) $this->connection->fetchOne(
             $sql,
@@ -652,7 +660,8 @@ FROM (
             END
         ) > 0
 ) conflicts
-SQL, ['field_id' => $fieldId]);
+SQL
+            , ['field_id' => $fieldId]);
     }
 
     private function requireExtraFieldStorage(

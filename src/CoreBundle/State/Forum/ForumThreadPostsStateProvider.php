@@ -91,29 +91,6 @@ final class ForumThreadPostsStateProvider implements ProviderInterface
     }
 
     /**
-     * @param array<string, mixed> $uriVariables
-     */
-    private function resolveThreadId(array $uriVariables, ?Request $request): int
-    {
-        $threadId = $uriVariables['threadId'] ?? null;
-
-        if ($threadId instanceof CForumThread) {
-            return (int) $threadId->getIid();
-        }
-
-        if (is_numeric($threadId)) {
-            return (int) $threadId;
-        }
-
-        $requestThreadId = $request?->attributes->get('threadId');
-        if (is_numeric($requestThreadId)) {
-            return (int) $requestThreadId;
-        }
-
-        return 0;
-    }
-
-    /**
      * @return array<string, mixed>
      */
     public function getThreadPosts(int $threadId, Request $request): array
@@ -254,6 +231,29 @@ final class ForumThreadPostsStateProvider implements ProviderInterface
             'totalPages' => $totalPages,
             'hasNextPage' => $page < $totalPages,
         ];
+    }
+
+    /**
+     * @param array<string, mixed> $uriVariables
+     */
+    private function resolveThreadId(array $uriVariables, ?Request $request): int
+    {
+        $threadId = $uriVariables['threadId'] ?? null;
+
+        if ($threadId instanceof CForumThread) {
+            return (int) $threadId->getIid();
+        }
+
+        if (is_numeric($threadId)) {
+            return (int) $threadId;
+        }
+
+        $requestThreadId = $request?->attributes->get('threadId');
+        if (is_numeric($requestThreadId)) {
+            return (int) $requestThreadId;
+        }
+
+        return 0;
     }
 
     private function createPostsQueryBuilder(

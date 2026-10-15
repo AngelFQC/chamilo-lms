@@ -126,9 +126,6 @@ class Legal
         return $this->id;
     }
 
-    /**
-     * Get date.
-     */
     public function getDate(): int
     {
         return $this->date;

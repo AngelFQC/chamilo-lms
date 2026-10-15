@@ -122,16 +122,6 @@ final class CDocumentRepository extends ResourceRepository
         return $this->getCount($qb);
     }
 
-    protected function addFileTypeQueryBuilder(string $fileType, ?QueryBuilder $qb = null): QueryBuilder
-    {
-        $qb = $this->getOrCreateQueryBuilder($qb);
-
-        return $qb
-            ->andWhere('resource.filetype = :filetype')
-            ->setParameter('filetype', $fileType)
-        ;
-    }
-
     /**
      * Register the original SCORM ZIP under:
      *   learning_path / SCORM - {lp_id} - {lp_title} / {lp_title}.zip
@@ -283,34 +273,6 @@ final class CDocumentRepository extends ResourceRepository
                 }
             }
         }
-    }
-
-    /**
-     * Try to delete the first child folder whose title starts with $prefix under $parent.
-     * Returns true if something was removed.
-     */
-    private function tryDeleteFirstFolderByTitlePrefix(ResourceNode $parent, string $prefix): bool
-    {
-        $em = $this->em();
-        $qb = $em->createQueryBuilder()
-            ->select('rn')
-            ->from(ResourceNode::class, 'rn')
-            ->where('rn.parent = :parent')
-            ->andWhere('rn.title LIKE :prefix')
-            ->setParameter('parent', $parent)
-            ->setParameter('prefix', $prefix.'%')
-            ->setMaxResults(1)
-        ;
-
-        /** @var ResourceNode|null $node */
-        $node = $qb->getQuery()->getOneOrNullResult();
-        if ($node) {
-            $em->remove($node);
-
-            return true;
-        }
-
-        return false;
     }
 
     /**
@@ -599,96 +561,6 @@ final class CDocumentRepository extends ResourceRepository
     }
 
     /**
-     * @return ResourceNode[]
-     */
-    private function findLearningPathSystemFolders(Course $course): array
-    {
-        $courseRoot = $course->getResourceNode();
-        if (!$courseRoot instanceof ResourceNode) {
-            return [];
-        }
-
-        $parents = [$courseRoot];
-        $documentsRoot = $this->getCourseDocumentsRootNode($course);
-        if ($documentsRoot instanceof ResourceNode && $documentsRoot->getId() !== $courseRoot->getId()) {
-            $parents[] = $documentsRoot;
-        }
-
-        $titles = array_values(array_unique(array_filter([
-            'learning_path',
-            \function_exists('get_lang') ? get_lang('Learning paths') : null,
-            \function_exists('get_lang') ? get_lang('Learning path') : null,
-            'Learning paths',
-            'Learning path',
-        ])));
-
-        $folders = [];
-        $seen = [];
-        foreach ($parents as $parent) {
-            foreach ($titles as $title) {
-                $folder = $this->findChildDocumentFolderByTitle($parent, $title);
-                if (!$folder instanceof ResourceNode) {
-                    continue;
-                }
-
-                $folderId = (int) $folder->getId();
-                if (isset($seen[$folderId])) {
-                    continue;
-                }
-
-                $seen[$folderId] = true;
-                $folders[] = $folder;
-            }
-        }
-
-        return $folders;
-    }
-
-    /**
-     * Prefer the folder that already contains the most direct document content.
-     * On ties, keep the oldest ResourceNode to avoid switching between duplicate roots.
-     *
-     * @param ResourceNode[] $folders
-     */
-    private function selectEstablishedDocumentFolder(array $folders): ?ResourceNode
-    {
-        if ([] === $folders) {
-            return null;
-        }
-
-        $rankedFolders = [];
-        foreach ($folders as $folder) {
-            $rankedFolders[] = [
-                'folder' => $folder,
-                'children' => $this->countDirectDocumentChildren($folder),
-                'id' => (int) $folder->getId(),
-            ];
-        }
-
-        usort(
-            $rankedFolders,
-            static fn (array $left, array $right): int => $right['children'] <=> $left['children']
-                ?: $left['id'] <=> $right['id']
-        );
-
-        return $rankedFolders[0]['folder'];
-    }
-
-    private function countDirectDocumentChildren(ResourceNode $parent): int
-    {
-        return (int) $this->em()
-            ->createQueryBuilder()
-            ->select('COUNT(d.iid)')
-            ->from(CDocument::class, 'd')
-            ->innerJoin('d.resourceNode', 'rn')
-            ->where('rn.parent = :parent')
-            ->setParameter('parent', $parent)
-            ->getQuery()
-            ->getSingleScalarResult()
-        ;
-    }
-
-    /**
      * Recursively list all files (not folders) under a CDocument folder by its iid.
      * Returns items ready for exporters.
      */
@@ -908,20 +780,6 @@ final class CDocumentRepository extends ResourceRepository
         return is_readable($candidate) ? $candidate : null;
     }
 
-    private function safeTitle(string $name): string
-    {
-        $name = trim($name);
-        $name = str_replace(['/', '\\'], '-', $name);
-
-        return preg_replace('/\s+/', ' ', $name) ?: 'Untitled';
-    }
-
-    private function em(): EntityManagerInterface
-    {
-        /** @var EntityManagerInterface $em */
-        return $this->getEntityManager();
-    }
-
     /**
      * Returns the document folders for a given course/session/group context,
      * as [ document_iid => "Full/Path/To/Folder" ].
@@ -1123,46 +981,6 @@ final class CDocumentRepository extends ResourceRepository
     }
 
     /**
-     * Rebuild the "Parent folder/Child folder/..." path for a folder ResourceLink,
-     * walking up the parent chain until a link without parent is found.
-     *
-     * Uses a small cache to avoid recalculating the same paths many times.
-     *
-     * @param array<int, array<string,mixed>> $linksById
-     * @param array<int, string>              $pathCache
-     */
-    private function buildFolderPathForLink(
-        int $id,
-        array $linksById,
-        array &$pathCache
-    ): string {
-        if (isset($pathCache[$id])) {
-            return $pathCache[$id];
-        }
-
-        if (!isset($linksById[$id])) {
-            return $pathCache[$id] = '';
-        }
-
-        $current = $linksById[$id];
-        $segments = [$current['title']];
-
-        $parentId = $current['parent_id'] ?? null;
-        $guard = 0;
-
-        while (null !== $parentId && isset($linksById[$parentId]) && $guard < 50) {
-            $parent = $linksById[$parentId];
-            array_unshift($segments, $parent['title']);
-            $parentId = $parent['parent_id'] ?? null;
-            $guard++;
-        }
-
-        $path = implode('/', $segments);
-
-        return $pathCache[$id] = $path;
-    }
-
-    /**
      * Compute document storage usage breakdown for a course.
      *
      * - Counts only the "document" tool (resource_type_group = document resource type id).
@@ -1261,5 +1079,187 @@ final class CDocumentRepository extends ResourceRepository
         ]);
 
         return (int) ($used ?? 0);
+    }
+
+    protected function addFileTypeQueryBuilder(string $fileType, ?QueryBuilder $qb = null): QueryBuilder
+    {
+        $qb = $this->getOrCreateQueryBuilder($qb);
+
+        return $qb
+            ->andWhere('resource.filetype = :filetype')
+            ->setParameter('filetype', $fileType)
+        ;
+    }
+
+    /**
+     * Try to delete the first child folder whose title starts with $prefix under $parent.
+     * Returns true if something was removed.
+     */
+    private function tryDeleteFirstFolderByTitlePrefix(ResourceNode $parent, string $prefix): bool
+    {
+        $em = $this->em();
+        $qb = $em->createQueryBuilder()
+            ->select('rn')
+            ->from(ResourceNode::class, 'rn')
+            ->where('rn.parent = :parent')
+            ->andWhere('rn.title LIKE :prefix')
+            ->setParameter('parent', $parent)
+            ->setParameter('prefix', $prefix.'%')
+            ->setMaxResults(1)
+        ;
+
+        /** @var ResourceNode|null $node */
+        $node = $qb->getQuery()->getOneOrNullResult();
+        if ($node) {
+            $em->remove($node);
+
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
+     * @return ResourceNode[]
+     */
+    private function findLearningPathSystemFolders(Course $course): array
+    {
+        $courseRoot = $course->getResourceNode();
+        if (!$courseRoot instanceof ResourceNode) {
+            return [];
+        }
+
+        $parents = [$courseRoot];
+        $documentsRoot = $this->getCourseDocumentsRootNode($course);
+        if ($documentsRoot instanceof ResourceNode && $documentsRoot->getId() !== $courseRoot->getId()) {
+            $parents[] = $documentsRoot;
+        }
+
+        $titles = array_values(array_unique(array_filter([
+            'learning_path',
+            \function_exists('get_lang') ? get_lang('Learning paths') : null,
+            \function_exists('get_lang') ? get_lang('Learning path') : null,
+            'Learning paths',
+            'Learning path',
+        ])));
+
+        $folders = [];
+        $seen = [];
+        foreach ($parents as $parent) {
+            foreach ($titles as $title) {
+                $folder = $this->findChildDocumentFolderByTitle($parent, $title);
+                if (!$folder instanceof ResourceNode) {
+                    continue;
+                }
+
+                $folderId = (int) $folder->getId();
+                if (isset($seen[$folderId])) {
+                    continue;
+                }
+
+                $seen[$folderId] = true;
+                $folders[] = $folder;
+            }
+        }
+
+        return $folders;
+    }
+
+    /**
+     * Prefer the folder that already contains the most direct document content.
+     * On ties, keep the oldest ResourceNode to avoid switching between duplicate roots.
+     *
+     * @param ResourceNode[] $folders
+     */
+    private function selectEstablishedDocumentFolder(array $folders): ?ResourceNode
+    {
+        if ([] === $folders) {
+            return null;
+        }
+
+        $rankedFolders = [];
+        foreach ($folders as $folder) {
+            $rankedFolders[] = [
+                'folder' => $folder,
+                'children' => $this->countDirectDocumentChildren($folder),
+                'id' => (int) $folder->getId(),
+            ];
+        }
+
+        usort(
+            $rankedFolders,
+            static fn (array $left, array $right): int => $right['children'] <=> $left['children']
+                ?: $left['id'] <=> $right['id']
+        );
+
+        return $rankedFolders[0]['folder'];
+    }
+
+    private function countDirectDocumentChildren(ResourceNode $parent): int
+    {
+        return (int) $this->em()
+            ->createQueryBuilder()
+            ->select('COUNT(d.iid)')
+            ->from(CDocument::class, 'd')
+            ->innerJoin('d.resourceNode', 'rn')
+            ->where('rn.parent = :parent')
+            ->setParameter('parent', $parent)
+            ->getQuery()
+            ->getSingleScalarResult()
+        ;
+    }
+
+    private function safeTitle(string $name): string
+    {
+        $name = trim($name);
+        $name = str_replace(['/', '\\'], '-', $name);
+
+        return preg_replace('/\s+/', ' ', $name) ?: 'Untitled';
+    }
+
+    private function em(): EntityManagerInterface
+    {
+        /** @var EntityManagerInterface $em */
+        return $this->getEntityManager();
+    }
+
+    /**
+     * Rebuild the "Parent folder/Child folder/..." path for a folder ResourceLink,
+     * walking up the parent chain until a link without parent is found.
+     *
+     * Uses a small cache to avoid recalculating the same paths many times.
+     *
+     * @param array<int, array<string,mixed>> $linksById
+     * @param array<int, string>              $pathCache
+     */
+    private function buildFolderPathForLink(
+        int $id,
+        array $linksById,
+        array &$pathCache
+    ): string {
+        if (isset($pathCache[$id])) {
+            return $pathCache[$id];
+        }
+
+        if (!isset($linksById[$id])) {
+            return $pathCache[$id] = '';
+        }
+
+        $current = $linksById[$id];
+        $segments = [$current['title']];
+
+        $parentId = $current['parent_id'] ?? null;
+        $guard = 0;
+
+        while (null !== $parentId && isset($linksById[$parentId]) && $guard < 50) {
+            $parent = $linksById[$parentId];
+            array_unshift($segments, $parent['title']);
+            $parentId = $parent['parent_id'] ?? null;
+            $guard++;
+        }
+
+        $path = implode('/', $segments);
+
+        return $pathCache[$id] = $path;
     }
 }

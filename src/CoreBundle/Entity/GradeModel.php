@@ -36,8 +36,6 @@ class GradeModel
     protected ?string $defaultExternalEvalPrefix = null;
 
     /**
-     * Get title.
-     *
      * @return string
      */
     public function getTitle()
@@ -53,8 +51,6 @@ class GradeModel
     }
 
     /**
-     * Get description.
-     *
      * @return string
      */
     public function getDescription()
@@ -70,8 +66,6 @@ class GradeModel
     }
 
     /**
-     * Get defaultLowestEvalExclude.
-     *
      * @return bool
      */
     public function getDefaultLowestEvalExclude()
@@ -87,8 +81,6 @@ class GradeModel
     }
 
     /**
-     * Get defaultExternalEval.
-     *
      * @return bool
      */
     public function getDefaultExternalEval()
@@ -104,8 +96,6 @@ class GradeModel
     }
 
     /**
-     * Get defaultExternalEvalPrefix.
-     *
      * @return string
      */
     public function getDefaultExternalEvalPrefix()
@@ -121,8 +111,6 @@ class GradeModel
     }
 
     /**
-     * Get id.
-     *
      * @return int
      */
     public function getId()

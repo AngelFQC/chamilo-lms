@@ -26,7 +26,9 @@ use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
-/** @implements ProcessorInterface<LearningPathCategoryInput|null, void> */
+/**
+ * @implements ProcessorInterface<LearningPathCategoryInput|null, void>
+ */
 final readonly class LearningPathCategoryMutationProcessor implements ProcessorInterface
 {
     use LearningPathStateHelperTrait;

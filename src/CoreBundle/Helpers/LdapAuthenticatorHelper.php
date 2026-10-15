@@ -28,96 +28,6 @@ readonly class LdapAuthenticatorHelper
         $this->ldapConfig = $authConfigHelper->getLdapConfig();
     }
 
-    /**
-     * Build the base LDAP filter combining objectClass with the optional config filter.
-     * Mirrors the logic in LdapSyncUsersCommand so listing and sync always target the same set.
-     *
-     * Examples with filter = "memberOf=CN=chamilo-users,DC=domain,DC=name":
-     *   → (&(objectClass=person)(memberOf=CN=chamilo-users,DC=domain,DC=name))
-     *
-     * With a compound filter = "|(memberOf=CN=g1,...)(memberOf=CN=g2,...)":
-     *   → (&(objectClass=person)(|(memberOf=CN=g1,...)(memberOf=CN=g2,...)))
-     */
-    private function buildBaseFilter(): string
-    {
-        $objectClassFilter = "(objectClass={$this->ldapConfig['object_class']})";
-        $configFilter = $this->ldapConfig['filter'] ?? '';
-
-        if (!empty($configFilter)) {
-            return '(&'.$objectClassFilter.'('.$configFilter.'))';
-        }
-
-        return $objectClassFilter;
-    }
-
-    private function bindOrFail(): void
-    {
-        try {
-            $this->ldap->bind($this->ldapConfig['search_dn'], $this->ldapConfig['search_password']);
-        } catch (InvalidCredentialsException) {
-            throw new NotAllowedException();
-        }
-    }
-
-    /**
-     * @return array<int, Entry>
-     */
-    private function queryAllUsers(): array
-    {
-        $this->bindOrFail();
-
-        $request = $this->requestStack->getCurrentRequest();
-        $dataCorrespondence = $this->ldapConfig['data_correspondence'];
-
-        $keywordFirstname = trim($request->query->get('keyword_firstname', ''));
-        $keywordLastname = trim($request->query->get('keyword_lastname', ''));
-        $keywordUsername = trim($request->query->get('keyword_username', ''));
-        $keywordType = trim($request->query->get('keyword_type', ''));
-
-        $ldapQuery = [$this->buildBaseFilter()];
-
-        if ($keywordUsername) {
-            $ldapQuery[] = '(uid='.ldap_escape($keywordUsername, '', LDAP_ESCAPE_FILTER).')';
-        }
-
-        if ($keywordLastname) {
-            $ldapQuery[] = '('.$dataCorrespondence['lastname'].'='.ldap_escape($keywordLastname, '', LDAP_ESCAPE_FILTER).'*)';
-        }
-
-        if ($keywordFirstname) {
-            $ldapQuery[] = '('.$dataCorrespondence['firstname'].'='.ldap_escape($keywordFirstname, '', LDAP_ESCAPE_FILTER).'*)';
-        }
-
-        if ($keywordType && 'all' !== $keywordType) {
-            $ldapQuery[] = '(employeeType='.ldap_escape($keywordType, '', LDAP_ESCAPE_FILTER).')';
-        }
-
-        $query = \count($ldapQuery) > 1 ? '(&'.implode('', $ldapQuery).')' : $ldapQuery[0];
-
-        return $this->ldap
-            ->query($this->ldapConfig['base_dn'], $query)
-            ->execute()
-            ->toArray()
-        ;
-    }
-
-    /**
-     * @return array<int, Entry>
-     */
-    private function queryByOu(string $ou): array
-    {
-        $this->bindOrFail();
-
-        return $this->ldap
-            ->query(
-                'ou='.ldap_escape($ou, '', LDAP_ESCAPE_DN).','.$this->ldapConfig['base_dn'],
-                $this->buildBaseFilter()
-            )
-            ->execute()
-            ->toArray()
-        ;
-    }
-
     public function countUsers(array $params): int
     {
         return \count($this->queryAllUsers());
@@ -214,6 +124,96 @@ readonly class LdapAuthenticatorHelper
         }
 
         return $users;
+    }
+
+    /**
+     * Build the base LDAP filter combining objectClass with the optional config filter.
+     * Mirrors the logic in LdapSyncUsersCommand so listing and sync always target the same set.
+     *
+     * Examples with filter = "memberOf=CN=chamilo-users,DC=domain,DC=name":
+     *   → (&(objectClass=person)(memberOf=CN=chamilo-users,DC=domain,DC=name))
+     *
+     * With a compound filter = "|(memberOf=CN=g1,...)(memberOf=CN=g2,...)":
+     *   → (&(objectClass=person)(|(memberOf=CN=g1,...)(memberOf=CN=g2,...)))
+     */
+    private function buildBaseFilter(): string
+    {
+        $objectClassFilter = "(objectClass={$this->ldapConfig['object_class']})";
+        $configFilter = $this->ldapConfig['filter'] ?? '';
+
+        if (!empty($configFilter)) {
+            return '(&'.$objectClassFilter.'('.$configFilter.'))';
+        }
+
+        return $objectClassFilter;
+    }
+
+    private function bindOrFail(): void
+    {
+        try {
+            $this->ldap->bind($this->ldapConfig['search_dn'], $this->ldapConfig['search_password']);
+        } catch (InvalidCredentialsException) {
+            throw new NotAllowedException();
+        }
+    }
+
+    /**
+     * @return array<int, Entry>
+     */
+    private function queryAllUsers(): array
+    {
+        $this->bindOrFail();
+
+        $request = $this->requestStack->getCurrentRequest();
+        $dataCorrespondence = $this->ldapConfig['data_correspondence'];
+
+        $keywordFirstname = trim($request->query->get('keyword_firstname', ''));
+        $keywordLastname = trim($request->query->get('keyword_lastname', ''));
+        $keywordUsername = trim($request->query->get('keyword_username', ''));
+        $keywordType = trim($request->query->get('keyword_type', ''));
+
+        $ldapQuery = [$this->buildBaseFilter()];
+
+        if ($keywordUsername) {
+            $ldapQuery[] = '(uid='.ldap_escape($keywordUsername, '', LDAP_ESCAPE_FILTER).')';
+        }
+
+        if ($keywordLastname) {
+            $ldapQuery[] = '('.$dataCorrespondence['lastname'].'='.ldap_escape($keywordLastname, '', LDAP_ESCAPE_FILTER).'*)';
+        }
+
+        if ($keywordFirstname) {
+            $ldapQuery[] = '('.$dataCorrespondence['firstname'].'='.ldap_escape($keywordFirstname, '', LDAP_ESCAPE_FILTER).'*)';
+        }
+
+        if ($keywordType && 'all' !== $keywordType) {
+            $ldapQuery[] = '(employeeType='.ldap_escape($keywordType, '', LDAP_ESCAPE_FILTER).')';
+        }
+
+        $query = \count($ldapQuery) > 1 ? '(&'.implode('', $ldapQuery).')' : $ldapQuery[0];
+
+        return $this->ldap
+            ->query($this->ldapConfig['base_dn'], $query)
+            ->execute()
+            ->toArray()
+        ;
+    }
+
+    /**
+     * @return array<int, Entry>
+     */
+    private function queryByOu(string $ou): array
+    {
+        $this->bindOrFail();
+
+        return $this->ldap
+            ->query(
+                'ou='.ldap_escape($ou, '', LDAP_ESCAPE_DN).','.$this->ldapConfig['base_dn'],
+                $this->buildBaseFilter()
+            )
+            ->execute()
+            ->toArray()
+        ;
     }
 
     /**

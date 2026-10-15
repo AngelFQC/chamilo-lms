@@ -32,8 +32,6 @@ class ExtraFieldRelTag
     private ?Tag $tag = null;
 
     /**
-     * Get itemId.
-     *
      * @return int
      */
     public function getItemId()
@@ -49,8 +47,6 @@ class ExtraFieldRelTag
     }
 
     /**
-     * Get id.
-     *
      * @return int
      */
     public function getId()

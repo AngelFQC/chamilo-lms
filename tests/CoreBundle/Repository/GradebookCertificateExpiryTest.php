@@ -36,13 +36,6 @@ class GradebookCertificateExpiryTest extends TestCase
         $this->repository = $reflection->newInstanceWithoutConstructor();
     }
 
-    private function callApplyValidityPeriodExpiry(GradebookCertificate $cert, ?GradebookCategory $category): void
-    {
-        $method = new ReflectionMethod(GradebookCertificateRepository::class, 'applyValidityPeriodExpiry');
-        $method->setAccessible(true);
-        $method->invoke($this->repository, $cert, $category);
-    }
-
     public function testExpiryDateComputedWhenValidityPeriodIsSet(): void
     {
         $category = (new GradebookCategory())->setCertificateValidityPeriod(30);
@@ -126,5 +119,12 @@ class GradebookCertificateExpiryTest extends TestCase
         $this->callApplyValidityPeriodExpiry($cert, $category);
 
         $this->assertSame('2020-01-11', $cert->getExpiryDate()->format('Y-m-d'));
+    }
+
+    private function callApplyValidityPeriodExpiry(GradebookCertificate $cert, ?GradebookCategory $category): void
+    {
+        $method = new ReflectionMethod(GradebookCertificateRepository::class, 'applyValidityPeriodExpiry');
+        $method->setAccessible(true);
+        $method->invoke($this->repository, $cert, $category);
     }
 }

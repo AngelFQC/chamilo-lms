@@ -27,54 +27,6 @@ final class OAuthConnectedAppApiSecurityTest extends AbstractApiTest
 {
     use ChamiloTestTrait;
 
-    private function seedClient(string $suffix): OAuthClient
-    {
-        /** @var EntityManagerInterface $em */
-        $em = self::getContainer()->get(EntityManagerInterface::class);
-
-        $client = (new OAuthClient())
-            ->setClientId('chamilo_oauth_client_test_'.$suffix)
-            ->setTokenEndpointAuthMethod('none')
-            ->setClientName('Test Client '.$suffix)
-            ->setRedirectUris(['https://client.example/callback'])
-            ->setGrantTypes(['authorization_code', 'refresh_token'])
-            ->setResponseTypes(['code'])
-            ->setScope('mcp')
-            ->setCreatedAt(new DateTime())
-        ;
-
-        $em->persist($client);
-        $em->flush();
-
-        return $client;
-    }
-
-    private function seedGrant(User $owner, OAuthClient $client, string $suffix): OAuthRefreshToken
-    {
-        /** @var EntityManagerInterface $em */
-        $em = self::getContainer()->get(EntityManagerInterface::class);
-        $accessUrl = self::getContainer()->get(AccessUrlHelper::class)->getCurrent();
-
-        $now = new DateTime();
-        $grant = (new OAuthRefreshToken())
-            ->setTokenHash(hash('sha256', 'test-refresh-token-'.$suffix))
-            ->setGrantId(Uuid::v4()->toRfc4122())
-            ->setClient($client)
-            ->setUser($owner)
-            ->setAccessUrlId((int) $accessUrl->getId())
-            ->setScope('mcp')
-            ->setConsentedAt($now)
-            ->setCreatedAt($now)
-            ->setExpiresAt((clone $now)->modify('+30 days'))
-            ->setAbsoluteExpiresAt((clone $now)->modify('+90 days'))
-        ;
-
-        $em->persist($grant);
-        $em->flush();
-
-        return $grant;
-    }
-
     public function testForeignUserCannotRevokeOthersGrant(): void
     {
         $victim = $this->createUser('oauth_sec_victim_revoke');
@@ -141,5 +93,53 @@ final class OAuthConnectedAppApiSecurityTest extends AbstractApiTest
         );
 
         $this->assertResponseStatusCodeSame(404);
+    }
+
+    private function seedClient(string $suffix): OAuthClient
+    {
+        /** @var EntityManagerInterface $em */
+        $em = self::getContainer()->get(EntityManagerInterface::class);
+
+        $client = (new OAuthClient())
+            ->setClientId('chamilo_oauth_client_test_'.$suffix)
+            ->setTokenEndpointAuthMethod('none')
+            ->setClientName('Test Client '.$suffix)
+            ->setRedirectUris(['https://client.example/callback'])
+            ->setGrantTypes(['authorization_code', 'refresh_token'])
+            ->setResponseTypes(['code'])
+            ->setScope('mcp')
+            ->setCreatedAt(new DateTime())
+        ;
+
+        $em->persist($client);
+        $em->flush();
+
+        return $client;
+    }
+
+    private function seedGrant(User $owner, OAuthClient $client, string $suffix): OAuthRefreshToken
+    {
+        /** @var EntityManagerInterface $em */
+        $em = self::getContainer()->get(EntityManagerInterface::class);
+        $accessUrl = self::getContainer()->get(AccessUrlHelper::class)->getCurrent();
+
+        $now = new DateTime();
+        $grant = (new OAuthRefreshToken())
+            ->setTokenHash(hash('sha256', 'test-refresh-token-'.$suffix))
+            ->setGrantId(Uuid::v4()->toRfc4122())
+            ->setClient($client)
+            ->setUser($owner)
+            ->setAccessUrlId((int) $accessUrl->getId())
+            ->setScope('mcp')
+            ->setConsentedAt($now)
+            ->setCreatedAt($now)
+            ->setExpiresAt((clone $now)->modify('+30 days'))
+            ->setAbsoluteExpiresAt((clone $now)->modify('+90 days'))
+        ;
+
+        $em->persist($grant);
+        $em->flush();
+
+        return $grant;
     }
 }

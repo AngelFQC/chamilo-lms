@@ -29,7 +29,7 @@ class MessageStatusListener
         $remainingReceivers = $message
             ->getReceivers()
             ->filter(
-                fn (MessageRelUser $messageRelUser) => !$messageRelUser->isDeleted()
+                static fn (MessageRelUser $messageRelUser) => !$messageRelUser->isDeleted()
             )
             ->count()
         ;

@@ -45,7 +45,7 @@ class JuryType extends AbstractType
             [
                 'class' => 'Entity\BranchSync',
                 'property' => 'title',
-                'query_builder' => function (EntityRepository $er) {
+                'query_builder' => static function (EntityRepository $er) {
                     return $er->createQueryBuilder('u')
                             // ->where('u.role LIKE :role')
                             // ->setParameter(':role', 'ROLE_JURY%')

@@ -387,6 +387,23 @@ class SequenceResourceRepository extends ServiceEntityRepository
         return false;
     }
 
+    public function getDependents(int $resourceId, int $type): array
+    {
+        return $this->getRequirementsOrDependents($resourceId, $type, 'dependents');
+    }
+
+    public function checkDependentsForUser(array $sequences, int $type, int $userId, int $sessionId = 0, int $originCourseId = 0): array
+    {
+        return $this->checkRequirementsOrDependentsForUser(
+            $sequences,
+            $type,
+            'dependents',
+            $userId,
+            $sessionId,
+            $originCourseId
+        );
+    }
+
     /**
      * Get sessions from vertices.
      *
@@ -422,23 +439,6 @@ class SequenceResourceRepository extends ServiceEntityRepository
         }
 
         return $sessionVertices;
-    }
-
-    public function getDependents(int $resourceId, int $type): array
-    {
-        return $this->getRequirementsOrDependents($resourceId, $type, 'dependents');
-    }
-
-    public function checkDependentsForUser(array $sequences, int $type, int $userId, int $sessionId = 0, int $originCourseId = 0): array
-    {
-        return $this->checkRequirementsOrDependentsForUser(
-            $sequences,
-            $type,
-            'dependents',
-            $userId,
-            $sessionId,
-            $originCourseId
-        );
     }
 
     private function getRequirementsOrDependents(int $resourceId, int $resourceType, string $itemType): array

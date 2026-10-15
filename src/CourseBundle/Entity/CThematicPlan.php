@@ -49,8 +49,6 @@ class CThematicPlan implements Stringable // extends AbstractResource implements
     }
 
     /**
-     * Get title.
-     *
      * @return string
      */
     public function getTitle()

@@ -35,7 +35,6 @@ class VideoConference extends AbstractTool implements ToolInterface
 
     public function getResourceTypes(): ?array
     {
-        return [
-        ];
+        return [];
     }
 }

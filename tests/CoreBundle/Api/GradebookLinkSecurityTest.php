@@ -26,96 +26,6 @@ final class GradebookLinkSecurityTest extends AbstractApiTest
 {
     use ChamiloTestTrait;
 
-    /**
-     * Builds two courses with a teacher each, a student of the second one, and a gradebook
-     * category with one link in the second course.
-     *
-     * @return array{courseA: Course, courseB: Course, teacherA: User, teacherB: User, studentB: User, category: GradebookCategory, link: GradebookLink}
-     */
-    private function bootstrap(string $suffix): array
-    {
-        /** @var CourseRepository $courseRepo */
-        $courseRepo = self::getContainer()->get(CourseRepository::class);
-
-        $courseA = $this->createCourse('Link Sec A '.$suffix);
-        $courseA->setVisibility(Course::REGISTERED);
-        $courseB = $this->createCourse('Link Sec B '.$suffix);
-        $courseB->setVisibility(Course::REGISTERED);
-
-        $teacherA = $this->createUser('link_sec_teacher_a_'.$suffix);
-        $teacherB = $this->createUser('link_sec_teacher_b_'.$suffix);
-        $studentB = $this->createUser('link_sec_student_b_'.$suffix);
-        $courseA->addUserAsTeacher($teacherA);
-        $courseB->addUserAsTeacher($teacherB);
-        $courseB->addUserAsStudent($studentB);
-        $courseRepo->update($courseA);
-        $courseRepo->update($courseB);
-
-        $em = $this->getEntityManager();
-
-        $category = (new GradebookCategory())
-            ->setTitle('Link Sec Category '.$suffix)
-            ->setCourse($courseB)
-            ->setWeight(100)
-            ->setVisible(true)
-            ->setLocked(0)
-        ;
-        $em->persist($category);
-
-        $link = (new GradebookLink())
-            ->setType(1)
-            ->setResourceNode($courseB->getResourceNode())
-            ->setCourse($courseB)
-            ->setCategory($category)
-            ->setWeight(10)
-            ->setVisible(1)
-            ->setLocked(0)
-            ->setCreatedAt(new DateTime())
-        ;
-        $em->persist($link);
-        $em->flush();
-
-        return [
-            'courseA' => $courseA,
-            'courseB' => $courseB,
-            'teacherA' => $teacherA,
-            'teacherB' => $teacherB,
-            'studentB' => $studentB,
-            'category' => $category,
-            'link' => $link,
-        ];
-    }
-
-    /**
-     * @param array<string, mixed> $json
-     */
-    private function request(User $user, string $method, string $uri, array $json = []): void
-    {
-        $options = [];
-        if ([] !== $json) {
-            $options['json'] = $json;
-            $options['headers'] = ['Content-Type' => 'application/ld+json'];
-        }
-
-        $this->createClientWithCredentials($this->getUserTokenFromUser($user))->request($method, $uri, $options);
-    }
-
-    private function linkExists(GradebookLink $link): bool
-    {
-        $em = $this->getEntityManager();
-        $em->clear();
-
-        return null !== $em->getRepository(GradebookLink::class)->find($link->getId());
-    }
-
-    private function freshWeight(GradebookLink $link): ?float
-    {
-        $em = $this->getEntityManager();
-        $em->clear();
-
-        return $em->getRepository(GradebookLink::class)->find($link->getId())?->getWeight();
-    }
-
     public function testTeacherOfAnotherCourseCannotDeleteALinkUsingOwnCid(): void
     {
         $ctx = $this->bootstrap('delete_foreign');
@@ -233,5 +143,95 @@ final class GradebookLinkSecurityTest extends AbstractApiTest
 
         $this->assertResponseStatusCodeSame(403);
         $this->assertTrue($this->linkExists($ctx['link']));
+    }
+
+    /**
+     * Builds two courses with a teacher each, a student of the second one, and a gradebook
+     * category with one link in the second course.
+     *
+     * @return array{courseA: Course, courseB: Course, teacherA: User, teacherB: User, studentB: User, category: GradebookCategory, link: GradebookLink}
+     */
+    private function bootstrap(string $suffix): array
+    {
+        /** @var CourseRepository $courseRepo */
+        $courseRepo = self::getContainer()->get(CourseRepository::class);
+
+        $courseA = $this->createCourse('Link Sec A '.$suffix);
+        $courseA->setVisibility(Course::REGISTERED);
+        $courseB = $this->createCourse('Link Sec B '.$suffix);
+        $courseB->setVisibility(Course::REGISTERED);
+
+        $teacherA = $this->createUser('link_sec_teacher_a_'.$suffix);
+        $teacherB = $this->createUser('link_sec_teacher_b_'.$suffix);
+        $studentB = $this->createUser('link_sec_student_b_'.$suffix);
+        $courseA->addUserAsTeacher($teacherA);
+        $courseB->addUserAsTeacher($teacherB);
+        $courseB->addUserAsStudent($studentB);
+        $courseRepo->update($courseA);
+        $courseRepo->update($courseB);
+
+        $em = $this->getEntityManager();
+
+        $category = (new GradebookCategory())
+            ->setTitle('Link Sec Category '.$suffix)
+            ->setCourse($courseB)
+            ->setWeight(100)
+            ->setVisible(true)
+            ->setLocked(0)
+        ;
+        $em->persist($category);
+
+        $link = (new GradebookLink())
+            ->setType(1)
+            ->setResourceNode($courseB->getResourceNode())
+            ->setCourse($courseB)
+            ->setCategory($category)
+            ->setWeight(10)
+            ->setVisible(1)
+            ->setLocked(0)
+            ->setCreatedAt(new DateTime())
+        ;
+        $em->persist($link);
+        $em->flush();
+
+        return [
+            'courseA' => $courseA,
+            'courseB' => $courseB,
+            'teacherA' => $teacherA,
+            'teacherB' => $teacherB,
+            'studentB' => $studentB,
+            'category' => $category,
+            'link' => $link,
+        ];
+    }
+
+    /**
+     * @param array<string, mixed> $json
+     */
+    private function request(User $user, string $method, string $uri, array $json = []): void
+    {
+        $options = [];
+        if ([] !== $json) {
+            $options['json'] = $json;
+            $options['headers'] = ['Content-Type' => 'application/ld+json'];
+        }
+
+        $this->createClientWithCredentials($this->getUserTokenFromUser($user))->request($method, $uri, $options);
+    }
+
+    private function linkExists(GradebookLink $link): bool
+    {
+        $em = $this->getEntityManager();
+        $em->clear();
+
+        return null !== $em->getRepository(GradebookLink::class)->find($link->getId());
+    }
+
+    private function freshWeight(GradebookLink $link): ?float
+    {
+        $em = $this->getEntityManager();
+        $em->clear();
+
+        return $em->getRepository(GradebookLink::class)->find($link->getId())?->getWeight();
     }
 }

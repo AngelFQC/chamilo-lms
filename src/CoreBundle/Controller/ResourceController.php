@@ -67,9 +67,6 @@ use const PHP_EOL;
 use const PHP_QUERY_RFC3986;
 use const PHP_URL_QUERY;
 
-/**
- * @author Julio Montoya <gugli100@gmail.com>.
- */
 #[Route('/r')]
 class ResourceController extends AbstractResourceController implements CourseControllerInterface
 {
@@ -363,7 +360,7 @@ class ResourceController extends AbstractResourceController implements CourseCon
         }
 
         $response = new StreamedResponse(
-            function () use ($zipName, $children, $resourceFileHelper, $resourceNodeRepository): void {
+            static function () use ($zipName, $children, $resourceFileHelper, $resourceNodeRepository): void {
                 // Define suitable options for ZipStream Archive.
                 $options = new Archive();
                 $options->setContentType('application/octet-stream');
@@ -585,64 +582,6 @@ class ResourceController extends AbstractResourceController implements CourseCon
         return new Response(null, Response::HTTP_NO_CONTENT);
     }
 
-    private function findCourseToolResourceLink(
-        ResourceNode $resourceNode,
-        Course $course,
-        ?Session $session
-    ): ?ResourceLink {
-        $courseId = $course->getId();
-        $sessionId = $session?->getId();
-
-        foreach ($resourceNode->getResourceLinks() as $resourceLink) {
-            if ($resourceLink->getCourse()?->getId() !== $courseId) {
-                continue;
-            }
-
-            if ($resourceLink->getSession()?->getId() !== $sessionId) {
-                continue;
-            }
-
-            if (
-                null !== $resourceLink->getGroup()
-                || null !== $resourceLink->getUserGroup()
-                || null !== $resourceLink->getUser()
-            ) {
-                continue;
-            }
-
-            return $resourceLink;
-        }
-
-        return null;
-    }
-
-    private function isUserToolVisibilityLocked(
-        Course $course,
-        CTool $courseTool,
-        ToolChain $toolChain,
-        SettingsManager $settingsManager
-    ): bool {
-        $courseToolName = strtolower(
-            $toolChain->normalizeCourseToolName($courseTool->getTool()->getTitle())
-        );
-
-        if ('member' !== $courseToolName || !$course->isPublic()) {
-            return false;
-        }
-
-        return $this->isSettingEnabled(
-            $settingsManager->getSetting('privacy.disable_change_user_visibility_for_public_courses')
-        );
-    }
-
-    private function isSettingEnabled(mixed $value): bool
-    {
-        return true === $value
-            || 1 === $value
-            || '1' === $value
-            || 'true' === strtolower(trim((string) $value));
-    }
-
     #[Route('/resource_files/{resourceNodeId}/variants', name: 'chamilo_core_resource_files_variants', methods: ['GET'])]
     #[IsGranted(ResourceNodeVoter::VIEW, subject: 'resourceNode', message: 'Unauthorised access to resource')]
     public function getVariants(
@@ -708,6 +647,64 @@ class ResourceController extends AbstractResourceController implements CourseCon
         $em->flush();
 
         return $this->json(['success' => true]);
+    }
+
+    private function findCourseToolResourceLink(
+        ResourceNode $resourceNode,
+        Course $course,
+        ?Session $session
+    ): ?ResourceLink {
+        $courseId = $course->getId();
+        $sessionId = $session?->getId();
+
+        foreach ($resourceNode->getResourceLinks() as $resourceLink) {
+            if ($resourceLink->getCourse()?->getId() !== $courseId) {
+                continue;
+            }
+
+            if ($resourceLink->getSession()?->getId() !== $sessionId) {
+                continue;
+            }
+
+            if (
+                null !== $resourceLink->getGroup()
+                || null !== $resourceLink->getUserGroup()
+                || null !== $resourceLink->getUser()
+            ) {
+                continue;
+            }
+
+            return $resourceLink;
+        }
+
+        return null;
+    }
+
+    private function isUserToolVisibilityLocked(
+        Course $course,
+        CTool $courseTool,
+        ToolChain $toolChain,
+        SettingsManager $settingsManager
+    ): bool {
+        $courseToolName = strtolower(
+            $toolChain->normalizeCourseToolName($courseTool->getTool()->getTitle())
+        );
+
+        if ('member' !== $courseToolName || !$course->isPublic()) {
+            return false;
+        }
+
+        return $this->isSettingEnabled(
+            $settingsManager->getSetting('privacy.disable_change_user_visibility_for_public_courses')
+        );
+    }
+
+    private function isSettingEnabled(mixed $value): bool
+    {
+        return true === $value
+            || 1 === $value
+            || '1' === $value
+            || 'true' === strtolower(trim((string) $value));
     }
 
     private function processFile(Request $request, ResourceNode $resourceNode, ResourceFile $resourceFile, string $mode = 'show', string $filter = '', ?array $allUserInfo = null): mixed
@@ -1253,8 +1250,8 @@ class ResourceController extends AbstractResourceController implements CourseCon
 
         // Detect when this document is being displayed from a Learning Path context
         $origin = strtolower(trim((string) $request->query->get('origin', '')));
-        $isLpContext =
-            $request->query->has('lp_id')
+        $isLpContext
+            = $request->query->has('lp_id')
             || $request->query->has('learnpath_id')
             || $request->query->has('learnpath_item_id')
             || ('learnpath' === $origin);

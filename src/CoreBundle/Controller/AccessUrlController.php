@@ -45,16 +45,6 @@ class AccessUrlController extends AbstractController
         private readonly UserHelper $userHelper,
     ) {}
 
-    private function currentUser(): User
-    {
-        $user = $this->userHelper->getCurrent();
-        if (null === $user) {
-            throw $this->createAccessDeniedException();
-        }
-
-        return $user;
-    }
-
     #[IsGranted('ROLE_GLOBAL_ADMIN')]
     #[Route('/users/import', name: 'chamilo_core_access_url_users_import', methods: ['GET', 'POST'])]
     public function importUsers(Request $request): Response
@@ -207,13 +197,6 @@ class AccessUrlController extends AbstractController
         ]);
     }
 
-    private function formatReport(string $icon, string $message, array $params): string
-    {
-        $text = vsprintf($this->translator->trans($message), $params);
-
-        return \sprintf('<i class="mdi mdi-%s text-base me-1"></i> %s', $icon, $text);
-    }
-
     #[Route('/auth-sources/list', methods: ['GET'])]
     #[IsGranted('ROLE_ADMIN')]
     public function authSourcesList(
@@ -342,5 +325,22 @@ class AccessUrlController extends AbstractController
         $entityManager->flush();
 
         return new Response(null, Response::HTTP_NO_CONTENT);
+    }
+
+    private function currentUser(): User
+    {
+        $user = $this->userHelper->getCurrent();
+        if (null === $user) {
+            throw $this->createAccessDeniedException();
+        }
+
+        return $user;
+    }
+
+    private function formatReport(string $icon, string $message, array $params): string
+    {
+        $text = vsprintf($this->translator->trans($message), $params);
+
+        return \sprintf('<i class="mdi mdi-%s text-base me-1"></i> %s', $icon, $text);
     }
 }

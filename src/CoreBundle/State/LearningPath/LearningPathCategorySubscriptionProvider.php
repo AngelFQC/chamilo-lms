@@ -32,7 +32,9 @@ use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
-/** @implements ProviderInterface<LearningPathCategorySubscription> */
+/**
+ * @implements ProviderInterface<LearningPathCategorySubscription>
+ */
 final readonly class LearningPathCategorySubscriptionProvider implements ProviderInterface
 {
     use LearningPathStateHelperTrait;

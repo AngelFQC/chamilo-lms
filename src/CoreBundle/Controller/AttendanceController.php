@@ -100,7 +100,7 @@ class AttendanceController extends AbstractController
         $users = $userRepository->findUsersByContext($courseId, $sessionId, $groupId);
         $showOfficialCode = $this->showOfficialCodeInAttendance();
 
-        $formattedUsers = array_map(function ($user) use ($userRepository, $sheetRepository, $calendars, $totalCalendars, $showOfficialCode) {
+        $formattedUsers = array_map(static function ($user) use ($userRepository, $sheetRepository, $calendars, $totalCalendars, $showOfficialCode) {
             $absences = 0;
 
             foreach ($calendars as $calendar) {
@@ -198,7 +198,7 @@ class AttendanceController extends AbstractController
         if ($sessionId) {
             $session = $this->em->getRepository(Session::class)->find($sessionId);
             $rel = $session?->getCourseCoachesSubscriptions()
-                ->filter(fn ($rel) => $rel->getCourse()?->getId() === $courseId)
+                ->filter(static fn ($rel) => $rel->getCourse()?->getId() === $courseId)
                 ->first()
             ;
 
@@ -406,7 +406,7 @@ class AttendanceController extends AbstractController
 
         // Output
         $writer = new Xls($spreadsheet);
-        $response = new StreamedResponse(fn () => $writer->save('php://output'));
+        $response = new StreamedResponse(static fn () => $writer->save('php://output'));
         $disposition = $response->headers->makeDisposition(
             ResponseHeaderBag::DISPOSITION_ATTACHMENT,
             "attendance-$id.xls"
@@ -506,7 +506,7 @@ class AttendanceController extends AbstractController
         $this->denyAccessUnlessGranted('EDIT', $attendance->getResourceNode());
 
         $usersInCourse = $userRepository->findUsersByContext($courseId, $sessionId, $groupId);
-        $userIdsInCourse = array_map(fn (User $user) => $user->getId(), $usersInCourse);
+        $userIdsInCourse = array_map(static fn (User $user) => $user->getId(), $usersInCourse);
 
         $affectedRows = 0;
 
@@ -738,9 +738,9 @@ class AttendanceController extends AbstractController
         // Self-view of the caller's own attendance; require course membership.
         $this->denyAccessUnlessGranted('VIEW', $attendance->getResourceNode());
 
-        $dates = $attendance->getCalendars()->map(function (CAttendanceCalendar $calendar) use ($user) {
+        $dates = $attendance->getCalendars()->map(static function (CAttendanceCalendar $calendar) use ($user) {
             $sheet = $calendar->getSheets()->filter(
-                fn ($s) => $s->getUser()->getId() === $user->getId()
+                static fn ($s) => $s->getUser()->getId() === $user->getId()
             )->first() ?: null;
 
             return [
@@ -844,7 +844,7 @@ class AttendanceController extends AbstractController
 
     private function updateAttendanceResults(CAttendance $attendance): void
     {
-        $sheets = $attendance->getCalendars()->map(fn ($calendar) => $calendar->getSheets())->toArray();
+        $sheets = $attendance->getCalendars()->map(static fn ($calendar) => $calendar->getSheets())->toArray();
         $results = [];
 
         foreach ($sheets as $calendarSheets) {

@@ -88,7 +88,8 @@ LEFT JOIN c_tool existing_tool
    AND existing_tool.title = :title
 WHERE existing_tool.iid IS NULL
 ORDER BY c.id
-SQL,
+SQL
+            ,
             ['title' => self::TOOL_TITLE]
         );
 

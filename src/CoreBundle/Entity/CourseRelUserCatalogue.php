@@ -42,8 +42,6 @@ class CourseRelUserCatalogue implements Stringable
     }
 
     /**
-     * Get Course.
-     *
      * @return Course
      */
     public function getCourse()
@@ -67,8 +65,6 @@ class CourseRelUserCatalogue implements Stringable
     }
 
     /**
-     * Get visible.
-     *
      * @return int
      */
     public function getVisible()

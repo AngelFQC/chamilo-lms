@@ -104,8 +104,6 @@ class TrackEAttemptQualify
     }
 
     /**
-     * Set questionId.
-     *
      * @return TrackEAttemptQualify
      */
     public function setQuestionId(int $questionId): static
@@ -135,9 +133,6 @@ class TrackEAttemptQualify
         return $this->insertDate;
     }
 
-    /**
-     * Set insert date.
-     */
     public function setInsertDate(DateTime $insertDate): self
     {
         $this->insertDate = $insertDate;
@@ -151,8 +146,6 @@ class TrackEAttemptQualify
     }
 
     /**
-     * Set author.
-     *
      * @return TrackEAttemptQualify
      */
     public function setAuthor(int $author): static
@@ -180,8 +173,6 @@ class TrackEAttemptQualify
     }
 
     /**
-     * Set sessionId.
-     *
      * @return TrackEAttemptQualify
      */
     public function setSessionId(int $sessionId): static

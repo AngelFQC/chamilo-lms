@@ -13,7 +13,7 @@ class StandardizationService
 {
     public static function sort(array $array, string $key = 'name'): array
     {
-        usort($array, function ($a, $b) use ($key) {
+        usort($array, static function ($a, $b) use ($key) {
             $valA = \is_array($a) ? ($a[$key] ?? '') : (string) $a;
             $valB = \is_array($b) ? ($b[$key] ?? '') : (string) $b;
 
@@ -37,11 +37,11 @@ class StandardizationService
         }
 
         if (_api_get_person_name_convention($countryCode, 'sort_by')) {
-            usort($users, function ($a, $b) {
+            usort($users, static function ($a, $b) {
                 return strcmp(self::standardizeString($a->getLastName()), self::standardizeString($b->getLastName()));
             });
         } else {
-            usort($users, function ($a, $b) {
+            usort($users, static function ($a, $b) {
                 return strcmp(self::standardizeString($a->getFirstName()), self::standardizeString($b->getFirstName()));
             });
         }

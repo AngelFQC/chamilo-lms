@@ -107,8 +107,6 @@ class Room
     protected ?BranchSync $branch = null;
 
     /**
-     * Get id.
-     *
      * @return int
      */
     public function getId()
@@ -117,8 +115,6 @@ class Room
     }
 
     /**
-     * Get title.
-     *
      * @return string
      */
     public function getTitle()

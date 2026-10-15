@@ -180,13 +180,6 @@ class CCalendarEvent extends AbstractResource implements ResourceInterface, Reso
     #[ORM\Column(name: 'max_attendees', type: 'integer')]
     protected int $maxAttendees = 0;
 
-    /**
-     * @var Collection<int, AgendaReminder>
-     */
-    #[Groups(['calendar_event:write'])]
-    #[ORM\OneToMany(mappedBy: 'event', targetEntity: AgendaReminder::class, cascade: ['persist'], orphanRemoval: true)]
-    private Collection $reminders;
-
     #[Groups(['calendar_event:write', 'calendar_event:read'])]
     #[ORM\ManyToOne(targetEntity: Career::class)]
     #[ORM\JoinColumn(name: 'career_id', referencedColumnName: 'id', nullable: true)]
@@ -198,6 +191,13 @@ class CCalendarEvent extends AbstractResource implements ResourceInterface, Reso
     #[ORM\ManyToOne(targetEntity: Promotion::class)]
     #[ORM\JoinColumn(name: 'promotion_id', referencedColumnName: 'id', nullable: true)]
     protected ?Promotion $promotion = null;
+
+    /**
+     * @var Collection<int, AgendaReminder>
+     */
+    #[Groups(['calendar_event:write'])]
+    #[ORM\OneToMany(mappedBy: 'event', targetEntity: AgendaReminder::class, cascade: ['persist'], orphanRemoval: true)]
+    private Collection $reminders;
 
     public function __construct()
     {

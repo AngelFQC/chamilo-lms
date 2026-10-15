@@ -34,8 +34,6 @@ class SequenceRowEntity
     protected ?SequenceTypeEntity $type = null;
 
     /**
-     * Get id.
-     *
      * @return int
      */
     public function getId()

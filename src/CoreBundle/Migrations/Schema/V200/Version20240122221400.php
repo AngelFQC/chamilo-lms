@@ -38,6 +38,8 @@ final class Version20240122221400 extends AbstractMigrationChamilo
         // $this->deleteImportFolder();
     }
 
+    public function down(Schema $schema): void {}
+
     private function updateAndGenerateSubLanguage(array $sublanguage): string
     {
         // Get the parent language ID
@@ -99,11 +101,11 @@ final class Version20240122221400 extends AbstractMigrationChamilo
             $terms[$index] = trim(rtrim($translation, ';'), '"');
         }
 
-        $header = 'msgid ""'."\n".'msgstr ""'."\n".
-            '"Project-Id-Version: chamilo\n"'."\n".
-            '"Language: '.$isocode.'\n"'."\n".
-            '"Content-Type: text/plain; charset=UTF-8\n"'."\n".
-            '"Content-Transfer-Encoding: 8bit\n"'."\n\n";
+        $header = 'msgid ""'."\n".'msgstr ""'."\n"
+            .'"Project-Id-Version: chamilo\n"'."\n"
+            .'"Language: '.$isocode.'\n"'."\n"
+            .'"Content-Type: text/plain; charset=UTF-8\n"'."\n"
+            .'"Content-Transfer-Encoding: 8bit\n"'."\n\n";
         file_put_contents($destinationFilePath, $header);
 
         $originalTermsInLanguage = SubLanguageManager::get_all_language_variable_in_file(
@@ -178,6 +180,4 @@ final class Version20240122221400 extends AbstractMigrationChamilo
         }
         rmdir($directory);
     }
-
-    public function down(Schema $schema): void {}
 }

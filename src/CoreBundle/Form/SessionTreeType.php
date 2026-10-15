@@ -35,7 +35,7 @@ class SessionTreeType extends AbstractType
             [
                 'class' => 'Entity\SessionPath',
                 'property' => 'name',
-                'query_builder' => function (EntityRepository $er) {
+                'query_builder' => static function (EntityRepository $er) {
                     return $er->createQueryBuilder('u')
                         ->orderBy('u.name', Criteria::DESC)
                     ;
@@ -49,7 +49,7 @@ class SessionTreeType extends AbstractType
             [
                 'class' => 'Entity\Tool',
                 'property' => 'name',
-                'query_builder' => function (EntityRepository $er) {
+                'query_builder' => static function (EntityRepository $er) {
                     return $er->createQueryBuilder('u')
                         ->orderBy('u.name', Criteria::DESC)
                     ;
@@ -63,7 +63,7 @@ class SessionTreeType extends AbstractType
             [
                 'class' => 'Entity\Tool',
                 'property' => 'name',
-                'query_builder' => function (EntityRepository $er) {
+                'query_builder' => static function (EntityRepository $er) {
                     return $er->createQueryBuilder('u')
                         ->orderBy('u.name', Criteria::DESC)
                     ;
@@ -77,7 +77,7 @@ class SessionTreeType extends AbstractType
             [
                 'class' => 'Entity\Session',
                 'property' => 'name',
-                'query_builder' => function (EntityRepository $er) {
+                'query_builder' => static function (EntityRepository $er) {
                     return $er->createQueryBuilder('u')
                         ->orderBy('u.name', Criteria::DESC)
                     ;
@@ -91,7 +91,7 @@ class SessionTreeType extends AbstractType
             [
                 'class' => 'Entity\Course',
                 'property' => 'title',
-                'query_builder' => function (EntityRepository $er) {
+                'query_builder' => static function (EntityRepository $er) {
                     return $er->createQueryBuilder('u')
                         ->orderBy('u.title', Criteria::DESC)
                     ;

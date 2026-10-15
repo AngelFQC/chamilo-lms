@@ -51,7 +51,9 @@ use Throwable;
 use const FILTER_VALIDATE_BOOLEAN;
 use const JSON_THROW_ON_ERROR;
 
-/** @implements ProcessorInterface<mixed, LearningPathConfiguration> */
+/**
+ * @implements ProcessorInterface<mixed, LearningPathConfiguration>
+ */
 final readonly class LearningPathConfigurationProcessor implements ProcessorInterface
 {
     use LearningPathStateHelperTrait;

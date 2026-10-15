@@ -15,10 +15,6 @@ use Doctrine\ORM\NonUniqueResultException;
 use Doctrine\ORM\Query\Expr\Join;
 use Doctrine\Persistence\ManagerRegistry;
 
-/**
- * @author Angel Fernando Quiroz Campos <angel.quiroz@beeznest.com>
- * @author Julio Montoya
- */
 class ExtraFieldValuesRepository extends ServiceEntityRepository
 {
     public function __construct(ManagerRegistry $registry)

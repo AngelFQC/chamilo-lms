@@ -347,68 +347,6 @@ class SecurityController extends AbstractController
         return $this->createSessionExpirationResponse($request);
     }
 
-    private function createSessionExpirationResponse(Request $request): JsonResponse
-    {
-        $featureEnabled = 'true' === $this->settingsManager->getSetting(
-            'security.session_expiration_warning_enabled',
-            true
-        );
-
-        if (!$featureEnabled) {
-            $response = new JsonResponse([
-                'enabled' => false,
-                'isAuthenticated' => true,
-                'lifetime' => 0,
-                'warningSeconds' => 0,
-                'expiresAt' => 0,
-                'logoutUrl' => '/logout',
-            ]);
-
-            $response->headers->set('Cache-Control', 'no-store, private');
-            $response->headers->set('Pragma', 'no-cache');
-
-            return $response;
-        }
-
-        $session = $request->getSession();
-
-        if (!$session->isStarted()) {
-            $session->start();
-        }
-
-        $now = time();
-        $session->set(self::SESSION_KEEP_ALIVE_KEY, $now);
-
-        $lifetime = $this->getSessionLifetime($request);
-
-        $configuredWarningSeconds = (int) $this->settingsManager->getSetting(
-            'security.session_expiration_warning_seconds',
-            true
-        );
-
-        if ($configuredWarningSeconds <= 0) {
-            $configuredWarningSeconds = self::SESSION_EXPIRATION_WARNING_SECONDS;
-        }
-
-        $warningSeconds = $lifetime > 1
-            ? min($configuredWarningSeconds, $lifetime - 1)
-            : 0;
-
-        $response = new JsonResponse([
-            'enabled' => $lifetime > 1 && $warningSeconds > 0,
-            'isAuthenticated' => true,
-            'lifetime' => $lifetime,
-            'warningSeconds' => $warningSeconds,
-            'expiresAt' => $lifetime > 0 ? $now + $lifetime : 0,
-            'logoutUrl' => '/logout',
-        ]);
-
-        $response->headers->set('Cache-Control', 'no-store, private');
-        $response->headers->set('Pragma', 'no-cache');
-
-        return $response;
-    }
-
     /**
      * Returns the contextual ROLE_CURRENT_COURSE_* roles the current user holds
      * for the course/session/group context resolved from the cid/sid/gid query
@@ -472,6 +410,68 @@ class SecurityController extends AbstractController
 
         // this response was managed in LdapAuthenticator class
         return new Response(null, Response::HTTP_NO_CONTENT);
+    }
+
+    private function createSessionExpirationResponse(Request $request): JsonResponse
+    {
+        $featureEnabled = 'true' === $this->settingsManager->getSetting(
+            'security.session_expiration_warning_enabled',
+            true
+        );
+
+        if (!$featureEnabled) {
+            $response = new JsonResponse([
+                'enabled' => false,
+                'isAuthenticated' => true,
+                'lifetime' => 0,
+                'warningSeconds' => 0,
+                'expiresAt' => 0,
+                'logoutUrl' => '/logout',
+            ]);
+
+            $response->headers->set('Cache-Control', 'no-store, private');
+            $response->headers->set('Pragma', 'no-cache');
+
+            return $response;
+        }
+
+        $session = $request->getSession();
+
+        if (!$session->isStarted()) {
+            $session->start();
+        }
+
+        $now = time();
+        $session->set(self::SESSION_KEEP_ALIVE_KEY, $now);
+
+        $lifetime = $this->getSessionLifetime($request);
+
+        $configuredWarningSeconds = (int) $this->settingsManager->getSetting(
+            'security.session_expiration_warning_seconds',
+            true
+        );
+
+        if ($configuredWarningSeconds <= 0) {
+            $configuredWarningSeconds = self::SESSION_EXPIRATION_WARNING_SECONDS;
+        }
+
+        $warningSeconds = $lifetime > 1
+            ? min($configuredWarningSeconds, $lifetime - 1)
+            : 0;
+
+        $response = new JsonResponse([
+            'enabled' => $lifetime > 1 && $warningSeconds > 0,
+            'isAuthenticated' => true,
+            'lifetime' => $lifetime,
+            'warningSeconds' => $warningSeconds,
+            'expiresAt' => $lifetime > 0 ? $now + $lifetime : 0,
+            'logoutUrl' => '/logout',
+        ]);
+
+        $response->headers->set('Cache-Control', 'no-store, private');
+        $response->headers->set('Pragma', 'no-cache');
+
+        return $response;
     }
 
     /**

@@ -46,23 +46,6 @@ class Version20201215072917 extends AbstractMigrationChamilo
         }
     }
 
-    private function getConfigurationSelectedValue(): string
-    {
-        global $_configuration;
-        $updateRootPath = $this->getUpdateRootPath();
-        $oldConfigPath = $updateRootPath.'/app/config/configuration.php';
-        if (!\in_array($oldConfigPath, get_included_files(), true)) {
-            include_once $oldConfigPath;
-        }
-
-        $value = $_configuration['allow_careers_in_global_agenda'] ?? false;
-        if (\is_bool($value)) {
-            return $value ? 'true' : 'false';
-        }
-
-        return (string) $value;
-    }
-
     public function down(Schema $schema): void
     {
         $this->addSql("DELETE FROM settings WHERE variable = 'allow_careers_in_global_agenda'");
@@ -78,5 +61,22 @@ class Version20201215072917 extends AbstractMigrationChamilo
             $this->addSql('DROP INDEX IDX_C_CALENDAR_EVENT_PROMOTION ON c_calendar_event');
             $this->addSql('ALTER TABLE c_calendar_event DROP COLUMN promotion_id');
         }
+    }
+
+    private function getConfigurationSelectedValue(): string
+    {
+        global $_configuration;
+        $updateRootPath = $this->getUpdateRootPath();
+        $oldConfigPath = $updateRootPath.'/app/config/configuration.php';
+        if (!\in_array($oldConfigPath, get_included_files(), true)) {
+            include_once $oldConfigPath;
+        }
+
+        $value = $_configuration['allow_careers_in_global_agenda'] ?? false;
+        if (\is_bool($value)) {
+            return $value ? 'true' : 'false';
+        }
+
+        return (string) $value;
     }
 }

@@ -113,7 +113,8 @@ FROM gradebook_category
 WHERE c_id = :courseId
   AND parent_id IS NULL
 ORDER BY id
-SQL,
+SQL
+                ,
                 ['courseId' => $courseId]
             );
             if ([] === $categories) {

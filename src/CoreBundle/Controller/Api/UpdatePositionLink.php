@@ -171,7 +171,7 @@ class UpdatePositionLink extends AbstractController
         $links = $qb->getQuery()->getResult();
 
         // Sort by current displayOrder in this context (stable base before reinserting)
-        usort($links, function (CLink $a, CLink $b) use ($course, $session): int {
+        usort($links, static function (CLink $a, CLink $b) use ($course, $session): int {
             $aRl = $a->getResourceNode()?->getResourceLinkByContext($course, $session);
             $bRl = $b->getResourceNode()?->getResourceLinkByContext($course, $session);
 

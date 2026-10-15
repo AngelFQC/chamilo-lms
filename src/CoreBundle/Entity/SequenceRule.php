@@ -21,8 +21,6 @@ class SequenceRule
     protected string $description;
 
     /**
-     * Get id.
-     *
      * @return int
      */
     public function getId()

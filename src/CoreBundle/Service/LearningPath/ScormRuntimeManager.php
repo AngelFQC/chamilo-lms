@@ -220,63 +220,6 @@ final readonly class ScormRuntimeManager
         ]);
     }
 
-    private function buildPackageEntryPath(CLp $lp, CLpItem $item): string
-    {
-        $lpPath = $this->normalizeRelativePath((string) $lp->getPath(), true);
-        $parts = '' !== $lpPath ? explode('/', $lpPath) : [];
-        if ([] !== $parts) {
-            array_shift($parts);
-        }
-
-        $manifestDirectory = implode('/', $parts);
-        $itemPath = $this->normalizeRelativePath((string) $item->getPath());
-
-        return $this->normalizeRelativePath(
-            ('' !== $manifestDirectory ? $manifestDirectory.'/' : '').$itemPath,
-        );
-    }
-
-    private function buildPackageParameters(CLpItem $item): string
-    {
-        $parameters = ltrim(trim((string) $item->getParameters()), '?&');
-        if ('' === $parameters) {
-            return '';
-        }
-
-        parse_str($parameters, $query);
-        if (!\is_array($query)) {
-            return '';
-        }
-
-        /** @var array<string, scalar> $safeQuery */
-        $safeQuery = [];
-        foreach ($query as $key => $value) {
-            if (\is_scalar($value)) {
-                $safeQuery[(string) $key] = $value;
-            }
-        }
-
-        return http_build_query($safeQuery);
-    }
-
-    private function buildPackageFingerprint(CLp $lp): string
-    {
-        $asset = $lp->getAsset();
-        $assetId = $asset instanceof Asset ? (string) $asset->getId() : '';
-        $updatedAt = $asset instanceof Asset && null !== $asset->getUpdatedAt()
-            ? $asset->getUpdatedAt()->format(DATE_ATOM)
-            : '';
-        $size = $asset instanceof Asset ? (string) max(0, (int) $asset->getSize()) : '0';
-
-        return hash('sha256', implode('|', [
-            (string) $lp->getIid(),
-            (string) $lp->getPath(),
-            $assetId,
-            $updatedAt,
-            $size,
-        ]));
-    }
-
     public function resolveAssetFilePath(CLp $lp, string $relativePath): string
     {
         $asset = $lp->getAsset();
@@ -334,6 +277,63 @@ final readonly class ScormRuntimeManager
         $this->saveComments($itemView, $course, $normalized);
 
         $this->entityManager->flush();
+    }
+
+    private function buildPackageEntryPath(CLp $lp, CLpItem $item): string
+    {
+        $lpPath = $this->normalizeRelativePath((string) $lp->getPath(), true);
+        $parts = '' !== $lpPath ? explode('/', $lpPath) : [];
+        if ([] !== $parts) {
+            array_shift($parts);
+        }
+
+        $manifestDirectory = implode('/', $parts);
+        $itemPath = $this->normalizeRelativePath((string) $item->getPath());
+
+        return $this->normalizeRelativePath(
+            ('' !== $manifestDirectory ? $manifestDirectory.'/' : '').$itemPath,
+        );
+    }
+
+    private function buildPackageParameters(CLpItem $item): string
+    {
+        $parameters = ltrim(trim((string) $item->getParameters()), '?&');
+        if ('' === $parameters) {
+            return '';
+        }
+
+        parse_str($parameters, $query);
+        if (!\is_array($query)) {
+            return '';
+        }
+
+        /** @var array<string, scalar> $safeQuery */
+        $safeQuery = [];
+        foreach ($query as $key => $value) {
+            if (\is_scalar($value)) {
+                $safeQuery[(string) $key] = $value;
+            }
+        }
+
+        return http_build_query($safeQuery);
+    }
+
+    private function buildPackageFingerprint(CLp $lp): string
+    {
+        $asset = $lp->getAsset();
+        $assetId = $asset instanceof Asset ? (string) $asset->getId() : '';
+        $updatedAt = $asset instanceof Asset && null !== $asset->getUpdatedAt()
+            ? $asset->getUpdatedAt()->format(DATE_ATOM)
+            : '';
+        $size = $asset instanceof Asset ? (string) max(0, (int) $asset->getSize()) : '0';
+
+        return hash('sha256', implode('|', [
+            (string) $lp->getIid(),
+            (string) $lp->getPath(),
+            $assetId,
+            $updatedAt,
+            $size,
+        ]));
     }
 
     /**

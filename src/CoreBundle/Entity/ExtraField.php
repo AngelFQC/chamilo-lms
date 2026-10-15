@@ -36,8 +36,7 @@ use Symfony\Component\Validator\Constraints as Assert;
         'groups' => ['extra_field:write'],
     ],
     security: "is_granted('ROLE_ADMIN')"
-),
-]
+),]
 #[ORM\Table(name: 'extra_field')]
 #[ORM\UniqueConstraint(name: 'uniq_extra_field_variable_itemtype', columns: ['variable', 'item_type'])]
 #[ORM\Entity]
@@ -339,7 +338,7 @@ class ExtraField
             return false;
         }
 
-        return $this->tags->exists(fn ($key, Tag $tag) => $tagName === $tag->getTag());
+        return $this->tags->exists(static fn ($key, Tag $tag) => $tagName === $tag->getTag());
     }
 
     public function getTypeToString(): string

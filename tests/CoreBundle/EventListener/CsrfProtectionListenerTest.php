@@ -226,7 +226,7 @@ final class CsrfProtectionListenerTest extends TestCase
             ->expects(self::once())
             ->method('isTokenValid')
             ->with(self::callback(
-                fn (CsrfToken $token): bool => CsrfProtectionListener::ORIGIN_CHECK_TOKEN === $token->getValue()
+                static fn (CsrfToken $token): bool => CsrfProtectionListener::ORIGIN_CHECK_TOKEN === $token->getValue()
                     && CsrfProtectionListener::TOKEN_ID === $token->getId()
             ))
             ->willReturn(true)

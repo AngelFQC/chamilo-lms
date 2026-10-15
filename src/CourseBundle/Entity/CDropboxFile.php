@@ -79,6 +79,11 @@ class CDropboxFile extends AbstractResource implements ResourceInterface, String
         $this->lastUploadDate = $now;
     }
 
+    public function __toString(): string
+    {
+        return $this->getTitle();
+    }
+
     /**
      * Required by ResourceInterface.
      */
@@ -100,11 +105,6 @@ class CDropboxFile extends AbstractResource implements ResourceInterface, String
     public function setResourceName(string $name): self
     {
         return $this->setTitle($name);
-    }
-
-    public function __toString(): string
-    {
-        return $this->getTitle();
     }
 
     // --- Accessors ---

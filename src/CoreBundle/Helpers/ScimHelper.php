@@ -33,14 +33,6 @@ readonly class ScimHelper
         }
     }
 
-    private function getExtraField(): ExtraField
-    {
-        return $this->extraFieldRepo->findByVariable(
-            ExtraField::USER_FIELD_TYPE,
-            self::SCIM_FIELD
-        );
-    }
-
     public function findUser(string $externalId): ?User
     {
         $field = $this->getExtraField();
@@ -75,6 +67,14 @@ readonly class ScimHelper
             $this->getExtraField(),
             $user,
             $externalId
+        );
+    }
+
+    private function getExtraField(): ExtraField
+    {
+        return $this->extraFieldRepo->findByVariable(
+            ExtraField::USER_FIELD_TYPE,
+            self::SCIM_FIELD
         );
     }
 }

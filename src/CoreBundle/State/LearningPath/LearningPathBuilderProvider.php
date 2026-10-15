@@ -49,7 +49,9 @@ use const ENT_QUOTES;
 use const PATHINFO_EXTENSION;
 use const PHP_QUERY_RFC3986;
 
-/** @implements ProviderInterface<LearningPathBuilder> */
+/**
+ * @implements ProviderInterface<LearningPathBuilder>
+ */
 final readonly class LearningPathBuilderProvider implements ProviderInterface
 {
     use LearningPathStateHelperTrait;

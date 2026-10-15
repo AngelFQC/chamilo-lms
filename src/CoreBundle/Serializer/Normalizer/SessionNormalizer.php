@@ -17,11 +17,11 @@ class SessionNormalizer implements NormalizerInterface, NormalizerAwareInterface
 {
     use NormalizerAwareTrait;
 
+    private const string ALREADY_CALLED = 'SESSION_NORMALIZER_ALREADY_CALLED';
+
     public function __construct(
         private readonly UserHelper $userHelper,
     ) {}
-
-    private const string ALREADY_CALLED = 'SESSION_NORMALIZER_ALREADY_CALLED';
 
     public function normalize($data, ?string $format = null, array $context = []): array
     {

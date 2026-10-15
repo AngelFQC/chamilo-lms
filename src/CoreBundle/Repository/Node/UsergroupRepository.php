@@ -472,8 +472,6 @@ class UsergroupRepository extends ResourceRepository
     }
 
     /**
-     * Gets the current access URL ID.
-     *
      * @return int the ID of the current access URL
      */
     public function getCurrentAccessUrlId(): int

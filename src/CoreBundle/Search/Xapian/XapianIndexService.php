@@ -200,6 +200,32 @@ final class XapianIndexService
         }
     }
 
+    public function purgeCourseIndex(int $courseId): void
+    {
+        // Get all Xapian document ids (search_did) linked to this course
+        $rows = $this->em->createQueryBuilder()
+            ->select('DISTINCT ser.searchDid AS searchDid')
+            ->from(SearchEngineRef::class, 'ser')
+            ->join('ser.resourceNode', 'rn')
+            ->join('rn.resourceLinks', 'rl')
+            ->join('rl.course', 'c')
+            ->where('c.id = :courseId')
+            ->setParameter('courseId', $courseId)
+            ->getQuery()
+            ->getScalarResult()
+        ;
+
+        foreach ($rows as $row) {
+            $did = (int) ($row['searchDid'] ?? 0);
+            if ($did <= 0) {
+                continue;
+            }
+
+            // Delete the Xapian entry by its search_did (Xapian docid)
+            $this->deleteBySearchDid($did);
+        }
+    }
+
     /**
      * Opens the writable Xapian database using DB_CREATE_OR_OPEN.
      */
@@ -266,32 +292,6 @@ final class XapianIndexService
         return $map[$iso] ?? self::DEFAULT_LANGUAGE;
     }
 
-    public function purgeCourseIndex(int $courseId): void
-    {
-        // Get all Xapian document ids (search_did) linked to this course
-        $rows = $this->em->createQueryBuilder()
-            ->select('DISTINCT ser.searchDid AS searchDid')
-            ->from(SearchEngineRef::class, 'ser')
-            ->join('ser.resourceNode', 'rn')
-            ->join('rn.resourceLinks', 'rl')
-            ->join('rl.course', 'c')
-            ->where('c.id = :courseId')
-            ->setParameter('courseId', $courseId)
-            ->getQuery()
-            ->getScalarResult()
-        ;
-
-        foreach ($rows as $row) {
-            $did = (int) ($row['searchDid'] ?? 0);
-            if ($did <= 0) {
-                continue;
-            }
-
-            // Delete the Xapian entry by its search_did (Xapian docid)
-            $this->deleteBySearchDid($did);
-        }
-    }
-
     private function deleteBySearchDid(int $did): void
     {
         if ($did <= 0) {
@@ -303,8 +303,8 @@ final class XapianIndexService
             $this->deleteDocument($did);
         } catch (Throwable $e) {
             error_log(
-                '[Xapian] deleteBySearchDid: delete failed for search_did='.$did.': '.
-                $e->getMessage().' in '.$e->getFile().':'.$e->getLine()
+                '[Xapian] deleteBySearchDid: delete failed for search_did='.$did.': '
+                .$e->getMessage().' in '.$e->getFile().':'.$e->getLine()
             );
         }
     }

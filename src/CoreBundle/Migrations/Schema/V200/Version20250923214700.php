@@ -126,7 +126,7 @@ final class Version20250923214700 extends AbstractMigrationChamilo
             'ROLE_STUDENT',
         ]);
 
-        usort($out, function ($a, $b) use ($prio) {
+        usort($out, static function ($a, $b) use ($prio) {
             $pa = $prio[$a] ?? PHP_INT_MAX;
             $pb = $prio[$b] ?? PHP_INT_MAX;
             if ($pa === $pb) {

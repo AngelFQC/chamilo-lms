@@ -91,6 +91,71 @@ final readonly class LanguageHelper
         return 'en';
     }
 
+    public function getPlatformDefaultIso(): ?string
+    {
+        return $this->languageRepository->getPlatformDefaultIso();
+    }
+
+    /**
+     * Resolves an ISO code (e.g. "fr_BE") to the best available Language:
+     * 1. Exact match ("fr_BE")
+     * 2. Short 2-letter code ("fr")
+     * 3. Canonical variant where language = country ("fr_FR")
+     * 4. Any available language sharing the same 2-letter prefix ("fr_*")
+     */
+    public function findBestAvailableMatch(string $isoCode): ?Language
+    {
+        $isoCode = str_replace('-', '_', $isoCode);
+
+        if (preg_match('/^([a-zA-Z]{2})_([a-zA-Z]{2})$/', $isoCode, $m)) {
+            $isoCode = strtolower($m[1]).'_'.strtoupper($m[2]);
+        }
+
+        $lang = $this->languageRepository->findByIsoCode($isoCode);
+        if ($lang?->getAvailable()) {
+            return $lang;
+        }
+
+        $short = strtolower(substr($isoCode, 0, 2));
+
+        $lang = $this->languageRepository->findByIsoCode($short);
+        if ($lang?->getAvailable()) {
+            return $lang;
+        }
+
+        $lang = $this->languageRepository->findByIsoCode($short.'_'.strtoupper($short));
+        if ($lang?->getAvailable()) {
+            return $lang;
+        }
+
+        return $this->languageRepository->findFirstAvailableByIsoPrefix($short);
+    }
+
+    /**
+     * Isocodes of languages LanguageFixtures marks as 'direction' => 'rtl'. Public and
+     * static so callers with no DB access yet (e.g. the pre-install web installer) can
+     * still resolve direction without a Language entity lookup. LanguageFixtures remains
+     * the single authority for RTL-ness.
+     *
+     * @return string[]
+     */
+    public static function getRtlIsocodes(): array
+    {
+        static $isocodes = null;
+
+        if (null === $isocodes) {
+            $isocodes = array_column(
+                array_filter(
+                    LanguageFixtures::getLanguages(),
+                    static fn (array $language): bool => 'rtl' === ($language['direction'] ?? null)
+                ),
+                'isocode'
+            );
+        }
+
+        return $isocodes;
+    }
+
     private function resolveLocaleCandidate(): string
     {
         // Request locale (usually already the effective UI locale)
@@ -148,46 +213,6 @@ final readonly class LanguageHelper
         return substr(strtolower($raw), 0, 2);
     }
 
-    public function getPlatformDefaultIso(): ?string
-    {
-        return $this->languageRepository->getPlatformDefaultIso();
-    }
-
-    /**
-     * Resolves an ISO code (e.g. "fr_BE") to the best available Language:
-     * 1. Exact match ("fr_BE")
-     * 2. Short 2-letter code ("fr")
-     * 3. Canonical variant where language = country ("fr_FR")
-     * 4. Any available language sharing the same 2-letter prefix ("fr_*")
-     */
-    public function findBestAvailableMatch(string $isoCode): ?Language
-    {
-        $isoCode = str_replace('-', '_', $isoCode);
-
-        if (preg_match('/^([a-zA-Z]{2})_([a-zA-Z]{2})$/', $isoCode, $m)) {
-            $isoCode = strtolower($m[1]).'_'.strtoupper($m[2]);
-        }
-
-        $lang = $this->languageRepository->findByIsoCode($isoCode);
-        if ($lang?->getAvailable()) {
-            return $lang;
-        }
-
-        $short = strtolower(substr($isoCode, 0, 2));
-
-        $lang = $this->languageRepository->findByIsoCode($short);
-        if ($lang?->getAvailable()) {
-            return $lang;
-        }
-
-        $lang = $this->languageRepository->findByIsoCode($short.'_'.strtoupper($short));
-        if ($lang?->getAvailable()) {
-            return $lang;
-        }
-
-        return $this->languageRepository->findFirstAvailableByIsoPrefix($short);
-    }
-
     private function toShortIso(string $iso): string
     {
         if (preg_match('/^([a-z]{2})_/', $iso, $m)) {
@@ -195,30 +220,5 @@ final readonly class LanguageHelper
         }
 
         return preg_match('/^[a-z]{2}$/', $iso) ? $iso : '';
-    }
-
-    /**
-     * Isocodes of languages LanguageFixtures marks as 'direction' => 'rtl'. Public and
-     * static so callers with no DB access yet (e.g. the pre-install web installer) can
-     * still resolve direction without a Language entity lookup. LanguageFixtures remains
-     * the single authority for RTL-ness.
-     *
-     * @return string[]
-     */
-    public static function getRtlIsocodes(): array
-    {
-        static $isocodes = null;
-
-        if (null === $isocodes) {
-            $isocodes = array_column(
-                array_filter(
-                    LanguageFixtures::getLanguages(),
-                    static fn (array $language): bool => 'rtl' === ($language['direction'] ?? null)
-                ),
-                'isocode'
-            );
-        }
-
-        return $isocodes;
     }
 }

@@ -19,13 +19,13 @@ trait CourseLinkExtensionTrait
         $joins = $queryBuilder->getDQLPart('join');
 
         if (empty($joins[$rootAlias])
-            || !array_filter($joins[$rootAlias], fn ($j) => 'node' === $j->getAlias())
+            || !array_filter($joins[$rootAlias], static fn ($j) => 'node' === $j->getAlias())
         ) {
             $queryBuilder->innerJoin("$rootAlias.resourceNode", 'node');
         }
 
         if (empty($joins[$rootAlias])
-            || !array_filter($joins[$rootAlias], fn ($j) => 'resource_links' === $j->getAlias())
+            || !array_filter($joins[$rootAlias], static fn ($j) => 'resource_links' === $j->getAlias())
         ) {
             $queryBuilder->innerJoin('node.resourceLinks', 'resource_links');
         }

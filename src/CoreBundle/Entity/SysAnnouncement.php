@@ -65,8 +65,6 @@ class SysAnnouncement
     }
 
     /**
-     * Get title.
-     *
      * @return string
      */
     public function getTitle()
@@ -82,8 +80,6 @@ class SysAnnouncement
     }
 
     /**
-     * Get content.
-     *
      * @return string
      */
     public function getContent()
@@ -99,8 +95,6 @@ class SysAnnouncement
     }
 
     /**
-     * Get lang.
-     *
      * @return string
      */
     public function getLang()
@@ -116,8 +110,6 @@ class SysAnnouncement
     }
 
     /**
-     * Get id.
-     *
      * @return int
      */
     public function getId()
@@ -205,8 +197,6 @@ class SysAnnouncement
     }
 
     /**
-     * Get dateStart.
-     *
      * @return DateTime
      */
     public function getDateStart()
@@ -222,8 +212,6 @@ class SysAnnouncement
     }
 
     /**
-     * Get dateEnd.
-     *
      * @return DateTime
      */
     public function getDateEnd()

@@ -64,12 +64,12 @@ final readonly class EnrollmentNotificationService
 
         $body = \sprintf(
             $this->translator->trans(
-                'Hello %s,<br><br>'.
-                'You have been enrolled in the %s: <strong>%s</strong>.<br><br>'.
-                'This enrollment is linked to your Chamilo account, username: <strong>%s</strong><br><br>'.
-                'Log in to %s to access it.<br><br>'.
-                'Best regards,<br>'.
-                '%s'
+                'Hello %s,<br><br>'
+                .'You have been enrolled in the %s: <strong>%s</strong>.<br><br>'
+                .'This enrollment is linked to your Chamilo account, username: <strong>%s</strong><br><br>'
+                .'Log in to %s to access it.<br><br>'
+                .'Best regards,<br>'
+                .'%s'
             ),
             $safeFullName,
             $itemLabel,

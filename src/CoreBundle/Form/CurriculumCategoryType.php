@@ -40,7 +40,7 @@ class CurriculumCategoryType extends AbstractType
             'entity',
             [
                 'class' => 'Entity\CurriculumCategory',
-                'query_builder' => function ($repository) use (
+                'query_builder' => static function ($repository) use (
                     $course,
                     $session
                 ) {

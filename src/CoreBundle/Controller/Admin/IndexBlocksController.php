@@ -336,7 +336,7 @@ class IndexBlocksController extends BaseController
                 // Matched by 'class', not 'url': both surviving items ('item-user-list',
                 // 'item-user-add') are route-based (no 'url' key at all), so matching on
                 // 'url' silently dropped them both here.
-                $items = array_filter($items, function (array $item) {
+                $items = array_filter($items, static function (array $item) {
                     $classes = [
                         'item-user-list',
                         'item-user-add',
@@ -347,7 +347,7 @@ class IndexBlocksController extends BaseController
             }
 
             if ('true' === $this->settingsManager->getSetting('session.limit_session_admin_list_users')) {
-                $items = array_filter($items, function (array $item): bool {
+                $items = array_filter($items, static function (array $item): bool {
                     $classes = [
                         'item-user-list',
                     ];

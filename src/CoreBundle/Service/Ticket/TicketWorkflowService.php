@@ -185,130 +185,6 @@ final readonly class TicketWorkflowService
      * @param array<string, mixed>     $data
      * @param array<int, UploadedFile> $files
      */
-    private function createTicketInternal(User $user, array $data, array $files): Ticket
-    {
-        $accessUrl = $this->getCurrentAccessUrl();
-        $project = $this->getProject((int) ($data['projectId'] ?? 0), $accessUrl);
-        $category = $this->getCategory((int) ($data['categoryId'] ?? 0), $project);
-        $subject = mb_substr(trim((string) ($data['subject'] ?? '')), 0, 255);
-        $content = trim((string) ($data['content'] ?? ''));
-
-        if ('' === $subject || '' === trim(strip_tags($content))) {
-            throw new BadRequestHttpException('Subject and message are required.');
-        }
-
-        $courseId = max(0, (int) ($data['courseId'] ?? 0));
-        $sessionId = max(0, (int) ($data['sessionId'] ?? 0));
-        if ($category->isCourseRequired() && $courseId <= 0) {
-            throw new BadRequestHttpException('A course is required for this category.');
-        }
-
-        $course = $courseId > 0 ? $this->entityManager->getRepository(Course::class)->find($courseId) : null;
-        if ($courseId > 0 && !$course instanceof Course) {
-            throw new BadRequestHttpException('The selected course is invalid.');
-        }
-
-        $session = $sessionId > 0 ? $this->entityManager->getRepository(Session::class)->find($sessionId) : null;
-        if ($sessionId > 0 && !$session instanceof Session) {
-            throw new BadRequestHttpException('The selected session is invalid.');
-        }
-
-        $isAdmin = $this->security->isGranted('ROLE_ADMIN');
-        $this->assertCourseAndSessionSelectionIsAllowed($user, $courseId, $sessionId, $isAdmin);
-        $priorityId = $isAdmin ? max(0, (int) ($data['priorityId'] ?? 0)) : self::PRIORITY_NORMAL;
-        $statusId = $isAdmin ? max(0, (int) ($data['statusId'] ?? 0)) : 0;
-        $priority = $this->getPriority($priorityId ?: self::PRIORITY_NORMAL, $accessUrl);
-        $status = $this->getStatus(
-            $statusId ?: ($project->getOtherArea() > 0 ? self::STATUS_FORWARDED : self::STATUS_NEW),
-            $accessUrl,
-        );
-        $assignee = null;
-
-        if ($isAdmin && (int) ($data['assignedUserId'] ?? 0) > 0) {
-            $assignee = $this->getAssignableUser((int) $data['assignedUserId'], $accessUrl);
-        }
-
-        if (!$assignee instanceof User) {
-            $assignee = $this->getFirstCategoryUser($category, $accessUrl);
-        }
-
-        $validatedFiles = $this->validateFiles($files);
-        $phone = trim((string) ($data['phone'] ?? ''));
-        $message = (string) \Security::remove_XSS($content, COURSEMANAGERLOWSECURITY);
-        if ('' !== $phone) {
-            $message .= '<p><strong>'.get_lang('Phone').':</strong> '
-                .htmlspecialchars($phone, ENT_QUOTES, 'UTF-8').'</p>';
-        }
-
-        $now = new DateTime('now');
-        $source = $isAdmin
-            ? strtoupper(trim((string) ($data['source'] ?? self::SOURCE_PLATFORM)))
-            : self::SOURCE_PLATFORM;
-        if (!\in_array($source, ['PLA', 'MAI', 'TEL', 'PRE'], true)) {
-            $source = self::SOURCE_PLATFORM;
-        }
-
-        $personalEmail = mb_substr(trim((string) ($data['personalEmail'] ?? '')), 0, 255);
-        if ('' !== $personalEmail && false === filter_var($personalEmail, FILTER_VALIDATE_EMAIL)) {
-            throw new BadRequestHttpException('The personal email address is invalid.');
-        }
-
-        $ticket = (new Ticket())
-            ->setProject($project)
-            ->setCategory($category)
-            ->setPriority($priority)
-            ->setStatus($status)
-            ->setCourse($course instanceof Course ? $course : null)
-            ->setSession($session instanceof Session ? $session : null)
-            ->setPersonalEmail($personalEmail)
-            ->setAssignedLastUser($assignee)
-            ->setSubject($subject)
-            ->setMessage($message)
-            ->setCode('')
-            ->setSource($source)
-            ->setTotalMessages(0)
-            ->setStartDate($now)
-            ->setInsertUserId((int) $user->getId())
-            ->setInsertDateTime($now)
-            ->setLastEditUserId((int) $user->getId())
-            ->setLastEditDateTime($now)
-            ->setAccessUrl($accessUrl)
-        ;
-
-        $this->entityManager->persist($ticket);
-        $this->entityManager->flush();
-
-        $ticketId = (int) $ticket->getId();
-        $ticket->setCode('A'.str_pad((string) $ticketId, 11, '0', STR_PAD_LEFT));
-        $category->setTotalTickets($category->getTotalTickets() + 1);
-        $this->ticketRelUserRepository->subscribeUserToTicket($user, $ticket);
-
-        if ($assignee instanceof User) {
-            $this->addAssignmentLog($ticket, $assignee, $user, $now);
-        }
-
-        if ([] !== $validatedFiles) {
-            $attachmentMessage = $this->createMessage($ticket, $user, '', '', $now);
-            $ticket->setTotalMessages(1);
-            $this->entityManager->flush();
-            $this->saveAttachments($ticket, $attachmentMessage, $user, $validatedFiles);
-        }
-
-        $this->entityManager->flush();
-        Event::addEvent(
-            'ticket_subscribe',
-            'ticket_event',
-            ['user_id' => (int) $user->getId(), 'ticket_id' => $ticketId, 'action' => 'subscribe'],
-        );
-        $this->notifyTicketCreated($ticket, $user, $category, $personalEmail);
-
-        return $ticket;
-    }
-
-    /**
-     * @param array<string, mixed>     $data
-     * @param array<int, UploadedFile> $files
-     */
     public function replyToTicket(Ticket $ticket, User $user, array $data, array $files): TicketMessage
     {
         $this->assertCanReply($ticket, $user);
@@ -556,6 +432,130 @@ final readonly class TicketWorkflowService
         }
 
         return $result;
+    }
+
+    /**
+     * @param array<string, mixed>     $data
+     * @param array<int, UploadedFile> $files
+     */
+    private function createTicketInternal(User $user, array $data, array $files): Ticket
+    {
+        $accessUrl = $this->getCurrentAccessUrl();
+        $project = $this->getProject((int) ($data['projectId'] ?? 0), $accessUrl);
+        $category = $this->getCategory((int) ($data['categoryId'] ?? 0), $project);
+        $subject = mb_substr(trim((string) ($data['subject'] ?? '')), 0, 255);
+        $content = trim((string) ($data['content'] ?? ''));
+
+        if ('' === $subject || '' === trim(strip_tags($content))) {
+            throw new BadRequestHttpException('Subject and message are required.');
+        }
+
+        $courseId = max(0, (int) ($data['courseId'] ?? 0));
+        $sessionId = max(0, (int) ($data['sessionId'] ?? 0));
+        if ($category->isCourseRequired() && $courseId <= 0) {
+            throw new BadRequestHttpException('A course is required for this category.');
+        }
+
+        $course = $courseId > 0 ? $this->entityManager->getRepository(Course::class)->find($courseId) : null;
+        if ($courseId > 0 && !$course instanceof Course) {
+            throw new BadRequestHttpException('The selected course is invalid.');
+        }
+
+        $session = $sessionId > 0 ? $this->entityManager->getRepository(Session::class)->find($sessionId) : null;
+        if ($sessionId > 0 && !$session instanceof Session) {
+            throw new BadRequestHttpException('The selected session is invalid.');
+        }
+
+        $isAdmin = $this->security->isGranted('ROLE_ADMIN');
+        $this->assertCourseAndSessionSelectionIsAllowed($user, $courseId, $sessionId, $isAdmin);
+        $priorityId = $isAdmin ? max(0, (int) ($data['priorityId'] ?? 0)) : self::PRIORITY_NORMAL;
+        $statusId = $isAdmin ? max(0, (int) ($data['statusId'] ?? 0)) : 0;
+        $priority = $this->getPriority($priorityId ?: self::PRIORITY_NORMAL, $accessUrl);
+        $status = $this->getStatus(
+            $statusId ?: ($project->getOtherArea() > 0 ? self::STATUS_FORWARDED : self::STATUS_NEW),
+            $accessUrl,
+        );
+        $assignee = null;
+
+        if ($isAdmin && (int) ($data['assignedUserId'] ?? 0) > 0) {
+            $assignee = $this->getAssignableUser((int) $data['assignedUserId'], $accessUrl);
+        }
+
+        if (!$assignee instanceof User) {
+            $assignee = $this->getFirstCategoryUser($category, $accessUrl);
+        }
+
+        $validatedFiles = $this->validateFiles($files);
+        $phone = trim((string) ($data['phone'] ?? ''));
+        $message = (string) \Security::remove_XSS($content, COURSEMANAGERLOWSECURITY);
+        if ('' !== $phone) {
+            $message .= '<p><strong>'.get_lang('Phone').':</strong> '
+                .htmlspecialchars($phone, ENT_QUOTES, 'UTF-8').'</p>';
+        }
+
+        $now = new DateTime('now');
+        $source = $isAdmin
+            ? strtoupper(trim((string) ($data['source'] ?? self::SOURCE_PLATFORM)))
+            : self::SOURCE_PLATFORM;
+        if (!\in_array($source, ['PLA', 'MAI', 'TEL', 'PRE'], true)) {
+            $source = self::SOURCE_PLATFORM;
+        }
+
+        $personalEmail = mb_substr(trim((string) ($data['personalEmail'] ?? '')), 0, 255);
+        if ('' !== $personalEmail && false === filter_var($personalEmail, FILTER_VALIDATE_EMAIL)) {
+            throw new BadRequestHttpException('The personal email address is invalid.');
+        }
+
+        $ticket = (new Ticket())
+            ->setProject($project)
+            ->setCategory($category)
+            ->setPriority($priority)
+            ->setStatus($status)
+            ->setCourse($course instanceof Course ? $course : null)
+            ->setSession($session instanceof Session ? $session : null)
+            ->setPersonalEmail($personalEmail)
+            ->setAssignedLastUser($assignee)
+            ->setSubject($subject)
+            ->setMessage($message)
+            ->setCode('')
+            ->setSource($source)
+            ->setTotalMessages(0)
+            ->setStartDate($now)
+            ->setInsertUserId((int) $user->getId())
+            ->setInsertDateTime($now)
+            ->setLastEditUserId((int) $user->getId())
+            ->setLastEditDateTime($now)
+            ->setAccessUrl($accessUrl)
+        ;
+
+        $this->entityManager->persist($ticket);
+        $this->entityManager->flush();
+
+        $ticketId = (int) $ticket->getId();
+        $ticket->setCode('A'.str_pad((string) $ticketId, 11, '0', STR_PAD_LEFT));
+        $category->setTotalTickets($category->getTotalTickets() + 1);
+        $this->ticketRelUserRepository->subscribeUserToTicket($user, $ticket);
+
+        if ($assignee instanceof User) {
+            $this->addAssignmentLog($ticket, $assignee, $user, $now);
+        }
+
+        if ([] !== $validatedFiles) {
+            $attachmentMessage = $this->createMessage($ticket, $user, '', '', $now);
+            $ticket->setTotalMessages(1);
+            $this->entityManager->flush();
+            $this->saveAttachments($ticket, $attachmentMessage, $user, $validatedFiles);
+        }
+
+        $this->entityManager->flush();
+        Event::addEvent(
+            'ticket_subscribe',
+            'ticket_event',
+            ['user_id' => (int) $user->getId(), 'ticket_id' => $ticketId, 'action' => 'subscribe'],
+        );
+        $this->notifyTicketCreated($ticket, $user, $category, $personalEmail);
+
+        return $ticket;
     }
 
     private function normalizeBoolean(mixed $value): bool

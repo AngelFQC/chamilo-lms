@@ -45,7 +45,9 @@ use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
-/** @implements ProviderInterface<LearningPathReporting> */
+/**
+ * @implements ProviderInterface<LearningPathReporting>
+ */
 final readonly class LearningPathReportingProvider implements ProviderInterface
 {
     use LearningPathStateHelperTrait;

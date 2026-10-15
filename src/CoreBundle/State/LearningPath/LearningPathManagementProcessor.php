@@ -38,7 +38,9 @@ use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Throwable;
 
-/** @implements ProcessorInterface<LearningPathManagementInput, void> */
+/**
+ * @implements ProcessorInterface<LearningPathManagementInput, void>
+ */
 final readonly class LearningPathManagementProcessor implements ProcessorInterface
 {
     use LearningPathStateHelperTrait;

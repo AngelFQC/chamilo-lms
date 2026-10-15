@@ -166,6 +166,8 @@ final class Version20240515124400 extends AbstractMigrationChamilo
         ]);
     }
 
+    public function down(Schema $schema): void {}
+
     /**
      * @param array<int, int> $updates
      */
@@ -200,6 +202,4 @@ final class Version20240515124400 extends AbstractMigrationChamilo
             $parameters
         );
     }
-
-    public function down(Schema $schema): void {}
 }

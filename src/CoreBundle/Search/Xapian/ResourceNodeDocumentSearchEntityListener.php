@@ -69,8 +69,8 @@ final class ResourceNodeDocumentSearchEntityListener
             $this->indexer->indexDocument($document);
         } catch (Throwable $e) {
             error_log(
-                '[Xapian] ResourceNodeDocumentSearchEntityListener postUpdate: indexing failed: '.
-                $e->getMessage().' in '.$e->getFile().':'.$e->getLine()
+                '[Xapian] ResourceNodeDocumentSearchEntityListener postUpdate: indexing failed: '
+                .$e->getMessage().' in '.$e->getFile().':'.$e->getLine()
             );
         }
     }
@@ -86,8 +86,8 @@ final class ResourceNodeDocumentSearchEntityListener
             $this->indexer->deleteForResourceNodeId((int) $resourceNode->getId());
         } catch (Throwable $e) {
             error_log(
-                '[Xapian] ResourceNodeDocumentSearchEntityListener: certificate cleanup failed: '.
-                $e->getMessage().' in '.$e->getFile().':'.$e->getLine()
+                '[Xapian] ResourceNodeDocumentSearchEntityListener: certificate cleanup failed: '
+                .$e->getMessage().' in '.$e->getFile().':'.$e->getLine()
             );
         }
     }

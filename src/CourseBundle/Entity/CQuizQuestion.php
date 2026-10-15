@@ -183,8 +183,6 @@ class CQuizQuestion extends AbstractResource implements ResourceInterface, Strin
     }
 
     /**
-     * Get ponderation.
-     *
      * @return float
      */
     public function getPonderation()
@@ -200,8 +198,6 @@ class CQuizQuestion extends AbstractResource implements ResourceInterface, Strin
     }
 
     /**
-     * Get position.
-     *
      * @return int
      */
     public function getPosition()
@@ -217,8 +213,6 @@ class CQuizQuestion extends AbstractResource implements ResourceInterface, Strin
     }
 
     /**
-     * Get type.
-     *
      * @return int
      */
     public function getType()
@@ -234,8 +228,6 @@ class CQuizQuestion extends AbstractResource implements ResourceInterface, Strin
     }
 
     /**
-     * Get picture.
-     *
      * @return string
      */
     public function getPicture()
@@ -251,8 +243,6 @@ class CQuizQuestion extends AbstractResource implements ResourceInterface, Strin
     }
 
     /**
-     * Get level.
-     *
      * @return int
      */
     public function getLevel()
@@ -268,8 +258,6 @@ class CQuizQuestion extends AbstractResource implements ResourceInterface, Strin
     }
 
     /**
-     * Get extra.
-     *
      * @return string
      */
     public function getExtra()
@@ -285,8 +273,6 @@ class CQuizQuestion extends AbstractResource implements ResourceInterface, Strin
     }
 
     /**
-     * Get questionCode.
-     *
      * @return string
      */
     public function getQuestionCode()
@@ -360,9 +346,6 @@ class CQuizQuestion extends AbstractResource implements ResourceInterface, Strin
         return $this;
     }
 
-    /**
-     * Get iid.
-     */
     public function getIid(): ?int
     {
         return $this->iid;

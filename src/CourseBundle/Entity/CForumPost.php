@@ -494,8 +494,6 @@ class CForumPost extends AbstractResource implements ResourceInterface, Stringab
     }
 
     /**
-     * Get postDate.
-     *
      * @return DateTime
      */
     public function getPostDate()
@@ -511,8 +509,6 @@ class CForumPost extends AbstractResource implements ResourceInterface, Stringab
     }
 
     /**
-     * Get postNotification.
-     *
      * @return bool
      */
     public function getPostNotification()
@@ -528,8 +524,6 @@ class CForumPost extends AbstractResource implements ResourceInterface, Stringab
     }
 
     /**
-     * Get visible.
-     *
      * @return bool
      */
     public function getVisible()
@@ -552,9 +546,6 @@ class CForumPost extends AbstractResource implements ResourceInterface, Stringab
         return $this;
     }
 
-    /**
-     * Get iid.
-     */
     public function getIid(): ?int
     {
         return $this->iid;

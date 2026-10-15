@@ -159,7 +159,7 @@ final class CToolStateProvider implements ProviderInterface
 
             if ($session && $allowVisibilityInSession) {
                 $sessionLink = $resourceLinks->findFirst(
-                    fn (int $key, ResourceLink $resourceLink): bool => $resourceLink->getSession()?->getId() === $session->getId(),
+                    static fn (int $key, ResourceLink $resourceLink): bool => $resourceLink->getSession()?->getId() === $session->getId(),
                 );
 
                 if ($sessionLink) {

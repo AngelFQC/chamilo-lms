@@ -167,25 +167,6 @@ final readonly class ExerciseAttemptScoringService
         ];
     }
 
-    private function syncLearningPathScore(TrackEExercise $attempt, float $score): void
-    {
-        if ($attempt->getOrigLpId() <= 0 || $attempt->getOrigLpItemId() <= 0 || $attempt->getOrigLpItemViewId() <= 0) {
-            return;
-        }
-
-        $lpItem = $this->entityManager->getRepository(CLpItem::class)->find($attempt->getOrigLpItemId());
-        if (!$lpItem instanceof CLpItem || 'quiz' !== $lpItem->getItemType()) {
-            return;
-        }
-
-        $lpItemView = $this->entityManager->getRepository(CLpItemView::class)->find($attempt->getOrigLpItemViewId());
-        if (!$lpItemView instanceof CLpItemView) {
-            return;
-        }
-
-        $lpItemView->setScore($score);
-    }
-
     /**
      * @return array<int, int>
      */
@@ -251,11 +232,6 @@ final readonly class ExerciseAttemptScoringService
         }
 
         return $unsupportedTypes;
-    }
-
-    private function isSupportedQuestionType(int $type): bool
-    {
-        return isset(self::SUPPORTED_TYPE_NAMES[$type]);
     }
 
     /**
@@ -377,6 +353,74 @@ final readonly class ExerciseAttemptScoringService
             self::ANNOTATION => $this->scoreManualAnswer($rows),
             default => 0.0,
         };
+    }
+
+    /**
+     * @param array<int, CQuizAnswer> $answers
+     */
+    public function getQuestionWeight(CQuizQuestion $question, array $answers): float
+    {
+        $type = (int) $question->getType();
+        if (\in_array($type, [self::MEDIA_QUESTION, self::PAGE_BREAK], true)) {
+            return 0.0;
+        }
+
+        if (self::CALCULATED_ANSWER === $type) {
+            return (float) $question->getPonderation();
+        }
+
+        if (\in_array($type, [self::MULTIPLE_ANSWER_COMBINATION, self::MULTIPLE_ANSWER_COMBINATION_TRUE_FALSE], true)) {
+            $firstAnswer = reset($answers);
+            if ($firstAnswer instanceof CQuizAnswer && 0.0 !== $firstAnswer->getPonderation()) {
+                return $firstAnswer->getPonderation();
+            }
+        }
+
+        return (float) $question->getPonderation();
+    }
+
+    public function requiresManualCorrection(CQuizQuestion $question): bool
+    {
+        return \in_array((int) $question->getType(), [self::FREE_ANSWER, self::ORAL_EXPRESSION, self::UPLOAD_ANSWER, self::ANSWER_IN_OFFICE_DOC, self::ANNOTATION], true);
+    }
+
+    /**
+     * @param array<int, TrackEAttempt> $rows
+     */
+    public function updateQuestionAttemptRows(CQuizQuestion $question, array $rows, float $score): void
+    {
+        foreach ($rows as $row) {
+            $row->setMarks($score);
+            $row->setTms(new DateTime());
+        }
+
+        if ([] === $rows && !$this->requiresManualCorrection($question)) {
+            return;
+        }
+    }
+
+    private function syncLearningPathScore(TrackEExercise $attempt, float $score): void
+    {
+        if ($attempt->getOrigLpId() <= 0 || $attempt->getOrigLpItemId() <= 0 || $attempt->getOrigLpItemViewId() <= 0) {
+            return;
+        }
+
+        $lpItem = $this->entityManager->getRepository(CLpItem::class)->find($attempt->getOrigLpItemId());
+        if (!$lpItem instanceof CLpItem || 'quiz' !== $lpItem->getItemType()) {
+            return;
+        }
+
+        $lpItemView = $this->entityManager->getRepository(CLpItemView::class)->find($attempt->getOrigLpItemViewId());
+        if (!$lpItemView instanceof CLpItemView) {
+            return;
+        }
+
+        $lpItemView->setScore($score);
+    }
+
+    private function isSupportedQuestionType(int $type): bool
+    {
+        return isset(self::SUPPORTED_TYPE_NAMES[$type]);
     }
 
     /**
@@ -1073,30 +1117,6 @@ final readonly class ExerciseAttemptScoringService
     }
 
     /**
-     * @param array<int, CQuizAnswer> $answers
-     */
-    public function getQuestionWeight(CQuizQuestion $question, array $answers): float
-    {
-        $type = (int) $question->getType();
-        if (\in_array($type, [self::MEDIA_QUESTION, self::PAGE_BREAK], true)) {
-            return 0.0;
-        }
-
-        if (self::CALCULATED_ANSWER === $type) {
-            return (float) $question->getPonderation();
-        }
-
-        if (\in_array($type, [self::MULTIPLE_ANSWER_COMBINATION, self::MULTIPLE_ANSWER_COMBINATION_TRUE_FALSE], true)) {
-            $firstAnswer = reset($answers);
-            if ($firstAnswer instanceof CQuizAnswer && 0.0 !== $firstAnswer->getPonderation()) {
-                return $firstAnswer->getPonderation();
-            }
-        }
-
-        return (float) $question->getPonderation();
-    }
-
-    /**
      * @param array<int, TrackEAttempt> $rows
      */
     private function getFirstSavedAnswerId(array $rows): int
@@ -1125,11 +1145,6 @@ final readonly class ExerciseAttemptScoringService
         return $positions;
     }
 
-    public function requiresManualCorrection(CQuizQuestion $question): bool
-    {
-        return \in_array((int) $question->getType(), [self::FREE_ANSWER, self::ORAL_EXPRESSION, self::UPLOAD_ANSWER, self::ANSWER_IN_OFFICE_DOC, self::ANNOTATION], true);
-    }
-
     private function getSavedAnswerIds(array $rows): array
     {
         $answerIds = [];
@@ -1141,21 +1156,6 @@ final readonly class ExerciseAttemptScoringService
         }
 
         return $answerIds;
-    }
-
-    /**
-     * @param array<int, TrackEAttempt> $rows
-     */
-    public function updateQuestionAttemptRows(CQuizQuestion $question, array $rows, float $score): void
-    {
-        foreach ($rows as $row) {
-            $row->setMarks($score);
-            $row->setTms(new DateTime());
-        }
-
-        if ([] === $rows && !$this->requiresManualCorrection($question)) {
-            return;
-        }
     }
 
     /**

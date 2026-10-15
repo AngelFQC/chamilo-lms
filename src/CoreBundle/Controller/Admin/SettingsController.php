@@ -396,8 +396,8 @@ class SettingsController extends BaseController
             $searchDiagnostics = $this->buildSearchDiagnostics($manager);
         }
 
-        $isPartial =
-            $request->isMethod('PATCH')
+        $isPartial
+            = $request->isMethod('PATCH')
             || 'PATCH' === strtoupper((string) $request->request->get('_method'))
             || $request->request->getBoolean('_partial', false);
 
@@ -715,7 +715,7 @@ class SettingsController extends BaseController
 
         // Sort by translated label (locale-aware)
         $collator = class_exists(Collator::class) ? new Collator($request->getLocale()) : null;
-        usort($namespaces, function ($a, $b) use ($labelMap, $collator): int {
+        usort($namespaces, static function ($a, $b) use ($labelMap, $collator): int {
             return $collator
                 ? (int) $collator->compare($labelMap[$a], $labelMap[$b])
                 : strcasecmp($labelMap[$a], $labelMap[$b]);

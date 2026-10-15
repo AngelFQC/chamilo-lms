@@ -26,7 +26,7 @@ final class Version20240713125400 extends AbstractMigrationChamilo
             $roles = unserialize($user['roles']);
 
             if (false !== $roles) {
-                $updatedRoles = array_map(function ($role) {
+                $updatedRoles = array_map(static function ($role) {
                     return 'ROLE_RRHH' === $role ? 'ROLE_HR' : $role;
                 }, $roles);
 
@@ -49,7 +49,7 @@ final class Version20240713125400 extends AbstractMigrationChamilo
             $roles = unserialize($user['roles']);
 
             if (false !== $roles) {
-                $updatedRoles = array_map(function ($role) {
+                $updatedRoles = array_map(static function ($role) {
                     return 'ROLE_HR' === $role ? 'ROLE_RRHH' : $role;
                 }, $roles);
 

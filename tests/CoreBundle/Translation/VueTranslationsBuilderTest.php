@@ -159,8 +159,8 @@ final class VueTranslationsBuilderTest extends TestCase
 
     private function writePoFile(string $body): void
     {
-        $header = 'msgid ""'."\n".'msgstr ""'."\n".'"Language: cs_66\n"'."\n".
-            '"Content-Type: text/plain; charset=UTF-8\n"'."\n\n";
+        $header = 'msgid ""'."\n".'msgstr ""'."\n".'"Language: cs_66\n"'."\n"
+            .'"Content-Type: text/plain; charset=UTF-8\n"'."\n\n";
 
         file_put_contents($this->projectDir.'/var/translations/messages.cs_66.po', $header.$body."\n");
     }

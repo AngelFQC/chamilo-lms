@@ -125,28 +125,6 @@ final class ThemeHelper
     }
 
     /**
-     * Decide the theme in which the requested asset actually exists.
-     * This prevents 404 when the file is only present in DEFAULT_THEME.
-     */
-    private function resolveAssetTheme(string $path): ?string
-    {
-        $visual = $this->getVisualTheme();
-
-        try {
-            if ($this->filesystem->fileExists($visual.DIRECTORY_SEPARATOR.$path)) {
-                return $visual;
-            }
-            if ($this->filesystem->fileExists(self::DEFAULT_THEME.DIRECTORY_SEPARATOR.$path)) {
-                return self::DEFAULT_THEME;
-            }
-        } catch (FilesystemException) {
-            return null;
-        }
-
-        return null;
-    }
-
-    /**
      * Resolves a themed file location checking the selected theme first,
      * then falling back to DEFAULT_THEME as a last resort.
      */
@@ -381,6 +359,28 @@ final class ThemeHelper
         }
 
         return $this->fillUpPalette($palette, $fillUpTo);
+    }
+
+    /**
+     * Decide the theme in which the requested asset actually exists.
+     * This prevents 404 when the file is only present in DEFAULT_THEME.
+     */
+    private function resolveAssetTheme(string $path): ?string
+    {
+        $visual = $this->getVisualTheme();
+
+        try {
+            if ($this->filesystem->fileExists($visual.DIRECTORY_SEPARATOR.$path)) {
+                return $visual;
+            }
+            if ($this->filesystem->fileExists(self::DEFAULT_THEME.DIRECTORY_SEPARATOR.$path)) {
+                return self::DEFAULT_THEME;
+            }
+        } catch (FilesystemException) {
+            return null;
+        }
+
+        return null;
     }
 
     /**

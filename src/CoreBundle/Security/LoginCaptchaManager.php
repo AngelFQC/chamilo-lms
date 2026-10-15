@@ -196,7 +196,7 @@ SVG;
 
     private function getState(string $username): array
     {
-        return $this->cache->get($this->buildCacheKey($username), function (ItemInterface $item): array {
+        return $this->cache->get($this->buildCacheKey($username), static function (ItemInterface $item): array {
             $item->expiresAfter(86400);
 
             return [
@@ -212,7 +212,7 @@ SVG;
         $key = $this->buildCacheKey($username);
         $this->cache->delete($key);
 
-        $this->cache->get($key, function (ItemInterface $item) use ($state): array {
+        $this->cache->get($key, static function (ItemInterface $item) use ($state): array {
             $item->expiresAfter(86400);
 
             return $state;

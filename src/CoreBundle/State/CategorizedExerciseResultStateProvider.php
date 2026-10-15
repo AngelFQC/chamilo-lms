@@ -207,8 +207,8 @@ class CategorizedExerciseResultStateProvider implements ProviderInterface
                 }
             }
 
-            if (RESULT_DISABLE_DONT_SHOW_SCORE_ONLY_IF_USER_FINISHES_ATTEMPTS_SHOW_ALWAYS_FEEDBACK ===
-                $objExercise->results_disabled
+            if (RESULT_DISABLE_DONT_SHOW_SCORE_ONLY_IF_USER_FINISHES_ATTEMPTS_SHOW_ALWAYS_FEEDBACK
+                === $objExercise->results_disabled
             ) {
                 $show_only_score = false;
                 $showTotalScore = false;

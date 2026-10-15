@@ -34,17 +34,12 @@ class TrackELoginRecord
     #[ORM\Column(name: 'success', type: 'boolean')]
     protected bool $success;
 
-    /**
-     * Get the username.
-     */
     public function getUsername(): string
     {
         return $this->username;
     }
 
     /**
-     * Set the username.
-     *
      * @return $this
      */
     public function setUsername(string $username): self
@@ -55,8 +50,6 @@ class TrackELoginRecord
     }
 
     /**
-     * Get login date.
-     *
      * @return DateTime
      */
     public function getLoginDate()
@@ -65,8 +58,6 @@ class TrackELoginRecord
     }
 
     /**
-     * Set Login date.
-     *
      * @return $this
      */
     public function setLoginDate(DateTime $loginDate): self
@@ -77,8 +68,6 @@ class TrackELoginRecord
     }
 
     /**
-     * Get user Ip.
-     *
      * @return string
      */
     public function getUserIp()
@@ -87,8 +76,6 @@ class TrackELoginRecord
     }
 
     /**
-     * Set user ip.
-     *
      * @return $this
      */
     public function setUserIp(string $userIp): self

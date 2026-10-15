@@ -84,9 +84,9 @@ final class Version20250905185500 extends AbstractMigrationChamilo
             if (!empty($cfg)) {
                 foreach ($cfg as $key => $val) {
                     $variable = $title.'_'.(string) $key;
-                    $selectedValue =
-                        \is_bool($val) ? ($val ? 'true' : 'false') :
-                            (\is_scalar($val) ? (string) $val : json_encode($val, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES));
+                    $selectedValue
+                        = \is_bool($val) ? ($val ? 'true' : 'false')
+                            : (\is_scalar($val) ? (string) $val : json_encode($val, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES));
 
                     $conn->insert('settings', [
                         'variable' => $variable,

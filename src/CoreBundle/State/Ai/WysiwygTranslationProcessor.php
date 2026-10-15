@@ -17,7 +17,9 @@ use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 use Symfony\Component\HttpKernel\Exception\UnprocessableEntityHttpException;
 
-/** @implements ProcessorInterface<WysiwygTranslation, WysiwygTranslation> */
+/**
+ * @implements ProcessorInterface<WysiwygTranslation, WysiwygTranslation>
+ */
 final readonly class WysiwygTranslationProcessor implements ProcessorInterface
 {
     use WysiwygTranslationAccessHelperTrait;

@@ -17,33 +17,11 @@ use Doctrine\ORM\NonUniqueResultException;
 use Doctrine\ORM\NoResultException;
 use Doctrine\Persistence\ManagerRegistry;
 
-/**
- * @author Angel Fernando Quiroz Campos <angel.quiroz@beeznest.com>
- */
 class TrackECourseAccessRepository extends ServiceEntityRepository
 {
     public function __construct(ManagerRegistry $registry)
     {
         parent::__construct($registry, TrackECourseAccess::class);
-    }
-
-    /**
-     * Ensure the given User is managed by Doctrine.
-     */
-    private function toManagedUser(User $user): ?User
-    {
-        $id = (int) $user->getId();
-        if ($id <= 0) {
-            // do not track access for users without a persisted identifier.
-            return null;
-        }
-
-        if ($this->getEntityManager()->contains($user)) {
-            return $user;
-        }
-
-        // Use a reference to avoid an extra database query.
-        return $this->getEntityManager()->getReference(User::class, $id);
     }
 
     /**
@@ -257,5 +235,24 @@ class TrackECourseAccessRepository extends ServiceEntityRepository
             ->getQuery()
             ->getOneOrNullResult()
         ;
+    }
+
+    /**
+     * Ensure the given User is managed by Doctrine.
+     */
+    private function toManagedUser(User $user): ?User
+    {
+        $id = (int) $user->getId();
+        if ($id <= 0) {
+            // do not track access for users without a persisted identifier.
+            return null;
+        }
+
+        if ($this->getEntityManager()->contains($user)) {
+            return $user;
+        }
+
+        // Use a reference to avoid an extra database query.
+        return $this->getEntityManager()->getReference(User::class, $id);
     }
 }

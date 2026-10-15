@@ -189,7 +189,7 @@ class ReinscriptionCheckCommand extends Command
             ->findBy(['session' => $session])
         ;
 
-        $courseIds = array_map(fn ($rel) => $rel->getCourse()->getId(), $courses);
+        $courseIds = array_map(static fn ($rel) => $rel->getCourse()->getId(), $courses);
 
         return $this->certificateRepository->createQueryBuilder('gc')
             ->join('gc.category', 'cat')
@@ -219,7 +219,7 @@ class ReinscriptionCheckCommand extends Command
      */
     private function getLatestCertificateDate(array $certificates): ?DateTime
     {
-        $dates = array_map(fn ($cert) => $cert->getCreatedAt(), $certificates);
+        $dates = array_map(static fn ($cert) => $cert->getCreatedAt(), $certificates);
 
         if (empty($dates)) {
             return null;

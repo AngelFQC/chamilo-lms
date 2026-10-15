@@ -247,50 +247,6 @@ class ToolChain
         return $this->getToolFromName($this->normalizeCourseToolName($title));
     }
 
-    /**
-     * Normalize the persisted setting without changing its legacy-compatible values.
-     *
-     * @return array<string, true>
-     */
-    private function normalizeCourseToolSetting(mixed $setting): array
-    {
-        if (null === $setting || false === $setting) {
-            return [];
-        }
-
-        if (\is_array($setting)) {
-            $values = $setting;
-        } elseif (\is_scalar($setting)) {
-            $raw = trim((string) $setting);
-            if ('' === $raw) {
-                return [];
-            }
-
-            $decoded = json_decode($raw, true);
-            $values = \is_array($decoded) ? $decoded : (preg_split('/[,;|]+/', $raw) ?: []);
-        } else {
-            return [];
-        }
-
-        $normalized = [];
-        foreach ($values as $key => $value) {
-            if ((true === $value || 'true' === $value || '1' === $value) && \is_string($key)) {
-                $value = $key;
-            }
-
-            if (!\is_scalar($value) && null !== $value) {
-                continue;
-            }
-
-            $courseToolName = strtolower($this->normalizeCourseToolName((string) $value));
-            if ('' !== $courseToolName) {
-                $normalized[$courseToolName] = true;
-            }
-        }
-
-        return $normalized;
-    }
-
     public function getToolFromName(string $title): AbstractTool
     {
         foreach ($this->handlerCollection->getCollection() as $handler) {
@@ -335,5 +291,49 @@ class ToolChain
         }
 
         return $this->resourceTypeList;
+    }
+
+    /**
+     * Normalize the persisted setting without changing its legacy-compatible values.
+     *
+     * @return array<string, true>
+     */
+    private function normalizeCourseToolSetting(mixed $setting): array
+    {
+        if (null === $setting || false === $setting) {
+            return [];
+        }
+
+        if (\is_array($setting)) {
+            $values = $setting;
+        } elseif (\is_scalar($setting)) {
+            $raw = trim((string) $setting);
+            if ('' === $raw) {
+                return [];
+            }
+
+            $decoded = json_decode($raw, true);
+            $values = \is_array($decoded) ? $decoded : (preg_split('/[,;|]+/', $raw) ?: []);
+        } else {
+            return [];
+        }
+
+        $normalized = [];
+        foreach ($values as $key => $value) {
+            if ((true === $value || 'true' === $value || '1' === $value) && \is_string($key)) {
+                $value = $key;
+            }
+
+            if (!\is_scalar($value) && null !== $value) {
+                continue;
+            }
+
+            $courseToolName = strtolower($this->normalizeCourseToolName((string) $value));
+            if ('' !== $courseToolName) {
+                $normalized[$courseToolName] = true;
+            }
+        }
+
+        return $normalized;
     }
 }

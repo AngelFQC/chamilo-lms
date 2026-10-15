@@ -121,6 +121,11 @@ class CBlog extends AbstractResource implements ResourceInterface, Stringable
         $this->dateCreation = new DateTime();
     }
 
+    public function __toString(): string
+    {
+        return $this->getTitle();
+    }
+
     public function getIid(): ?int
     {
         return $this->iid;
@@ -255,10 +260,5 @@ class CBlog extends AbstractResource implements ResourceInterface, Stringable
     public function setResourceName(string $name): self
     {
         return $this->setTitle($name);
-    }
-
-    public function __toString(): string
-    {
-        return $this->getTitle();
     }
 }

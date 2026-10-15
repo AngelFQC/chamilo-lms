@@ -11,7 +11,9 @@ use Chamilo\CourseBundle\Entity\CDropboxFeedback;
 use DateTime;
 use Doctrine\Persistence\ManagerRegistry;
 
-/** Custom queries for Dropbox feedback */
+/**
+ * Custom queries for Dropbox feedback.
+ */
 final class CDropboxFeedbackRepository extends ResourceRepository
 {
     public function __construct(ManagerRegistry $registry)

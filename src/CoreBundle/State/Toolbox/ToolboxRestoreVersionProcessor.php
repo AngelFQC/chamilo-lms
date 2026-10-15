@@ -20,7 +20,9 @@ use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
-/** @implements ProcessorInterface<mixed, null> */
+/**
+ * @implements ProcessorInterface<mixed, null>
+ */
 final readonly class ToolboxRestoreVersionProcessor implements ProcessorInterface
 {
     use ToolboxAccessHelperTrait;

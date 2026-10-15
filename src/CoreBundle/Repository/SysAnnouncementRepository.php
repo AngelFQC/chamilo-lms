@@ -38,7 +38,7 @@ class SysAnnouncementRepository extends ServiceEntityRepository
     {
         $hierarchy = $this->parameterBag->get('security.role_hierarchy.roles');
         $roles = [];
-        array_walk_recursive($hierarchy, function ($role) use (&$roles): void {
+        array_walk_recursive($hierarchy, static function ($role) use (&$roles): void {
             $roles[$role] = $role;
         });
 

@@ -24,79 +24,6 @@ class AccessUrlScopeHelperTest extends KernelTestCase
 {
     use ChamiloTestTrait;
 
-    private function createUserOnUrl(string $username, AccessUrl $url, string $role = ''): User
-    {
-        /** @var UserRepository $repo */
-        $repo = static::getContainer()->get(UserRepository::class);
-        $admin = $this->getAdmin();
-
-        $user = $repo->createUser()
-            ->setLastname($username)
-            ->setFirstname($username)
-            ->setUsername($username)
-            ->setStatus(1)
-            ->setPlainPassword($username)
-            ->setEmail($username.'@example.com')
-            ->setCreator($admin)
-            ->setCurrentUrl($url)
-            ->addAuthSourceByAuthentication(UserAuthSource::PLATFORM, $url)
-        ;
-
-        if ('' !== $role) {
-            $user->addRole($role);
-        }
-
-        $repo->updateUser($user);
-
-        return $user;
-    }
-
-    /**
-     * Builds root -> child -> grandchild (root is the fixture default URL), plus an
-     * unrelated separate-tree root, and registers one admin at each of the three main-tree
-     * levels.
-     *
-     * @return array{root: AccessUrl, child: AccessUrl, grandchild: AccessUrl, orphanRoot: AccessUrl,
-     *               rootAdmin: User, childAdmin: User, grandchildAdmin: User}
-     */
-    private function buildTree(): array
-    {
-        /** @var AccessUrlRepository $urlRepo */
-        $urlRepo = static::getContainer()->get(AccessUrlRepository::class);
-        $admin = $this->getAdmin();
-        $root = $this->getAccessUrl();
-
-        $child = (new AccessUrl())
-            ->setUrl('https://scope-child.example.org/')
-            ->setActive(1)
-            ->setCreator($admin)
-            ->setSuperior($root)
-        ;
-        $urlRepo->create($child);
-
-        $grandchild = (new AccessUrl())
-            ->setUrl('https://scope-grandchild.example.org/')
-            ->setActive(1)
-            ->setCreator($admin)
-            ->setSuperior($child)
-        ;
-        $urlRepo->create($grandchild);
-
-        // A separate, unrelated tree -- must never appear in the child/grandchild admins' scope.
-        $orphanRoot = (new AccessUrl())
-            ->setUrl('https://scope-orphan.example.org/')
-            ->setActive(1)
-            ->setCreator($admin)
-        ;
-        $urlRepo->create($orphanRoot);
-
-        $rootAdmin = $this->createUserOnUrl('scoperootadmin', $root);
-        $childAdmin = $this->createUserOnUrl('scopechildadmin', $child);
-        $grandchildAdmin = $this->createUserOnUrl('scopegrandchildadmin', $grandchild);
-
-        return compact('root', 'child', 'grandchild', 'orphanRoot', 'rootAdmin', 'childAdmin', 'grandchildAdmin');
-    }
-
     public function testRootAdminIsUnrestrictedAndManagesEverything(): void
     {
         self::bootKernel();
@@ -235,5 +162,78 @@ class AccessUrlScopeHelperTest extends KernelTestCase
         $this->assertFalse($scope->canGrantGlobalAdminRole($tree['childAdmin']));
         // Holding the role is not enough on its own without ROLE_GLOBAL_ADMIN either.
         $this->assertFalse($scope->canGrantGlobalAdminRole($tree['grandchildAdmin']));
+    }
+
+    private function createUserOnUrl(string $username, AccessUrl $url, string $role = ''): User
+    {
+        /** @var UserRepository $repo */
+        $repo = static::getContainer()->get(UserRepository::class);
+        $admin = $this->getAdmin();
+
+        $user = $repo->createUser()
+            ->setLastname($username)
+            ->setFirstname($username)
+            ->setUsername($username)
+            ->setStatus(1)
+            ->setPlainPassword($username)
+            ->setEmail($username.'@example.com')
+            ->setCreator($admin)
+            ->setCurrentUrl($url)
+            ->addAuthSourceByAuthentication(UserAuthSource::PLATFORM, $url)
+        ;
+
+        if ('' !== $role) {
+            $user->addRole($role);
+        }
+
+        $repo->updateUser($user);
+
+        return $user;
+    }
+
+    /**
+     * Builds root -> child -> grandchild (root is the fixture default URL), plus an
+     * unrelated separate-tree root, and registers one admin at each of the three main-tree
+     * levels.
+     *
+     * @return array{root: AccessUrl, child: AccessUrl, grandchild: AccessUrl, orphanRoot: AccessUrl,
+     *               rootAdmin: User, childAdmin: User, grandchildAdmin: User}
+     */
+    private function buildTree(): array
+    {
+        /** @var AccessUrlRepository $urlRepo */
+        $urlRepo = static::getContainer()->get(AccessUrlRepository::class);
+        $admin = $this->getAdmin();
+        $root = $this->getAccessUrl();
+
+        $child = (new AccessUrl())
+            ->setUrl('https://scope-child.example.org/')
+            ->setActive(1)
+            ->setCreator($admin)
+            ->setSuperior($root)
+        ;
+        $urlRepo->create($child);
+
+        $grandchild = (new AccessUrl())
+            ->setUrl('https://scope-grandchild.example.org/')
+            ->setActive(1)
+            ->setCreator($admin)
+            ->setSuperior($child)
+        ;
+        $urlRepo->create($grandchild);
+
+        // A separate, unrelated tree -- must never appear in the child/grandchild admins' scope.
+        $orphanRoot = (new AccessUrl())
+            ->setUrl('https://scope-orphan.example.org/')
+            ->setActive(1)
+            ->setCreator($admin)
+        ;
+        $urlRepo->create($orphanRoot);
+
+        $rootAdmin = $this->createUserOnUrl('scoperootadmin', $root);
+        $childAdmin = $this->createUserOnUrl('scopechildadmin', $child);
+        $grandchildAdmin = $this->createUserOnUrl('scopegrandchildadmin', $grandchild);
+
+        return compact('root', 'child', 'grandchild', 'orphanRoot', 'rootAdmin', 'childAdmin', 'grandchildAdmin');
     }
 }

@@ -42,9 +42,6 @@ class Block
     #[ORM\JoinColumn(name: 'user_id', referencedColumnName: 'id', onDelete: 'CASCADE')]
     private ?User $user = null;
 
-    /**
-     * Get id.
-     */
     public function getId(): ?int
     {
         return $this->id;

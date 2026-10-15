@@ -12,7 +12,9 @@ use Chamilo\CoreBundle\ApiResource\CourseReporting\CourseReportingOverview;
 use Chamilo\CoreBundle\Service\CourseReporting\CourseReportingContextResolver;
 use Chamilo\CoreBundle\Service\CourseReporting\CourseReportingQueryService;
 
-/** @implements ProviderInterface<CourseReportingOverview> */
+/**
+ * @implements ProviderInterface<CourseReportingOverview>
+ */
 final readonly class CourseReportingOverviewProvider implements ProviderInterface
 {
     public function __construct(

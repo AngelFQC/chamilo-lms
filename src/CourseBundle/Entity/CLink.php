@@ -313,8 +313,6 @@ class CLink extends AbstractResource implements ResourceInterface, ResourceShowC
     }
 
     /**
-     * Get target.
-     *
      * @return string
      */
     public function getTarget()

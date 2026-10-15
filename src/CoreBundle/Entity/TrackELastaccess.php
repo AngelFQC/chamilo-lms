@@ -40,8 +40,6 @@ class TrackELastaccess
     protected int $accessId;
 
     /**
-     * Get accessUserId.
-     *
      * @return int
      */
     public function getAccessUserId()
@@ -50,8 +48,6 @@ class TrackELastaccess
     }
 
     /**
-     * Set accessUserId.
-     *
      * @return TrackELastaccess
      */
     public function setAccessUserId(int $accessUserId)
@@ -62,8 +58,6 @@ class TrackELastaccess
     }
 
     /**
-     * Get accessDate.
-     *
      * @return DateTime
      */
     public function getAccessDate()
@@ -72,8 +66,6 @@ class TrackELastaccess
     }
 
     /**
-     * Set accessDate.
-     *
      * @return TrackELastaccess
      */
     public function setAccessDate(DateTime $accessDate)
@@ -84,8 +76,6 @@ class TrackELastaccess
     }
 
     /**
-     * Get cId.
-     *
      * @return int
      */
     public function getCId()
@@ -94,8 +84,6 @@ class TrackELastaccess
     }
 
     /**
-     * Set cId.
-     *
      * @return TrackELastaccess
      */
     public function setCId(int $cId)
@@ -106,8 +94,6 @@ class TrackELastaccess
     }
 
     /**
-     * Get accessTool.
-     *
      * @return string
      */
     public function getAccessTool()
@@ -116,8 +102,6 @@ class TrackELastaccess
     }
 
     /**
-     * Set accessTool.
-     *
      * @return TrackELastaccess
      */
     public function setAccessTool(string $accessTool)
@@ -128,8 +112,6 @@ class TrackELastaccess
     }
 
     /**
-     * Get sessionId.
-     *
      * @return int
      */
     public function getSessionId()
@@ -138,8 +120,6 @@ class TrackELastaccess
     }
 
     /**
-     * Set sessionId.
-     *
      * @return TrackELastaccess
      */
     public function setSessionId(int $sessionId)
@@ -150,8 +130,6 @@ class TrackELastaccess
     }
 
     /**
-     * Get accessId.
-     *
      * @return int
      */
     public function getAccessId()

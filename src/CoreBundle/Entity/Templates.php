@@ -46,8 +46,6 @@ class Templates
     protected ?Asset $image = null;
 
     /**
-     * Get title.
-     *
      * @return string
      */
     public function getTitle()
@@ -56,8 +54,6 @@ class Templates
     }
 
     /**
-     * Set title.
-     *
      * @return Templates
      */
     public function setTitle(string $title)
@@ -68,8 +64,6 @@ class Templates
     }
 
     /**
-     * Get description.
-     *
      * @return string
      */
     public function getDescription()
@@ -78,8 +72,6 @@ class Templates
     }
 
     /**
-     * Set description.
-     *
      * @return Templates
      */
     public function setDescription(string $description)
@@ -90,8 +82,6 @@ class Templates
     }
 
     /**
-     * Get refDoc.
-     *
      * @return int
      */
     public function getRefDoc()
@@ -100,8 +90,6 @@ class Templates
     }
 
     /**
-     * Set refDoc.
-     *
      * @return Templates
      */
     public function setRefDoc(int $refDoc)
@@ -129,8 +117,6 @@ class Templates
     }
 
     /**
-     * Get id.
-     *
      * @return int
      */
     public function getId()

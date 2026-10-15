@@ -228,7 +228,7 @@ class Message
     {
         return $this->receivers
             ->filter(
-                fn (MessageRelUser $messageRelUser) => MessageRelUser::TYPE_TO === $messageRelUser->getReceiverType()
+                static fn (MessageRelUser $messageRelUser) => MessageRelUser::TYPE_TO === $messageRelUser->getReceiverType()
             )->getValues()
         ;
     }
@@ -238,7 +238,7 @@ class Message
     {
         return $this->receivers
             ->filter(
-                fn (MessageRelUser $messageRelUser) => MessageRelUser::TYPE_CC === $messageRelUser->getReceiverType()
+                static fn (MessageRelUser $messageRelUser) => MessageRelUser::TYPE_CC === $messageRelUser->getReceiverType()
             )
             ->getValues()
         ;
@@ -252,7 +252,7 @@ class Message
     {
         return $this->receivers
             ->filter(
-                fn (MessageRelUser $messageRelUser) => MessageRelUser::TYPE_SENDER === $messageRelUser->getReceiverType()
+                static fn (MessageRelUser $messageRelUser) => MessageRelUser::TYPE_SENDER === $messageRelUser->getReceiverType()
             )
             ->getValues()
         ;

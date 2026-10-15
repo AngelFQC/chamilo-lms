@@ -30,6 +30,13 @@ use const PATHINFO_FILENAME;
 final class InstallerGate
 {
     /**
+     * Name of the file an administrator creates in the project root to authorise an
+     * upgrade. It sits outside the document root on purpose: nobody can probe over HTTP
+     * whether a platform is currently open for upgrading.
+     */
+    public const string UPGRADE_FLAG_FILE = 'UPGRADE_ENABLED';
+
+    /**
      * Tables that prove the platform already holds its configuration. The 1.11.x name
      * comes second: that branch stores its settings in `settings_current`, and 2.x and
      * later store them in `settings`.
@@ -48,13 +55,6 @@ final class InstallerGate
     private const string METADATA_TABLE = 'version';
 
     private const array METADATA_COLUMNS = ['version', 'executed_at', 'execution_time'];
-
-    /**
-     * Name of the file an administrator creates in the project root to authorise an
-     * upgrade. It sits outside the document root on purpose: nobody can probe over HTTP
-     * whether a platform is currently open for upgrading.
-     */
-    public const string UPGRADE_FLAG_FILE = 'UPGRADE_ENABLED';
 
     /**
      * Resolves what the installer may do for the given environment and database.

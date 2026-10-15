@@ -21,7 +21,9 @@ use Symfony\Bundle\SecurityBundle\Security;
 use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
-/** @implements ProviderInterface<ToolboxItem> */
+/**
+ * @implements ProviderInterface<ToolboxItem>
+ */
 final readonly class ToolboxItemProvider implements ProviderInterface
 {
     use ToolboxAccessHelperTrait;

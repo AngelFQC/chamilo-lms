@@ -80,6 +80,11 @@ class Portfolio extends AbstractResource implements ExtraFieldItemInterface, Res
         $this->duplicates = new ArrayCollection();
     }
 
+    public function __toString(): string
+    {
+        return $this->getTitle();
+    }
+
     public function getContent(): string
     {
         return $this->content;
@@ -246,10 +251,10 @@ class Portfolio extends AbstractResource implements ExtraFieldItemInterface, Res
     public function isDuplicatedInSession(Session $session): bool
     {
         return $this->duplicates
-            ->exists(function ($key, Portfolio $duplicated) use ($session) {
+            ->exists(static function ($key, Portfolio $duplicated) use ($session) {
                 return $duplicated->getResourceNode()
                     ->getResourceLinks()
-                    ->exists(function ($key, ResourceLink $resourceLink) use ($session) {
+                    ->exists(static function ($key, ResourceLink $resourceLink) use ($session) {
                         return null !== $resourceLink->getCourse()
                             && $resourceLink->getSession()
                             && $session->getId() === $resourceLink->getSession()->getId();
@@ -267,10 +272,10 @@ class Portfolio extends AbstractResource implements ExtraFieldItemInterface, Res
     public function isDuplicatedInSessionId(int $sessionId): bool
     {
         return $this->duplicates
-            ->exists(function ($key, Portfolio $duplicated) use ($sessionId) {
+            ->exists(static function ($key, Portfolio $duplicated) use ($sessionId) {
                 return $duplicated->getResourceNode()
                     ->getResourceLinks()
-                    ->exists(function ($key, ResourceLink $resourceLink) use ($sessionId) {
+                    ->exists(static function ($key, ResourceLink $resourceLink) use ($sessionId) {
                         return null !== $resourceLink->getCourse()
                             && $resourceLink->getSession()
                             && $sessionId === $resourceLink->getSession()->getId();
@@ -340,11 +345,6 @@ class Portfolio extends AbstractResource implements ExtraFieldItemInterface, Res
     public function setResourceName(string $name): static
     {
         return $this->setTitle($name);
-    }
-
-    public function __toString(): string
-    {
-        return $this->getTitle();
     }
 
     public function getResourceIdentifier(): int

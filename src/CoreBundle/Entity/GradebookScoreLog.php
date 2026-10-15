@@ -97,8 +97,6 @@ class GradebookScoreLog
     }
 
     /**
-     * Get the id.
-     *
      * @return int
      */
     public function getId()

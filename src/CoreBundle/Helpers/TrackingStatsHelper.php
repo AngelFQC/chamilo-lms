@@ -131,26 +131,6 @@ class TrackingStatsHelper
     }
 
     /**
-     * Build a public URL from a stored certificate path (legacy-compatible).
-     * Return null if you prefer serving it through a Symfony controller.
-     */
-    private function buildCertificateUrlFromPath(?string $path): ?string
-    {
-        // Expected legacy format: "<hash>.html" placed under a public "certificates/" path.
-        if (!$path) {
-            return null;
-        }
-
-        $hash = pathinfo($path, PATHINFO_FILENAME);
-        if (!$hash) {
-            return null;
-        }
-
-        // If you have a Symfony route, replace the line below with $router->generate(...).
-        return '/certificates/'.$hash.'.html';
-    }
-
-    /**
      * Global gradebook score for a user within a course/session.
      *
      * Uses the same dynamic calculation as the legacy gradebook flat view
@@ -219,23 +199,6 @@ class TrackingStatsHelper
         }
 
         return ['avg' => round($sumPct / $n, 2, PHP_ROUND_HALF_UP), 'participants' => $n];
-    }
-
-    /**
-     * User's average score (0..100) across LP tests/SCOs in a course/session.
-     * Thin wrapper around legacy Tracking::get_avg_student_score.
-     */
-    private function getUserAvgExerciseScore(User $user, Course $course, ?Session $session): float
-    {
-        // Uses the legacy method (as seen in myStudents).
-        $pct = Tracking::get_avg_student_score(
-            $user->getId(),
-            $course,
-            [],
-            $session
-        );
-
-        return is_numeric($pct) ? (float) $pct : 0.0;
     }
 
     public function getCourseAverageProgress(Course $course, ?Session $session): array
@@ -307,6 +270,43 @@ class TrackingStatsHelper
         }
 
         return ['avg' => round($totalAvg / $n, 2, PHP_ROUND_HALF_UP), 'participants' => $n];
+    }
+
+    /**
+     * Build a public URL from a stored certificate path (legacy-compatible).
+     * Return null if you prefer serving it through a Symfony controller.
+     */
+    private function buildCertificateUrlFromPath(?string $path): ?string
+    {
+        // Expected legacy format: "<hash>.html" placed under a public "certificates/" path.
+        if (!$path) {
+            return null;
+        }
+
+        $hash = pathinfo($path, PATHINFO_FILENAME);
+        if (!$hash) {
+            return null;
+        }
+
+        // If you have a Symfony route, replace the line below with $router->generate(...).
+        return '/certificates/'.$hash.'.html';
+    }
+
+    /**
+     * User's average score (0..100) across LP tests/SCOs in a course/session.
+     * Thin wrapper around legacy Tracking::get_avg_student_score.
+     */
+    private function getUserAvgExerciseScore(User $user, Course $course, ?Session $session): float
+    {
+        // Uses the legacy method (as seen in myStudents).
+        $pct = Tracking::get_avg_student_score(
+            $user->getId(),
+            $course,
+            [],
+            $session
+        );
+
+        return is_numeric($pct) ? (float) $pct : 0.0;
     }
 
     /**

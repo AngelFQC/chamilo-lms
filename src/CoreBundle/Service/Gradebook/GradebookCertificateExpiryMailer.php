@@ -92,13 +92,6 @@ final readonly class GradebookCertificateExpiryMailer
         ]);
     }
 
-    private function templateFor(CertificateExpiryNotificationType $type): string
-    {
-        return CertificateExpiryNotificationType::EXPIRED === $type
-            ? '@ChamiloCore/Mailer/GradebookCertificate/expiry_expired.html.twig'
-            : '@ChamiloCore/Mailer/GradebookCertificate/expiry_about_to_expire.html.twig';
-    }
-
     public function send(User $learner, string $subject, string $body): void
     {
         $email = (new Email())
@@ -109,5 +102,12 @@ final readonly class GradebookCertificateExpiryMailer
         ;
 
         $this->mailer->send($email);
+    }
+
+    private function templateFor(CertificateExpiryNotificationType $type): string
+    {
+        return CertificateExpiryNotificationType::EXPIRED === $type
+            ? '@ChamiloCore/Mailer/GradebookCertificate/expiry_expired.html.twig'
+            : '@ChamiloCore/Mailer/GradebookCertificate/expiry_about_to_expire.html.twig';
     }
 }

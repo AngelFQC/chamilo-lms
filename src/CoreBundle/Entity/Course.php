@@ -67,13 +67,11 @@ use const SORT_NATURAL;
 #[ApiFilter(
     filterClass: SearchFilter::class,
     properties: ['title' => 'partial', 'code' => 'partial', 'categories' => 'exact']
-)
-]
+)]
 #[ApiFilter(
     filterClass: OrderFilter::class,
     properties: ['id', 'title']
-)
-]
+)]
 #[ORM\Table(name: 'course')]
 #[ORM\Index(columns: ['sticky'], name: 'idx_course_sticky')]
 #[UniqueEntity('code')]
@@ -391,6 +389,11 @@ class Course extends AbstractResource implements ResourceInterface, ResourceWith
         $this->sticky = false;
     }
 
+    public function __toString(): string
+    {
+        return $this->getTitle();
+    }
+
     public static function getStatusList(): array
     {
         return [
@@ -411,11 +414,6 @@ class Course extends AbstractResource implements ResourceInterface, ResourceWith
     public function getAllowSelfSignup(): bool
     {
         return self::REGISTERED !== $this->visibility;
-    }
-
-    public function __toString(): string
-    {
-        return $this->getTitle();
     }
 
     public function getTitle(): string
@@ -473,7 +471,7 @@ class Course extends AbstractResource implements ResourceInterface, ResourceWith
         }
 
         $matching = $users->filter(
-            fn (CourseRelUser $subscription) => $subscription->getUser()->getId() === $user->getId()
+            static fn (CourseRelUser $subscription) => $subscription->getUser()->getId() === $user->getId()
         );
 
         return $matching->count() > 0 ? $matching->first() : null;
@@ -577,7 +575,7 @@ class Course extends AbstractResource implements ResourceInterface, ResourceWith
         }
 
         $matching = $users->filter(
-            fn (CourseRelUser $subscription) => $subscription->getUser()->getId() === $user->getId()
+            static fn (CourseRelUser $subscription) => $subscription->getUser()->getId() === $user->getId()
         );
 
         return $matching->count() > 0;

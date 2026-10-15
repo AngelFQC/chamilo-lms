@@ -195,7 +195,8 @@ WHERE filetype = 'file'
   AND iid > :lastIid
 ORDER BY iid
 LIMIT %d
-SQL,
+SQL
+                    ,
                     self::DOCUMENT_BATCH_SIZE
                 ),
                 ['lastIid' => $lastIid]

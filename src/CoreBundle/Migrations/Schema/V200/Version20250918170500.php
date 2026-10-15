@@ -56,6 +56,14 @@ final class Version20250918170500 extends AbstractMigrationChamilo
         }
     }
 
+    public function down(Schema $schema): void
+    {
+        // Drop unique index + FK + column (best-effort rollback)
+        $this->addSql('DROP INDEX UNIQ_4D71B46C1BAD783F ON c_dropbox_file');
+        $this->addSql('ALTER TABLE c_dropbox_file DROP FOREIGN KEY FK_4D71B46C1BAD783F');
+        $this->addSql('ALTER TABLE c_dropbox_file DROP COLUMN resource_node_id');
+    }
+
     private function foreignKeyExists(AbstractSchemaManager $sm, string $tableName, string $fkName): bool
     {
         foreach ($sm->listTableForeignKeys($tableName) as $fk) {
@@ -76,13 +84,5 @@ final class Version20250918170500 extends AbstractMigrationChamilo
         }
 
         return false;
-    }
-
-    public function down(Schema $schema): void
-    {
-        // Drop unique index + FK + column (best-effort rollback)
-        $this->addSql('DROP INDEX UNIQ_4D71B46C1BAD783F ON c_dropbox_file');
-        $this->addSql('ALTER TABLE c_dropbox_file DROP FOREIGN KEY FK_4D71B46C1BAD783F');
-        $this->addSql('ALTER TABLE c_dropbox_file DROP COLUMN resource_node_id');
     }
 }

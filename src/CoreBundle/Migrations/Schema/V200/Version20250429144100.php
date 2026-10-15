@@ -111,6 +111,8 @@ final class Version20250429144100 extends AbstractMigrationChamilo
         $this->log('Finished SCORM migration.');
     }
 
+    public function down(Schema $schema): void {}
+
     private function zipFolder(string $folderPath, string $zipPath): void
     {
         $zip = new ZipArchive();
@@ -138,6 +140,4 @@ final class Version20250429144100 extends AbstractMigrationChamilo
     {
         error_log('[SCORM Migration] '.$message);
     }
-
-    public function down(Schema $schema): void {}
 }

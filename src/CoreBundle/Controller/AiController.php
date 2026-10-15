@@ -72,7 +72,6 @@ use const PHP_URL_QUERY;
 #[Route('/ai')]
 class AiController extends AbstractController
 {
-    private bool $debug = false;
     private const string ACTIVE_MEDIA_PROVIDER_SESSION_PREFIX = 'ai_media_active_provider_';
     private const int LP_LEARNING_HELPER_MAX_SELECTED_TEXT_LENGTH = 5000;
     private const array LP_LEARNING_HELPER_METHODS = [
@@ -88,6 +87,7 @@ class AiController extends AbstractController
         'interleaved_learning',
         'memory_palace',
     ];
+    private bool $debug = false;
 
     public function __construct(
         private readonly AiProviderFactory $aiProviderFactory,
@@ -2294,104 +2294,6 @@ class AiController extends AbstractController
         }
     }
 
-    /**
-     * Builds the full prompt sent to the AI model: course title, first course description
-     * entry, and the current color theme are included as guidelines, on top of the
-     * illustration-style instructions the user typed in the modal.
-     */
-    private function buildCoursePicturePrompt(Course $course, string $userPrompt): string
-    {
-        $parts = [
-            'Create a flat-design digital illustration to use as a course thumbnail in an online course catalog, '
-            .'widescreen landscape orientation (16:9).',
-            'Depict the subject conceptually and abstractly, in a clean modern vector-illustration style with soft '
-            .'shapes; do not depict photorealistic people.',
-            'Do not include any readable text, letters, numbers, or logos anywhere in the image.',
-            'Center the main subject with clear space near all four edges, since the image will be cropped to a '
-            .'widescreen thumbnail.',
-            \sprintf('Course title: "%s".', $course->getTitle()),
-        ];
-
-        $description = $this->firstCourseDescriptionText($course);
-        if ('' !== $description) {
-            $parts[] = \sprintf('Course description, to use as context for the topic: "%s".', $description);
-        }
-
-        $colorGuideline = $this->buildColorGuidelineFromCurrentTheme();
-        if ('' !== $colorGuideline) {
-            $parts[] = \sprintf('Use these colors as accents in the illustration palette: %s.', $colorGuideline);
-        }
-
-        $parts[] = \sprintf('Illustration instructions: %s', $userPrompt);
-
-        return implode(' ', $parts);
-    }
-
-    private function firstCourseDescriptionText(Course $course): string
-    {
-        $descriptions = $this->courseDescriptionRepository->findAllInCourse($course);
-        $first = $descriptions[0] ?? null;
-
-        if (null === $first) {
-            return '';
-        }
-
-        $text = trim(strip_tags((string) $first->getContent()));
-
-        if (mb_strlen($text) > 500) {
-            $text = mb_substr($text, 0, 500).'...';
-        }
-
-        return $text;
-    }
-
-    private function buildColorGuidelineFromCurrentTheme(): string
-    {
-        /** @var AccessUrlRelColorTheme|null $activeRel */
-        $activeRel = $this->em->getRepository(AccessUrlRelColorTheme::class)->findOneBy([
-            'url' => api_get_current_access_url_id(),
-            'active' => true,
-        ]);
-
-        $colorTheme = $activeRel?->getColorTheme();
-        if (null === $colorTheme) {
-            return '';
-        }
-
-        $variables = $colorTheme->getVariables();
-        $labelsByVariable = [
-            '--color-primary-base' => 'primary',
-            '--color-secondary-base' => 'secondary',
-            '--color-tertiary-base' => 'tertiary',
-        ];
-
-        $parts = [];
-        foreach ($labelsByVariable as $cssVariable => $label) {
-            $hex = $this->rgbTripletToHex((string) ($variables[$cssVariable] ?? ''));
-            if (null !== $hex) {
-                $parts[] = $label.' '.$hex;
-            }
-        }
-
-        return implode(', ', $parts);
-    }
-
-    private function rgbTripletToHex(string $triplet): ?string
-    {
-        $components = preg_split('/\s+/', trim($triplet));
-        if (!\is_array($components) || 3 !== \count($components)) {
-            return null;
-        }
-
-        foreach ($components as $component) {
-            if (!is_numeric($component)) {
-                return null;
-            }
-        }
-
-        return \sprintf('#%02X%02X%02X', (int) $components[0], (int) $components[1], (int) $components[2]);
-    }
-
     #[Route('/generate_video', name: 'chamilo_core_ai_generate_video', methods: ['POST'])]
     public function generateVideo(Request $request): JsonResponse
     {
@@ -2638,7 +2540,7 @@ class AiController extends AbstractController
 
             $result['is_base64'] = (bool) ($result['is_base64'] ?? false);
             $result['content_type'] = (string) ($result['content_type'] ?? 'video/mp4');
-            $result['revised_prompt'] = $result['revised_prompt'] ?? null;
+            $result['revised_prompt'] ??= null;
 
             $text = '';
             if (isset($result['url']) && \is_string($result['url']) && '' !== trim($result['url'])) {
@@ -3171,6 +3073,104 @@ class AiController extends AbstractController
                 'text' => $this->debug ? $e->getMessage() : 'Failed to save answer to inbox.',
             ], 500);
         }
+    }
+
+    /**
+     * Builds the full prompt sent to the AI model: course title, first course description
+     * entry, and the current color theme are included as guidelines, on top of the
+     * illustration-style instructions the user typed in the modal.
+     */
+    private function buildCoursePicturePrompt(Course $course, string $userPrompt): string
+    {
+        $parts = [
+            'Create a flat-design digital illustration to use as a course thumbnail in an online course catalog, '
+            .'widescreen landscape orientation (16:9).',
+            'Depict the subject conceptually and abstractly, in a clean modern vector-illustration style with soft '
+            .'shapes; do not depict photorealistic people.',
+            'Do not include any readable text, letters, numbers, or logos anywhere in the image.',
+            'Center the main subject with clear space near all four edges, since the image will be cropped to a '
+            .'widescreen thumbnail.',
+            \sprintf('Course title: "%s".', $course->getTitle()),
+        ];
+
+        $description = $this->firstCourseDescriptionText($course);
+        if ('' !== $description) {
+            $parts[] = \sprintf('Course description, to use as context for the topic: "%s".', $description);
+        }
+
+        $colorGuideline = $this->buildColorGuidelineFromCurrentTheme();
+        if ('' !== $colorGuideline) {
+            $parts[] = \sprintf('Use these colors as accents in the illustration palette: %s.', $colorGuideline);
+        }
+
+        $parts[] = \sprintf('Illustration instructions: %s', $userPrompt);
+
+        return implode(' ', $parts);
+    }
+
+    private function firstCourseDescriptionText(Course $course): string
+    {
+        $descriptions = $this->courseDescriptionRepository->findAllInCourse($course);
+        $first = $descriptions[0] ?? null;
+
+        if (null === $first) {
+            return '';
+        }
+
+        $text = trim(strip_tags((string) $first->getContent()));
+
+        if (mb_strlen($text) > 500) {
+            $text = mb_substr($text, 0, 500).'...';
+        }
+
+        return $text;
+    }
+
+    private function buildColorGuidelineFromCurrentTheme(): string
+    {
+        /** @var AccessUrlRelColorTheme|null $activeRel */
+        $activeRel = $this->em->getRepository(AccessUrlRelColorTheme::class)->findOneBy([
+            'url' => api_get_current_access_url_id(),
+            'active' => true,
+        ]);
+
+        $colorTheme = $activeRel?->getColorTheme();
+        if (null === $colorTheme) {
+            return '';
+        }
+
+        $variables = $colorTheme->getVariables();
+        $labelsByVariable = [
+            '--color-primary-base' => 'primary',
+            '--color-secondary-base' => 'secondary',
+            '--color-tertiary-base' => 'tertiary',
+        ];
+
+        $parts = [];
+        foreach ($labelsByVariable as $cssVariable => $label) {
+            $hex = $this->rgbTripletToHex((string) ($variables[$cssVariable] ?? ''));
+            if (null !== $hex) {
+                $parts[] = $label.' '.$hex;
+            }
+        }
+
+        return implode(', ', $parts);
+    }
+
+    private function rgbTripletToHex(string $triplet): ?string
+    {
+        $components = preg_split('/\s+/', trim($triplet));
+        if (!\is_array($components) || 3 !== \count($components)) {
+            return null;
+        }
+
+        foreach ($components as $component) {
+            if (!is_numeric($component)) {
+                return null;
+            }
+        }
+
+        return \sprintf('#%02X%02X%02X', (int) $components[0], (int) $components[1], (int) $components[2]);
     }
 
     /**

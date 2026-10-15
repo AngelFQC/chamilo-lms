@@ -28,6 +28,9 @@ class ExternalTool extends AbstractResource implements ResourceInterface, Resour
     public const string V_1P1 = 'lti1p1';
     public const string V_1P3 = 'lti1p3';
 
+    #[ORM\Column(name: 'public_key', type: 'text', nullable: true)]
+    public ?string $publicKey = null;
+
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column(name: 'id', type: 'integer')]
@@ -38,9 +41,6 @@ class ExternalTool extends AbstractResource implements ResourceInterface, Resour
 
     #[ORM\Column(name: 'description', type: 'text', nullable: true)]
     protected ?string $description;
-
-    #[ORM\Column(name: 'public_key', type: 'text', nullable: true)]
-    public ?string $publicKey = null;
 
     #[ORM\Column(name: 'launch_url', type: 'string')]
     protected string $launchUrl;
@@ -554,8 +554,8 @@ class ExternalTool extends AbstractResource implements ResourceInterface, Resour
     public function getChildrenInCourses(array $coursesId): Collection
     {
         return $this->resourceNode->getChildren()->filter(
-            fn (ResourceNode $child) => $child->getResourceLinks()->exists(
-                fn (ResourceLink $link) => ($course = $link->getCourse()) && \in_array($course->getId(), $coursesId)
+            static fn (ResourceNode $child) => $child->getResourceLinks()->exists(
+                static fn (ResourceLink $link) => ($course = $link->getCourse()) && \in_array($course->getId(), $coursesId)
             )
         );
     }

@@ -26,97 +26,6 @@ final class CBlogRatingSecurityTest extends AbstractApiTest
 {
     use ChamiloTestTrait;
 
-    /**
-     * Builds a private course with a blog and a post, and two students of that course.
-     *
-     * @return array{course: Course, student: User, classmate: User, blog: CBlog, post: CBlogPost}
-     */
-    private function bootstrapCourse(string $suffix): array
-    {
-        /** @var CourseRepository $courseRepo */
-        $courseRepo = self::getContainer()->get(CourseRepository::class);
-
-        $course = $this->createCourse('Rating Sec Course '.$suffix);
-        $course->setVisibility(Course::REGISTERED);
-
-        $teacher = $this->createUser('rating_sec_teacher_'.$suffix);
-        $student = $this->createUser('rating_sec_student_'.$suffix);
-        $classmate = $this->createUser('rating_sec_classmate_'.$suffix);
-        $course->addUserAsTeacher($teacher);
-        $course->addUserAsStudent($student);
-        $course->addUserAsStudent($classmate);
-        $courseRepo->update($course);
-
-        $em = $this->getEntityManager();
-        $blog = (new CBlog())
-            ->setTitle('Rating Blog '.$suffix)
-            ->setBlogSubtitle('subtitle')
-            ->setParent($course)
-            ->setCreator($teacher)
-            ->addCourseLink($course)
-        ;
-        $em->persist($blog);
-        $em->flush();
-
-        $post = (new CBlogPost())
-            ->setTitle('Rating Post '.$suffix)
-            ->setFullText('Post body')
-            ->setBlog($blog)
-            ->setAuthor($teacher)
-        ;
-        $em->persist($post);
-        $em->flush();
-
-        return ['course' => $course, 'student' => $student, 'classmate' => $classmate, 'blog' => $blog, 'post' => $post];
-    }
-
-    private function createRating(CBlog $blog, CBlogPost $post, User $user, int $score = 3): CBlogRating
-    {
-        $rating = (new CBlogRating())
-            ->setBlog($blog)
-            ->setPost($post)
-            ->setUser($user)
-            ->setRating($score)
-        ;
-        $em = $this->getEntityManager();
-        $em->persist($rating);
-        $em->flush();
-
-        return $rating;
-    }
-
-    /**
-     * @param array<string, mixed> $json
-     */
-    private function request(User $user, string $method, string $uri, array $json = []): void
-    {
-        $options = [];
-        if ([] !== $json) {
-            $options['json'] = $json;
-            $options['headers'] = ['Content-Type' => 'PATCH' === $method ? 'application/merge-patch+json' : 'application/ld+json'];
-        }
-
-        $this->createClientWithCredentials($this->getUserTokenFromUser($user))->request($method, $uri, $options);
-    }
-
-    private function ratingPayload(CBlog $blog, CBlogPost $post, int $score = 5): array
-    {
-        return [
-            'ratingType' => 'post',
-            'rating' => $score,
-            'blog' => '/api/c_blogs/'.$blog->getIid(),
-            'post' => '/api/c_blog_posts/'.$post->getIid(),
-        ];
-    }
-
-    private function freshRating(CBlogRating $rating): ?CBlogRating
-    {
-        $em = $this->getEntityManager();
-        $em->clear();
-
-        return $em->getRepository(CBlogRating::class)->find($rating->getIid());
-    }
-
     public function testStudentRatingIsAttributedToTheAuthenticatedUserEvenIfAnotherOneIsSent(): void
     {
         $ctx = $this->bootstrapCourse('impersonate');
@@ -237,6 +146,97 @@ final class CBlogRatingSecurityTest extends AbstractApiTest
         $fresh = $this->freshRating($rating);
         $this->assertNotNull($fresh);
         $this->assertSame(2, $fresh->getRating());
+    }
+
+    /**
+     * Builds a private course with a blog and a post, and two students of that course.
+     *
+     * @return array{course: Course, student: User, classmate: User, blog: CBlog, post: CBlogPost}
+     */
+    private function bootstrapCourse(string $suffix): array
+    {
+        /** @var CourseRepository $courseRepo */
+        $courseRepo = self::getContainer()->get(CourseRepository::class);
+
+        $course = $this->createCourse('Rating Sec Course '.$suffix);
+        $course->setVisibility(Course::REGISTERED);
+
+        $teacher = $this->createUser('rating_sec_teacher_'.$suffix);
+        $student = $this->createUser('rating_sec_student_'.$suffix);
+        $classmate = $this->createUser('rating_sec_classmate_'.$suffix);
+        $course->addUserAsTeacher($teacher);
+        $course->addUserAsStudent($student);
+        $course->addUserAsStudent($classmate);
+        $courseRepo->update($course);
+
+        $em = $this->getEntityManager();
+        $blog = (new CBlog())
+            ->setTitle('Rating Blog '.$suffix)
+            ->setBlogSubtitle('subtitle')
+            ->setParent($course)
+            ->setCreator($teacher)
+            ->addCourseLink($course)
+        ;
+        $em->persist($blog);
+        $em->flush();
+
+        $post = (new CBlogPost())
+            ->setTitle('Rating Post '.$suffix)
+            ->setFullText('Post body')
+            ->setBlog($blog)
+            ->setAuthor($teacher)
+        ;
+        $em->persist($post);
+        $em->flush();
+
+        return ['course' => $course, 'student' => $student, 'classmate' => $classmate, 'blog' => $blog, 'post' => $post];
+    }
+
+    private function createRating(CBlog $blog, CBlogPost $post, User $user, int $score = 3): CBlogRating
+    {
+        $rating = (new CBlogRating())
+            ->setBlog($blog)
+            ->setPost($post)
+            ->setUser($user)
+            ->setRating($score)
+        ;
+        $em = $this->getEntityManager();
+        $em->persist($rating);
+        $em->flush();
+
+        return $rating;
+    }
+
+    /**
+     * @param array<string, mixed> $json
+     */
+    private function request(User $user, string $method, string $uri, array $json = []): void
+    {
+        $options = [];
+        if ([] !== $json) {
+            $options['json'] = $json;
+            $options['headers'] = ['Content-Type' => 'PATCH' === $method ? 'application/merge-patch+json' : 'application/ld+json'];
+        }
+
+        $this->createClientWithCredentials($this->getUserTokenFromUser($user))->request($method, $uri, $options);
+    }
+
+    private function ratingPayload(CBlog $blog, CBlogPost $post, int $score = 5): array
+    {
+        return [
+            'ratingType' => 'post',
+            'rating' => $score,
+            'blog' => '/api/c_blogs/'.$blog->getIid(),
+            'post' => '/api/c_blog_posts/'.$post->getIid(),
+        ];
+    }
+
+    private function freshRating(CBlogRating $rating): ?CBlogRating
+    {
+        $em = $this->getEntityManager();
+        $em->clear();
+
+        return $em->getRepository(CBlogRating::class)->find($rating->getIid());
     }
 
     private function getResponseStatusCode(): int

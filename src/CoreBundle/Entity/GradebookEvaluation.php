@@ -85,8 +85,6 @@ class GradebookEvaluation
     }
 
     /**
-     * Get title.
-     *
      * @return string
      */
     public function getTitle()
@@ -102,8 +100,6 @@ class GradebookEvaluation
     }
 
     /**
-     * Get description.
-     *
      * @return string
      */
     public function getDescription()
@@ -119,8 +115,6 @@ class GradebookEvaluation
     }
 
     /**
-     * Get createdAt.
-     *
      * @return DateTime
      */
     public function getCreatedAt()
@@ -136,8 +130,6 @@ class GradebookEvaluation
     }
 
     /**
-     * Get weight.
-     *
      * @return float
      */
     public function getWeight()
@@ -153,8 +145,6 @@ class GradebookEvaluation
     }
 
     /**
-     * Get max.
-     *
      * @return float
      */
     public function getMax()
@@ -170,8 +160,6 @@ class GradebookEvaluation
     }
 
     /**
-     * Get visible.
-     *
      * @return int
      */
     public function getVisible()
@@ -187,8 +175,6 @@ class GradebookEvaluation
     }
 
     /**
-     * Get type.
-     *
      * @return string
      */
     public function getType()
@@ -204,8 +190,6 @@ class GradebookEvaluation
     }
 
     /**
-     * Get locked.
-     *
      * @return int
      */
     public function getLocked()
@@ -221,8 +205,6 @@ class GradebookEvaluation
     }
 
     /**
-     * Get id.
-     *
      * @return int
      */
     public function getId()

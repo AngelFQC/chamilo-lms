@@ -38,8 +38,6 @@ class ChatVideo
     protected DateTime $datetime;
 
     /**
-     * Get fromUser.
-     *
      * @return int
      */
     public function getFromUser()
@@ -48,8 +46,6 @@ class ChatVideo
     }
 
     /**
-     * Set fromUser.
-     *
      * @return ChatVideo
      */
     public function setFromUser(int $fromUser)
@@ -60,8 +56,6 @@ class ChatVideo
     }
 
     /**
-     * Get toUser.
-     *
      * @return int
      */
     public function getToUser()
@@ -70,8 +64,6 @@ class ChatVideo
     }
 
     /**
-     * Set toUser.
-     *
      * @return ChatVideo
      */
     public function setToUser(int $toUser)
@@ -82,8 +74,6 @@ class ChatVideo
     }
 
     /**
-     * Get title.
-     *
      * @return string
      */
     public function getTitle()
@@ -92,8 +82,6 @@ class ChatVideo
     }
 
     /**
-     * Set title.
-     *
      * @return ChatVideo
      */
     public function setTitle(string $title)
@@ -104,8 +92,6 @@ class ChatVideo
     }
 
     /**
-     * Get datetime.
-     *
      * @return DateTime
      */
     public function getDatetime()
@@ -114,8 +100,6 @@ class ChatVideo
     }
 
     /**
-     * Set datetime.
-     *
      * @return ChatVideo
      */
     public function setDatetime(DateTime $datetime)
@@ -126,8 +110,6 @@ class ChatVideo
     }
 
     /**
-     * Get id.
-     *
      * @return int
      */
     public function getId()

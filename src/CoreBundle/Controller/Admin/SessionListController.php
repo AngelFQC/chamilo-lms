@@ -78,26 +78,6 @@ class SessionListController extends AbstractController
         private readonly EventDispatcherInterface $eventDispatcher,
     ) {}
 
-    private function resolvePlatformTimezone(): DateTimeZone
-    {
-        $tz = (string) ($this->settingsManager->getSetting('platform.timezone', false, 'timezones') ?? '');
-
-        try {
-            return new DateTimeZone('' !== $tz ? $tz : 'UTC');
-        } catch (Throwable) {
-            return new DateTimeZone('UTC');
-        }
-    }
-
-    private function formatSessionDate(?DateTime $date, DateTimeZone $tz): ?string
-    {
-        if (null === $date) {
-            return null;
-        }
-
-        return (clone $date)->setTimezone($tz)->format('Y-m-d H:i');
-    }
-
     #[Route('', name: 'admin_session_list_data', methods: ['GET'])]
     public function list(Request $request): JsonResponse
     {
@@ -403,6 +383,26 @@ class SessionListController extends AbstractController
             default:
                 return $this->json(['error' => 'Unknown action.'], 400);
         }
+    }
+
+    private function resolvePlatformTimezone(): DateTimeZone
+    {
+        $tz = (string) ($this->settingsManager->getSetting('platform.timezone', false, 'timezones') ?? '');
+
+        try {
+            return new DateTimeZone('' !== $tz ? $tz : 'UTC');
+        } catch (Throwable) {
+            return new DateTimeZone('UTC');
+        }
+    }
+
+    private function formatSessionDate(?DateTime $date, DateTimeZone $tz): ?string
+    {
+        if (null === $date) {
+            return null;
+        }
+
+        return (clone $date)->setTimezone($tz)->format('Y-m-d H:i');
     }
 
     /**

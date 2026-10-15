@@ -32,8 +32,6 @@ class CDropboxPerson
     protected int $userId;
 
     /**
-     * Set cId.
-     *
      * @return CDropboxPerson
      */
     public function setCId(int $cId)
@@ -44,8 +42,6 @@ class CDropboxPerson
     }
 
     /**
-     * Get cId.
-     *
      * @return int
      */
     public function getCId()
@@ -54,8 +50,6 @@ class CDropboxPerson
     }
 
     /**
-     * Set fileId.
-     *
      * @return CDropboxPerson
      */
     public function setFileId(int $fileId)
@@ -66,8 +60,6 @@ class CDropboxPerson
     }
 
     /**
-     * Get fileId.
-     *
      * @return int
      */
     public function getFileId()
@@ -76,8 +68,6 @@ class CDropboxPerson
     }
 
     /**
-     * Set userId.
-     *
      * @return CDropboxPerson
      */
     public function setUserId(int $userId)
@@ -88,8 +78,6 @@ class CDropboxPerson
     }
 
     /**
-     * Get userId.
-     *
      * @return int
      */
     public function getUserId()

@@ -49,8 +49,6 @@ class GradebookLinkevalLog
     protected DateTime $createdAt;
 
     /**
-     * Get idLinkevalLog.
-     *
      * @return int
      */
     public function getIdLinkevalLog()
@@ -59,8 +57,6 @@ class GradebookLinkevalLog
     }
 
     /**
-     * Set idLinkevalLog.
-     *
      * @return GradebookLinkevalLog
      */
     public function setIdLinkevalLog(int $idLinkevalLog)
@@ -71,8 +67,6 @@ class GradebookLinkevalLog
     }
 
     /**
-     * Get title.
-     *
      * @return string
      */
     public function getTitle()
@@ -88,8 +82,6 @@ class GradebookLinkevalLog
     }
 
     /**
-     * Get description.
-     *
      * @return string
      */
     public function getDescription()
@@ -105,8 +97,6 @@ class GradebookLinkevalLog
     }
 
     /**
-     * Get createdAt.
-     *
      * @return DateTime
      */
     public function getCreatedAt()
@@ -115,8 +105,6 @@ class GradebookLinkevalLog
     }
 
     /**
-     * Set createdAt.
-     *
      * @return GradebookLinkevalLog
      */
     public function setCreatedAt(DateTime $createdAt)
@@ -127,8 +115,6 @@ class GradebookLinkevalLog
     }
 
     /**
-     * Get weight.
-     *
      * @return int
      */
     public function getWeight()
@@ -137,8 +123,6 @@ class GradebookLinkevalLog
     }
 
     /**
-     * Set weight.
-     *
      * @return GradebookLinkevalLog
      */
     public function setWeight(int $weight)
@@ -149,8 +133,6 @@ class GradebookLinkevalLog
     }
 
     /**
-     * Get visible.
-     *
      * @return bool
      */
     public function getVisible()
@@ -159,8 +141,6 @@ class GradebookLinkevalLog
     }
 
     /**
-     * Set visible.
-     *
      * @return GradebookLinkevalLog
      */
     public function setVisible(bool $visible)
@@ -171,8 +151,6 @@ class GradebookLinkevalLog
     }
 
     /**
-     * Get type.
-     *
      * @return string
      */
     public function getType()
@@ -181,8 +159,6 @@ class GradebookLinkevalLog
     }
 
     /**
-     * Set type.
-     *
      * @return GradebookLinkevalLog
      */
     public function setType(string $type)
@@ -193,8 +169,6 @@ class GradebookLinkevalLog
     }
 
     /**
-     * Get id.
-     *
      * @return int
      */
     public function getId()

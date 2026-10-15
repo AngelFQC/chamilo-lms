@@ -829,6 +829,11 @@ class User implements UserInterface, EquatableInterface, ResourceInterface, Reso
         $this->authSources = new ArrayCollection();
     }
 
+    public function __toString(): string
+    {
+        return $this->username;
+    }
+
     public static function getPasswordConstraints(): array
     {
         return [
@@ -839,11 +844,6 @@ class User implements UserInterface, EquatableInterface, ResourceInterface, Reso
     }
 
     public static function loadValidatorMetadata(ClassMetadata $metadata): void {}
-
-    public function __toString(): string
-    {
-        return $this->username;
-    }
 
     public function getUuid(): Uuid
     {
@@ -2141,7 +2141,7 @@ class User implements UserInterface, EquatableInterface, ResourceInterface, Reso
         $subscriptions = $this->getSessionRelCourseRelUsers();
 
         return $subscriptions->matching($criteria)->map(
-            fn (SessionRelCourseRelUser $sessionRelCourseRelUser) => $sessionRelCourseRelUser->getSession()
+            static fn (SessionRelCourseRelUser $sessionRelCourseRelUser) => $sessionRelCourseRelUser->getSession()
         );
     }
 
@@ -2257,7 +2257,7 @@ class User implements UserInterface, EquatableInterface, ResourceInterface, Reso
         return $categoryCourses->isEmpty()
             ? 0
             : max(
-                $categoryCourses->map(fn ($courseRelUser) => $courseRelUser->getSort())->toArray()
+                $categoryCourses->map(static fn ($courseRelUser) => $courseRelUser->getSort())->toArray()
             );
     }
 
@@ -2265,7 +2265,7 @@ class User implements UserInterface, EquatableInterface, ResourceInterface, Reso
     {
         $friends = $this->getFriendsByRelationType($relationType);
 
-        return $friends->exists(fn (int $index, UserRelUser $userRelUser) => $userRelUser->getFriend() === $friend);
+        return $friends->exists(static fn (int $index, UserRelUser $userRelUser) => $userRelUser->getFriend() === $friend);
     }
 
     /**
@@ -2285,7 +2285,7 @@ class User implements UserInterface, EquatableInterface, ResourceInterface, Reso
     {
         return $this
             ->getFriendsWithMeByRelationType($relationType)
-            ->exists(fn (int $index, UserRelUser $userRelUser) => $userRelUser->getUser() === $friend)
+            ->exists(static fn (int $index, UserRelUser $userRelUser) => $userRelUser->getUser() === $friend)
         ;
     }
 
@@ -2356,7 +2356,7 @@ class User implements UserInterface, EquatableInterface, ResourceInterface, Reso
     public function getSocialPostFeedbackBySocialPost(SocialPost $post): ?SocialPostFeedback
     {
         $filtered = $this->getSocialPostsFeedbacks()->filter(
-            fn (SocialPostFeedback $postFeedback) => $postFeedback->getSocialPost() === $post
+            static fn (SocialPostFeedback $postFeedback) => $postFeedback->getSocialPost() === $post
         );
         if ($filtered->count() > 0) {
             return $filtered->first();
@@ -2437,7 +2437,7 @@ class User implements UserInterface, EquatableInterface, ResourceInterface, Reso
         }
 
         return array_values(array_filter(
-            $authSources->map(fn (UserAuthSource $authSource) => $authSource->getAuthentication())->toArray(),
+            $authSources->map(static fn (UserAuthSource $authSource) => $authSource->getAuthentication())->toArray(),
             static fn (?string $authentication): bool => null !== $authentication
         ));
     }
@@ -2474,7 +2474,7 @@ class User implements UserInterface, EquatableInterface, ResourceInterface, Reso
     public function getAuthSourceByAuthentication(string $authentication, AccessUrl $accessUrl): ?UserAuthSource
     {
         return $this->authSources->findFirst(
-            fn (int $index, UserAuthSource $authSource) => $authSource->getAuthentication() === $authentication
+            static fn (int $index, UserAuthSource $authSource) => $authSource->getAuthentication() === $authentication
                 && $authSource->getUrl()->getId() === $accessUrl->getId()
         );
     }
@@ -2492,7 +2492,7 @@ class User implements UserInterface, EquatableInterface, ResourceInterface, Reso
     public function hasAuthSourceByAuthentication(string $authentication): bool
     {
         return $this->authSources->exists(
-            fn ($key, $authSource) => $authSource instanceof UserAuthSource
+            static fn ($key, $authSource) => $authSource instanceof UserAuthSource
                 && $authSource->getAuthentication() === $authentication
         );
     }

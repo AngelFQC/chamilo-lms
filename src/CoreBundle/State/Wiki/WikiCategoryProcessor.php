@@ -24,7 +24,9 @@ use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Throwable;
 
-/** @implements ProcessorInterface<WikiCategoryInput, void> */
+/**
+ * @implements ProcessorInterface<WikiCategoryInput, void>
+ */
 final readonly class WikiCategoryProcessor implements ProcessorInterface
 {
     public function __construct(

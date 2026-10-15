@@ -39,8 +39,6 @@ class GradebookResult
     protected DateTime $createdAt;
 
     /**
-     * Get createdAt.
-     *
      * @return DateTime
      */
     public function getCreatedAt()
@@ -56,8 +54,6 @@ class GradebookResult
     }
 
     /**
-     * Get score.
-     *
      * @return float
      */
     public function getScore()
@@ -73,8 +69,6 @@ class GradebookResult
     }
 
     /**
-     * Get id.
-     *
      * @return int
      */
     public function getId()

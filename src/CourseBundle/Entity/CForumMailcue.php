@@ -34,8 +34,6 @@ class CForumMailcue
     protected int $postId;
 
     /**
-     * Set cId.
-     *
      * @return CForumMailcue
      */
     public function setCId(int $cId)
@@ -46,8 +44,6 @@ class CForumMailcue
     }
 
     /**
-     * Get cId.
-     *
      * @return int
      */
     public function getCId()
@@ -56,8 +52,6 @@ class CForumMailcue
     }
 
     /**
-     * Set threadId.
-     *
      * @return CForumMailcue
      */
     public function setThreadId(int $threadId)
@@ -68,8 +62,6 @@ class CForumMailcue
     }
 
     /**
-     * Get threadId.
-     *
      * @return int
      */
     public function getThreadId()
@@ -78,8 +70,6 @@ class CForumMailcue
     }
 
     /**
-     * Set userId.
-     *
      * @return CForumMailcue
      */
     public function setUserId(int $userId)
@@ -90,8 +80,6 @@ class CForumMailcue
     }
 
     /**
-     * Get userId.
-     *
      * @return int
      */
     public function getUserId()
@@ -100,8 +88,6 @@ class CForumMailcue
     }
 
     /**
-     * Set postId.
-     *
      * @return CForumMailcue
      */
     public function setPostId(int $postId)
@@ -112,8 +98,6 @@ class CForumMailcue
     }
 
     /**
-     * Get postId.
-     *
      * @return int
      */
     public function getPostId()

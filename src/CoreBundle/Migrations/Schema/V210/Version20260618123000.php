@@ -57,8 +57,8 @@ final class Version20260618123000 extends AbstractMigrationChamilo
     private function upsertProgressiveAdaptiveSetting(string $table): void
     {
         $this->addSql(
-            'INSERT INTO '.$table.' (variable, category, title, comment, selected_value, access_url_changeable) '.
-            'SELECT ?, ?, ?, ?, ?, 0 WHERE NOT EXISTS (SELECT 1 FROM '.$table.' WHERE variable = ?)',
+            'INSERT INTO '.$table.' (variable, category, title, comment, selected_value, access_url_changeable) '
+            .'SELECT ?, ?, ?, ?, ?, 0 WHERE NOT EXISTS (SELECT 1 FROM '.$table.' WHERE variable = ?)',
             [
                 'quiz_question_category_destinations',
                 'exercise',

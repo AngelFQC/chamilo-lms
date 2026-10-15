@@ -85,8 +85,8 @@ class ConvertToMultiUrlCommand extends Command
         /** @var AbstractSchemaManager $sm */
         $sm = $this->conn->createSchemaManager();
 
-        $exists = fn (string $table) => $sm->tablesExist([$table]);
-        $tableColumns = function (string $table) use ($sm, $exists): array {
+        $exists = static fn (string $table) => $sm->tablesExist([$table]);
+        $tableColumns = static function (string $table) use ($sm, $exists): array {
             if (!$exists($table)) {
                 return [];
             }

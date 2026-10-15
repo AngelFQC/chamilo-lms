@@ -55,7 +55,8 @@ WHERE lp.iid > :lastIid
   )
 ORDER BY lp.iid
 LIMIT %d
-SQL, self::SELECT_BATCH_SIZE),
+SQL
+                    , self::SELECT_BATCH_SIZE),
                 ['lastIid' => $lastIid]
             );
 

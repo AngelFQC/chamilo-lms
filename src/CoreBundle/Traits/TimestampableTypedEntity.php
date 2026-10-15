@@ -25,8 +25,6 @@ trait TimestampableTypedEntity
     protected DateTime $updatedAt;
 
     /**
-     * Sets createdAt.
-     *
      * @return $this
      */
     public function setCreatedAt(DateTime $createdAt)
@@ -47,8 +45,6 @@ trait TimestampableTypedEntity
     }
 
     /**
-     * Sets updatedAt.
-     *
      * @return $this
      */
     public function setUpdatedAt(DateTime $updatedAt)

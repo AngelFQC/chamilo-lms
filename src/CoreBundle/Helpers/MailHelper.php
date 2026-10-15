@@ -61,55 +61,6 @@ final class MailHelper
         return new Address((string) $fromEmail, (string) $fromName);
     }
 
-    /**
-     * Returns false when the platform has no usable sender address, so the caller
-     * can give up instead of letting Address reject an empty string.
-     */
-    private function setNoreplyAndFromAddress(
-        TemplatedEmail $email,
-        array $sender,
-        array $replyToAddress = []
-    ): bool {
-        $emailConstraint = new Assert\Email();
-
-        // Default values
-        $notification = new Notification();
-        $defaultSenderName = $notification->getDefaultPlatformSenderName();
-        $defaultSenderEmail = $notification->getDefaultPlatformSenderEmail();
-
-        // If the parameter is set, don't use the admin.
-        $senderName = !empty($sender['name']) ? $sender['name'] : $defaultSenderName;
-        $senderEmail = !empty($sender['email']) ? $sender['email'] : $defaultSenderEmail;
-
-        // Neither mail.mailer_from_email nor admin.administrator_email is set, which
-        // is the state of a database that never went through the installer. Note
-        // Assert\Email accepts the empty string, so it cannot answer this on its own.
-        if (!api_valid_email((string) $senderEmail)) {
-            return false;
-        }
-
-        $adminEmail = $this->settingsManager->getSetting('admin.administrator_email', true);
-        $adminEmailValidation = $this->validator->validate($adminEmail, $emailConstraint);
-
-        if (!empty($adminEmail) && 0 === $adminEmailValidation->count()) {
-            $email
-                ->getHeaders()
-                ->addIdHeader('Errors-To', $adminEmail)
-            ;
-        }
-
-        // Reply to first
-        if (!empty($replyToAddress) && isset($replyToAddress['mail'], $replyToAddress['name'])) {
-            if (api_valid_email((string) $replyToAddress['mail'])) {
-                $email->addReplyTo(new Address($replyToAddress['mail'], $replyToAddress['name']));
-            }
-        }
-
-        $email->from(new Address($senderEmail, $senderName));
-
-        return true;
-    }
-
     public function send(
         string $recipientName,
         string $recipientEmail,
@@ -170,8 +121,8 @@ final class MailHelper
             // Attachment (supports single/multiple, and legacy/new payloads)
             if (!empty($data_file)) {
                 // Normalize: allow a single attachment array instead of a list
-                $isSingleAttachment =
-                    \is_array($data_file)
+                $isSingleAttachment
+                    = \is_array($data_file)
                     && (\array_key_exists('path', $data_file) || \array_key_exists('stream', $data_file))
                     && !array_is_list($data_file);
 
@@ -315,6 +266,55 @@ final class MailHelper
 
             return false;
         }
+    }
+
+    /**
+     * Returns false when the platform has no usable sender address, so the caller
+     * can give up instead of letting Address reject an empty string.
+     */
+    private function setNoreplyAndFromAddress(
+        TemplatedEmail $email,
+        array $sender,
+        array $replyToAddress = []
+    ): bool {
+        $emailConstraint = new Assert\Email();
+
+        // Default values
+        $notification = new Notification();
+        $defaultSenderName = $notification->getDefaultPlatformSenderName();
+        $defaultSenderEmail = $notification->getDefaultPlatformSenderEmail();
+
+        // If the parameter is set, don't use the admin.
+        $senderName = !empty($sender['name']) ? $sender['name'] : $defaultSenderName;
+        $senderEmail = !empty($sender['email']) ? $sender['email'] : $defaultSenderEmail;
+
+        // Neither mail.mailer_from_email nor admin.administrator_email is set, which
+        // is the state of a database that never went through the installer. Note
+        // Assert\Email accepts the empty string, so it cannot answer this on its own.
+        if (!api_valid_email((string) $senderEmail)) {
+            return false;
+        }
+
+        $adminEmail = $this->settingsManager->getSetting('admin.administrator_email', true);
+        $adminEmailValidation = $this->validator->validate($adminEmail, $emailConstraint);
+
+        if (!empty($adminEmail) && 0 === $adminEmailValidation->count()) {
+            $email
+                ->getHeaders()
+                ->addIdHeader('Errors-To', $adminEmail)
+            ;
+        }
+
+        // Reply to first
+        if (!empty($replyToAddress) && isset($replyToAddress['mail'], $replyToAddress['name'])) {
+            if (api_valid_email((string) $replyToAddress['mail'])) {
+                $email->addReplyTo(new Address($replyToAddress['mail'], $replyToAddress['name']));
+            }
+        }
+
+        $email->from(new Address($senderEmail, $senderName));
+
+        return true;
     }
 
     private function getMailerCharset(): string

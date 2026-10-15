@@ -155,8 +155,6 @@ class CourseCategory implements Stringable
     }
 
     /**
-     * Get id.
-     *
      * @return int
      */
     public function getId()
@@ -205,8 +203,6 @@ class CourseCategory implements Stringable
     }
 
     /**
-     * Get code.
-     *
      * @return string
      */
     public function getCode()
@@ -222,8 +218,6 @@ class CourseCategory implements Stringable
     }
 
     /**
-     * Get treePos.
-     *
      * @return int
      */
     public function getTreePos()
@@ -239,8 +233,6 @@ class CourseCategory implements Stringable
     }
 
     /**
-     * Get childrenCount.
-     *
      * @return int
      */
     public function getChildrenCount()

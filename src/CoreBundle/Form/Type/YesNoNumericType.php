@@ -33,10 +33,10 @@ class YesNoNumericType extends AbstractType
     {
         $builder->addModelTransformer(
             new CallbackTransformer(
-                function ($value) {
+                static function ($value) {
                     return (int) $value;
                 },
-                function ($value) {
+                static function ($value) {
                     return (string) $value;
                 }
             )

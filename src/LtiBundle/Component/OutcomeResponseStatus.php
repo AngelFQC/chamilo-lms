@@ -28,8 +28,6 @@ class OutcomeResponseStatus
     private string $description = '';
 
     /**
-     * Get codeMajor.
-     *
      * @return string
      */
     public function getCodeMajor()
@@ -38,8 +36,6 @@ class OutcomeResponseStatus
     }
 
     /**
-     * Set codeMajor.
-     *
      * @param string $codeMajor
      *
      * @return OutcomeResponseStatus
@@ -52,8 +48,6 @@ class OutcomeResponseStatus
     }
 
     /**
-     * Get severity.
-     *
      * @return string
      */
     public function getSeverity()
@@ -62,8 +56,6 @@ class OutcomeResponseStatus
     }
 
     /**
-     * Set severity.
-     *
      * @param string $severity
      *
      * @return OutcomeResponseStatus
@@ -76,8 +68,6 @@ class OutcomeResponseStatus
     }
 
     /**
-     * Get messageRefIdentifier.
-     *
      * @return int
      */
     public function getMessageRefIdentifier()
@@ -86,8 +76,6 @@ class OutcomeResponseStatus
     }
 
     /**
-     * Set messageRefIdentifier.
-     *
      * @param int $messageRefIdentifier
      *
      * @return OutcomeResponseStatus
@@ -100,8 +88,6 @@ class OutcomeResponseStatus
     }
 
     /**
-     * Get operationRefIdentifier.
-     *
      * @return int
      */
     public function getOperationRefIdentifier()
@@ -110,8 +96,6 @@ class OutcomeResponseStatus
     }
 
     /**
-     * Set operationRefIdentifier.
-     *
      * @param int $operationRefIdentifier
      *
      * @return OutcomeResponseStatus
@@ -124,8 +108,6 @@ class OutcomeResponseStatus
     }
 
     /**
-     * Get description.
-     *
      * @return string
      */
     public function getDescription()
@@ -134,8 +116,6 @@ class OutcomeResponseStatus
     }
 
     /**
-     * Set description.
-     *
      * @param string $description
      *
      * @return OutcomeResponseStatus

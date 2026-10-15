@@ -102,14 +102,6 @@ class ResourceNodeVoter extends Voter
         return $subject instanceof ResourceNode;
     }
 
-    // Context roles (ROLE_CURRENT_COURSE_*) live in User::$temporaryRoles and appear in
-    // $user->getRoles(), but Symfony's AbstractToken::getRoleNames() only returns roles
-    // fixed at token-creation time. isGranted() therefore misses them.
-    private function hasContextRole(string $role): bool
-    {
-        return \in_array($role, $this->security->getUser()?->getRoles() ?? [], true);
-    }
-
     protected function voteOnAttribute(string $attribute, $subject, TokenInterface $token, ?Vote $vote = null): bool
     {
         /** @var ResourceNode $resourceNode */
@@ -514,6 +506,14 @@ class ResourceNodeVoter extends Voter
         }
 
         return $this->resourceAclHelper->isAllowed($attribute, $link, $rights);
+    }
+
+    // Context roles (ROLE_CURRENT_COURSE_*) live in User::$temporaryRoles and appear in
+    // $user->getRoles(), but Symfony's AbstractToken::getRoleNames() only returns roles
+    // fixed at token-creation time. isGranted() therefore misses them.
+    private function hasContextRole(string $role): bool
+    {
+        return \in_array($role, $this->security->getUser()?->getRoles() ?? [], true);
     }
 
     /**

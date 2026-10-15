@@ -26,8 +26,8 @@ class MessageTagRepositoryTest extends AbstractApiTest
         $testUser = $this->createUser('test');
 
         // Create tag.
-        $tag =
-            (new MessageTag())
+        $tag
+            = (new MessageTag())
                 ->setTag('my tag')
                 ->setColor('red')
                 ->setUser($testUser)
@@ -56,8 +56,8 @@ class MessageTagRepositoryTest extends AbstractApiTest
         $testUser = $this->createUser('test');
 
         // Create first tag.
-        $tag =
-            (new MessageTag())
+        $tag
+            = (new MessageTag())
                 ->setTag('tag 1')
                 ->setUser($testUser)
         ;
@@ -66,8 +66,8 @@ class MessageTagRepositoryTest extends AbstractApiTest
         $this->assertSame(0, $tag->getPosition());
 
         // Create second tag
-        $tag2 =
-            (new MessageTag())
+        $tag2
+            = (new MessageTag())
                 ->setTag('tag 2')
                 ->setUser($testUser)
         ;
@@ -88,8 +88,8 @@ class MessageTagRepositoryTest extends AbstractApiTest
         $testUser = $this->createUser('test');
 
         // Create first tag.
-        $tag =
-            (new MessageTag())
+        $tag
+            = (new MessageTag())
                 ->setTag('unique')
                 ->setUser($testUser)
         ;
@@ -97,8 +97,8 @@ class MessageTagRepositoryTest extends AbstractApiTest
         $tagRepo->update($tag);
 
         // Create second tag, with same name + same user, should fail.
-        $tag =
-            (new MessageTag())
+        $tag
+            = (new MessageTag())
                 ->setTag('unique')
                 ->setUser($testUser)
         ;

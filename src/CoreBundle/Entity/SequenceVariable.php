@@ -29,8 +29,6 @@ class SequenceVariable
     protected ?string $defaultValue = null;
 
     /**
-     * Get id.
-     *
      * @return int
      */
     public function getId()

@@ -94,8 +94,6 @@ class CNotebook extends AbstractResource implements ResourceInterface, Stringabl
     }
 
     /**
-     * Get description.
-     *
      * @return string
      */
     public function getDescription()
@@ -111,8 +109,6 @@ class CNotebook extends AbstractResource implements ResourceInterface, Stringabl
     }
 
     /**
-     * Get creationDate.
-     *
      * @return DateTime
      */
     public function getCreationDate()
@@ -128,8 +124,6 @@ class CNotebook extends AbstractResource implements ResourceInterface, Stringabl
     }
 
     /**
-     * Get updateDate.
-     *
      * @return DateTime
      */
     public function getUpdateDate()
@@ -145,8 +139,6 @@ class CNotebook extends AbstractResource implements ResourceInterface, Stringabl
     }
 
     /**
-     * Get status.
-     *
      * @return int
      */
     public function getStatus()
@@ -154,9 +146,6 @@ class CNotebook extends AbstractResource implements ResourceInterface, Stringabl
         return $this->status;
     }
 
-    /**
-     * Get iid.
-     */
     public function getIid(): ?int
     {
         return $this->iid;

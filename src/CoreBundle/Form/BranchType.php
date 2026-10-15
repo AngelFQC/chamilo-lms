@@ -19,7 +19,6 @@ use Symfony\Component\OptionsResolver\OptionsResolver;
 class BranchType extends AbstractType
 {
     /**
-     * Builds the form
      * For form type details see:
      * http://symfony.com/doc/current/reference/forms/types.html.
      */

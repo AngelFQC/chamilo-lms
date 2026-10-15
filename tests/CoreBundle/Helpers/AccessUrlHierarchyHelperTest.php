@@ -22,23 +22,6 @@ class AccessUrlHierarchyHelperTest extends KernelTestCase
 {
     use ChamiloTestTrait;
 
-    private function createChildUrl(AccessUrl $parent, string $url): AccessUrl
-    {
-        /** @var AccessUrlRepository $urlRepo */
-        $urlRepo = static::getContainer()->get(AccessUrlRepository::class);
-        $admin = $this->getAdmin();
-
-        $child = (new AccessUrl())
-            ->setUrl($url)
-            ->setActive(1)
-            ->setCreator($admin)
-            ->setSuperior($parent)
-        ;
-        $urlRepo->create($child);
-
-        return $child;
-    }
-
     public function testOrdersParentBeforeChildrenAlphabeticallyAmongSiblings(): void
     {
         self::bootKernel();
@@ -82,5 +65,22 @@ class AccessUrlHierarchyHelperTest extends KernelTestCase
 
         $this->assertSame([$child->getId(), $grandchild->getId()], array_map(static fn (array $entry): int => $entry['url']->getId(), $ordered));
         $this->assertSame([0, 1], array_map(static fn (array $entry): int => $entry['depth'], $ordered));
+    }
+
+    private function createChildUrl(AccessUrl $parent, string $url): AccessUrl
+    {
+        /** @var AccessUrlRepository $urlRepo */
+        $urlRepo = static::getContainer()->get(AccessUrlRepository::class);
+        $admin = $this->getAdmin();
+
+        $child = (new AccessUrl())
+            ->setUrl($url)
+            ->setActive(1)
+            ->setCreator($admin)
+            ->setSuperior($parent)
+        ;
+        $urlRepo->create($child);
+
+        return $child;
     }
 }

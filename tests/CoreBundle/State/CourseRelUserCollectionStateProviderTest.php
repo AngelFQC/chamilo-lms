@@ -31,6 +31,44 @@ class CourseRelUserCollectionStateProviderTest extends WebTestCase
 {
     use ChamiloTestTrait;
 
+    public function testScopedGlobalAdminOnlySeesSubscriptionsInTheirOwnSubtree(): void
+    {
+        $client = static::createClient();
+        $child = $this->createChildUrl();
+        $scopedAdmin = $this->createUserOnUrl('cruc_scoped_admin', $child, 'ROLE_GLOBAL_ADMIN');
+        $childCourse = $this->createCourseOnUrl('Cruc Child Course', $child);
+        $rootCourse = $this->createCourseOnUrl('Cruc Root Course', $this->getAccessUrl());
+        $childStudent = $this->createUserOnUrl('cruc_child_student', $child);
+
+        $this->subscribeUserToCourse($childStudent, $childCourse);
+        $this->subscribeUserToCourse($childStudent, $rootCourse);
+
+        $client->loginUser($scopedAdmin);
+        $courseIds = $this->courseIdsInCollection($client);
+
+        $this->assertContains($childCourse->getId(), $courseIds);
+        $this->assertNotContains($rootCourse->getId(), $courseIds);
+    }
+
+    public function testUnrestrictedGlobalAdminSeesSubscriptionsFromEveryUrl(): void
+    {
+        $client = static::createClient();
+        $child = $this->createChildUrl();
+        $rootAdmin = $this->createUserOnUrl('cruc_root_admin', $this->getAccessUrl(), 'ROLE_GLOBAL_ADMIN');
+        $childCourse = $this->createCourseOnUrl('Cruc Child Course 2', $child);
+        $rootCourse = $this->createCourseOnUrl('Cruc Root Course 2', $this->getAccessUrl());
+        $childStudent = $this->createUserOnUrl('cruc_child_student_2', $child);
+
+        $this->subscribeUserToCourse($childStudent, $childCourse);
+        $this->subscribeUserToCourse($childStudent, $rootCourse);
+
+        $client->loginUser($rootAdmin);
+        $courseIds = $this->courseIdsInCollection($client);
+
+        $this->assertContains($childCourse->getId(), $courseIds);
+        $this->assertContains($rootCourse->getId(), $courseIds);
+    }
+
     private function createUserOnUrl(string $username, AccessUrl $url, string $role = ''): User
     {
         /** @var UserRepository $repo */
@@ -134,43 +172,5 @@ class CourseRelUserCollectionStateProviderTest extends WebTestCase
         }
 
         return $ids;
-    }
-
-    public function testScopedGlobalAdminOnlySeesSubscriptionsInTheirOwnSubtree(): void
-    {
-        $client = static::createClient();
-        $child = $this->createChildUrl();
-        $scopedAdmin = $this->createUserOnUrl('cruc_scoped_admin', $child, 'ROLE_GLOBAL_ADMIN');
-        $childCourse = $this->createCourseOnUrl('Cruc Child Course', $child);
-        $rootCourse = $this->createCourseOnUrl('Cruc Root Course', $this->getAccessUrl());
-        $childStudent = $this->createUserOnUrl('cruc_child_student', $child);
-
-        $this->subscribeUserToCourse($childStudent, $childCourse);
-        $this->subscribeUserToCourse($childStudent, $rootCourse);
-
-        $client->loginUser($scopedAdmin);
-        $courseIds = $this->courseIdsInCollection($client);
-
-        $this->assertContains($childCourse->getId(), $courseIds);
-        $this->assertNotContains($rootCourse->getId(), $courseIds);
-    }
-
-    public function testUnrestrictedGlobalAdminSeesSubscriptionsFromEveryUrl(): void
-    {
-        $client = static::createClient();
-        $child = $this->createChildUrl();
-        $rootAdmin = $this->createUserOnUrl('cruc_root_admin', $this->getAccessUrl(), 'ROLE_GLOBAL_ADMIN');
-        $childCourse = $this->createCourseOnUrl('Cruc Child Course 2', $child);
-        $rootCourse = $this->createCourseOnUrl('Cruc Root Course 2', $this->getAccessUrl());
-        $childStudent = $this->createUserOnUrl('cruc_child_student_2', $child);
-
-        $this->subscribeUserToCourse($childStudent, $childCourse);
-        $this->subscribeUserToCourse($childStudent, $rootCourse);
-
-        $client->loginUser($rootAdmin);
-        $courseIds = $this->courseIdsInCollection($client);
-
-        $this->assertContains($childCourse->getId(), $courseIds);
-        $this->assertContains($rootCourse->getId(), $courseIds);
     }
 }

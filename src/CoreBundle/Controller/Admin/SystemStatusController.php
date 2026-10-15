@@ -159,44 +159,6 @@ final class SystemStatusController extends AbstractController
         private readonly MigrationHistoryRecorder $migrationHistoryRecorder,
     ) {}
 
-    /**
-     * Records the migrations this database proves it already carries, for an administrator
-     * with no shell access. Refuses a history that already holds rows.
-     */
-    #[Route('/admin/system-status-migration-history', name: 'admin_system_status_record_migration_history', methods: ['POST'])]
-    public function recordMigrationHistory(): JsonResponse
-    {
-        try {
-            $pending = $this->migrationHistoryRecorder->countPendingAfterRecording();
-            $recorded = $this->migrationHistoryRecorder->record();
-        } catch (MigrationHistoryAlreadyRecordedException $e) {
-            return new JsonResponse(['success' => false, 'message' => $e->getMessage()], 409);
-        } catch (Throwable $e) {
-            return new JsonResponse(['success' => false, 'message' => $e->getMessage()], 500);
-        }
-
-        // The code on disk is often newer than the database, so a recording that leaves
-        // migrations pending is the normal outcome of an upgrade in progress. Say so:
-        // the administrator has to run those, and the count is what tells them.
-        $message = 0 === $pending
-            ? \sprintf(
-                $this->translator->trans('%s migrations recorded. Your platform can now be updated normally.'),
-                $recorded
-            )
-            : \sprintf(
-                $this->translator->trans('%s migrations recorded, and %s are still pending. Run the update to execute them.'),
-                $recorded,
-                $pending
-            );
-
-        return new JsonResponse([
-            'success' => true,
-            'recorded' => $recorded,
-            'pending' => $pending,
-            'message' => $message,
-        ]);
-    }
-
     #[Route('/admin/system-status-data', name: 'admin_system_status_data', methods: ['GET'])]
     public function __invoke(Request $request): JsonResponse
     {
@@ -236,6 +198,44 @@ final class SystemStatusController extends AbstractController
             'currentSection' => $section,
             'rowType' => $rowType,
             'rows' => $rows,
+        ]);
+    }
+
+    /**
+     * Records the migrations this database proves it already carries, for an administrator
+     * with no shell access. Refuses a history that already holds rows.
+     */
+    #[Route('/admin/system-status-migration-history', name: 'admin_system_status_record_migration_history', methods: ['POST'])]
+    public function recordMigrationHistory(): JsonResponse
+    {
+        try {
+            $pending = $this->migrationHistoryRecorder->countPendingAfterRecording();
+            $recorded = $this->migrationHistoryRecorder->record();
+        } catch (MigrationHistoryAlreadyRecordedException $e) {
+            return new JsonResponse(['success' => false, 'message' => $e->getMessage()], 409);
+        } catch (Throwable $e) {
+            return new JsonResponse(['success' => false, 'message' => $e->getMessage()], 500);
+        }
+
+        // The code on disk is often newer than the database, so a recording that leaves
+        // migrations pending is the normal outcome of an upgrade in progress. Say so:
+        // the administrator has to run those, and the count is what tells them.
+        $message = 0 === $pending
+            ? \sprintf(
+                $this->translator->trans('%s migrations recorded. Your platform can now be updated normally.'),
+                $recorded
+            )
+            : \sprintf(
+                $this->translator->trans('%s migrations recorded, and %s are still pending. Run the update to execute them.'),
+                $recorded,
+                $pending
+            );
+
+        return new JsonResponse([
+            'success' => true,
+            'recorded' => $recorded,
+            'pending' => $pending,
+            'message' => $message,
         ]);
     }
 

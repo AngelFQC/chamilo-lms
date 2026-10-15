@@ -21,16 +21,15 @@ use const PREG_SET_ORDER;
 
 final class Version20260116085001 extends AbstractMigrationChamilo
 {
-    private ?CDocumentRepository $documentRepo = null;
-    private ?CourseRepository $courseRepo = null;
-    private ?PersonalFileRepository $personalRepo = null;
-    private ?UserRepository $userRepo = null;
-
     /**
      * keep false to avoid creating new documents during link rewrite migrations,
      * which may generate duplicates at the root folder.
      */
     private const bool ENABLE_DOCUMENT_CREATION = false;
+    private ?CDocumentRepository $documentRepo = null;
+    private ?CourseRepository $courseRepo = null;
+    private ?PersonalFileRepository $personalRepo = null;
+    private ?UserRepository $userRepo = null;
 
     public function getDescription(): string
     {

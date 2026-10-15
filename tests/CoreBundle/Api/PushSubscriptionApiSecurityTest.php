@@ -38,29 +38,6 @@ final class PushSubscriptionApiSecurityTest extends AbstractApiTest
 {
     use ChamiloTestTrait;
 
-    /**
-     * Persists one PushSubscription owned by the given user and returns it.
-     */
-    private function seedSubscription(User $owner, string $suffix): PushSubscription
-    {
-        /** @var EntityManagerInterface $em */
-        $em = self::getContainer()->get(EntityManagerInterface::class);
-
-        $subscription = (new PushSubscription())
-            ->setEndpoint('https://push.example/endpoint-'.$suffix)
-            ->setPublicKey('public-key-'.$suffix)
-            ->setAuthToken('secret-auth-token-'.$suffix)
-            ->setContentEncoding('aesgcm')
-            ->setUserAgent('PHPUnit')
-            ->setUser($owner)
-        ;
-
-        $em->persist($subscription);
-        $em->flush();
-
-        return $subscription;
-    }
-
     public function testForeignUserCannotReadOthersSubscription(): void
     {
         $victim = $this->createUser('push_sec_victim_read');
@@ -226,5 +203,28 @@ final class PushSubscriptionApiSecurityTest extends AbstractApiTest
         /** @var PushSubscriptionRepository $repository */
         $repository = self::getContainer()->get(PushSubscriptionRepository::class);
         $this->assertNotNull($repository->find($id), 'The victim subscription must survive a foreign delete attempt.');
+    }
+
+    /**
+     * Persists one PushSubscription owned by the given user and returns it.
+     */
+    private function seedSubscription(User $owner, string $suffix): PushSubscription
+    {
+        /** @var EntityManagerInterface $em */
+        $em = self::getContainer()->get(EntityManagerInterface::class);
+
+        $subscription = (new PushSubscription())
+            ->setEndpoint('https://push.example/endpoint-'.$suffix)
+            ->setPublicKey('public-key-'.$suffix)
+            ->setAuthToken('secret-auth-token-'.$suffix)
+            ->setContentEncoding('aesgcm')
+            ->setUserAgent('PHPUnit')
+            ->setUser($owner)
+        ;
+
+        $em->persist($subscription);
+        $em->flush();
+
+        return $subscription;
     }
 }

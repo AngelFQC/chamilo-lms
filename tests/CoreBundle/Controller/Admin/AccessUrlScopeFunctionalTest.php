@@ -28,66 +28,6 @@ class AccessUrlScopeFunctionalTest extends WebTestCase
 {
     use ChamiloTestTrait;
 
-    private function createUserOnUrl(string $username, AccessUrl $url, string $role = ''): User
-    {
-        /** @var UserRepository $repo */
-        $repo = self::getContainer()->get(UserRepository::class);
-        $admin = $this->getAdmin();
-
-        $user = $repo->createUser()
-            ->setLastname($username)
-            ->setFirstname($username)
-            ->setUsername($username)
-            ->setStatus(1)
-            ->setPlainPassword($username)
-            ->setEmail($username.'@example.com')
-            ->setCreator($admin)
-            ->setCurrentUrl($url)
-            ->addAuthSourceByAuthentication(UserAuthSource::PLATFORM, $url)
-        ;
-
-        if ('' !== $role) {
-            $user->addRole($role);
-        }
-
-        $repo->updateUser($user);
-
-        return $user;
-    }
-
-    private function createChildUrl(): AccessUrl
-    {
-        /** @var AccessUrlRepository $urlRepo */
-        $urlRepo = self::getContainer()->get(AccessUrlRepository::class);
-        $admin = $this->getAdmin();
-        $root = $this->getAccessUrl();
-
-        $child = (new AccessUrl())
-            ->setUrl('https://scope-functional-'.uniqid().'.example.org/')
-            ->setActive(1)
-            ->setCreator($admin)
-            ->setSuperior($root)
-        ;
-        $urlRepo->create($child);
-
-        return $child;
-    }
-
-    private function postJson(KernelBrowser $client, string $method, string $uri, array $body): void
-    {
-        $client->request(
-            $method,
-            $uri,
-            [],
-            [],
-            [
-                'CONTENT_TYPE' => 'application/json',
-                'HTTP_SEC_FETCH_SITE' => 'same-origin',
-            ],
-            json_encode($body, JSON_THROW_ON_ERROR)
-        );
-    }
-
     public function testScopedAdminCannotAssignUsersToAUrlOutsideTheirSubtree(): void
     {
         // createClient() boots the kernel; it must run before any getContainer() call, so
@@ -263,5 +203,65 @@ class AccessUrlScopeFunctionalTest extends WebTestCase
             ['HTTP_SEC_FETCH_SITE' => 'same-origin']
         );
         $this->assertResponseStatusCodeSame(204);
+    }
+
+    private function createUserOnUrl(string $username, AccessUrl $url, string $role = ''): User
+    {
+        /** @var UserRepository $repo */
+        $repo = self::getContainer()->get(UserRepository::class);
+        $admin = $this->getAdmin();
+
+        $user = $repo->createUser()
+            ->setLastname($username)
+            ->setFirstname($username)
+            ->setUsername($username)
+            ->setStatus(1)
+            ->setPlainPassword($username)
+            ->setEmail($username.'@example.com')
+            ->setCreator($admin)
+            ->setCurrentUrl($url)
+            ->addAuthSourceByAuthentication(UserAuthSource::PLATFORM, $url)
+        ;
+
+        if ('' !== $role) {
+            $user->addRole($role);
+        }
+
+        $repo->updateUser($user);
+
+        return $user;
+    }
+
+    private function createChildUrl(): AccessUrl
+    {
+        /** @var AccessUrlRepository $urlRepo */
+        $urlRepo = self::getContainer()->get(AccessUrlRepository::class);
+        $admin = $this->getAdmin();
+        $root = $this->getAccessUrl();
+
+        $child = (new AccessUrl())
+            ->setUrl('https://scope-functional-'.uniqid().'.example.org/')
+            ->setActive(1)
+            ->setCreator($admin)
+            ->setSuperior($root)
+        ;
+        $urlRepo->create($child);
+
+        return $child;
+    }
+
+    private function postJson(KernelBrowser $client, string $method, string $uri, array $body): void
+    {
+        $client->request(
+            $method,
+            $uri,
+            [],
+            [],
+            [
+                'CONTENT_TYPE' => 'application/json',
+                'HTTP_SEC_FETCH_SITE' => 'same-origin',
+            ],
+            json_encode($body, JSON_THROW_ON_ERROR)
+        );
     }
 }

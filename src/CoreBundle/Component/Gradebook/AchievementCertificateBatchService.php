@@ -34,12 +34,12 @@ use const STUDENT;
  */
 final class AchievementCertificateBatchService
 {
-    private const CERTIFICATE_SUBJECT_FIELD =
-        'plugin_gradingelectronic_certificate_notification_subject';
-    private const CERTIFICATE_MESSAGE_FIELD =
-        'plugin_gradingelectronic_certificate_notification_message';
-    private const GRADING_ELECTRONIC_COURSE_FIELD =
-        'plugin_gradingelectronic_course_id';
+    private const CERTIFICATE_SUBJECT_FIELD
+        = 'plugin_gradingelectronic_certificate_notification_subject';
+    private const CERTIFICATE_MESSAGE_FIELD
+        = 'plugin_gradingelectronic_certificate_notification_message';
+    private const GRADING_ELECTRONIC_COURSE_FIELD
+        = 'plugin_gradingelectronic_course_id';
 
     private const int LINK_EXERCISE = 1;
     private const int LINK_STUDENT_PUBLICATION = 3;
@@ -290,6 +290,189 @@ final class AchievementCertificateBatchService
     }
 
     /**
+     * @return array{complete: bool, score: float|int|null, ...}
+     */
+    public function evaluateCandidate(
+        string $completionMode,
+        int $userId,
+        int $courseId,
+        string $courseCode,
+        float $minimumScore,
+        int $sessionId,
+        GradebookCategory $category
+    ): array {
+        if ('course-rule' === $completionMode) {
+            return $this->evaluator->evaluate(
+                $userId,
+                $courseId,
+                $courseCode,
+                $minimumScore,
+                $sessionId
+            );
+        }
+
+        $score = Category::getCurrentScore(
+            $userId,
+            $category,
+            true,
+            $courseId,
+            $sessionId
+        );
+
+        return [
+            'complete' => (float) $score >= $minimumScore,
+            'score' => $score,
+        ];
+    }
+
+    /**
+     * Pending students for one (course, category) context: enrolled, active,
+     * and without a certificate for that category yet. $sessionId selects
+     * the right subscription table — base-course enrollment (course_rel_user)
+     * for 0, session enrollment (session_rel_course_rel_user) otherwise, since
+     * the two use different tables *and* different "student" status codes
+     * (STUDENT = 5 for course_rel_user, Session::STUDENT = 0 for
+     * session_rel_course_rel_user).
+     *
+     * With $includeEmpty, a student whose only certificate row for that
+     * category has no resource node (the row was registered but the HTML
+     * file was never stored, e.g. after a failed generation) counts as
+     * pending too, so the certificate can be generated again.
+     *
+     * @return list<int>
+     */
+    public function loadPendingUserIds(
+        int $courseId,
+        int $categoryId,
+        int $sessionId,
+        int $afterUserId,
+        int $batchSize,
+        ?int $requestedUserId,
+        bool $includeEmpty = false
+    ): array {
+        $params = [
+            'courseId' => $courseId,
+            'categoryId' => $categoryId,
+            'afterUserId' => $afterUserId,
+        ];
+        $completeOnly = $includeEmpty ? ' AND certificate.resource_node_id IS NOT NULL' : '';
+
+        if (0 === $sessionId) {
+            $params['studentStatus'] = STUDENT;
+            $userFilter = '';
+            if (null !== $requestedUserId) {
+                $userFilter = ' AND course_user.user_id = :requestedUserId';
+                $params['requestedUserId'] = $requestedUserId;
+            }
+
+            $sql = 'SELECT DISTINCT course_user.user_id
+                    FROM course_rel_user course_user
+                    INNER JOIN user selected_user
+                       ON selected_user.id = course_user.user_id
+                      AND selected_user.active = 1
+                    LEFT JOIN gradebook_certificate certificate
+                       ON certificate.cat_id = :categoryId
+                      AND certificate.user_id = course_user.user_id'
+                .$completeOnly.'
+                    WHERE course_user.c_id = :courseId
+                      AND course_user.status = :studentStatus
+                      AND course_user.user_id > :afterUserId
+                      AND certificate.id IS NULL'
+                .$userFilter.'
+                    ORDER BY course_user.user_id ASC
+                    LIMIT '.$batchSize;
+        } else {
+            $params['sessionId'] = $sessionId;
+            $params['studentStatus'] = Session::STUDENT;
+            $userFilter = '';
+            if (null !== $requestedUserId) {
+                $userFilter = ' AND session_user.user_id = :requestedUserId';
+                $params['requestedUserId'] = $requestedUserId;
+            }
+
+            $sql = 'SELECT DISTINCT session_user.user_id
+                    FROM session_rel_course_rel_user session_user
+                    INNER JOIN user selected_user
+                       ON selected_user.id = session_user.user_id
+                      AND selected_user.active = 1
+                    LEFT JOIN gradebook_certificate certificate
+                       ON certificate.cat_id = :categoryId
+                      AND certificate.user_id = session_user.user_id'
+                .$completeOnly.'
+                    WHERE session_user.c_id = :courseId
+                      AND session_user.session_id = :sessionId
+                      AND session_user.status = :studentStatus
+                      AND session_user.user_id > :afterUserId
+                      AND certificate.id IS NULL'
+                .$userFilter.'
+                    ORDER BY session_user.user_id ASC
+                    LIMIT '.$batchSize;
+        }
+
+        $rows = $this->connection->fetchFirstColumn($sql, $params);
+
+        return array_map('intval', $rows);
+    }
+
+    /**
+     * $regenerateEmpty lets an existing certificate row without a resource
+     * node be generated again, instead of being skipped as already existing.
+     *
+     * @param array{subject: string, message: string, sender_id: int} $notification
+     */
+    public function generateCertificate(
+        GradebookCategory $category,
+        int $userId,
+        bool $sendNotification,
+        array $notification,
+        bool $regenerateEmpty = false
+    ): bool {
+        Category::generateUserCertificate(
+            $category,
+            $userId,
+            $sendNotification,
+            !$regenerateEmpty,
+            $notification
+        );
+
+        $certificate = $this->connection->fetchAssociative(
+            'SELECT id, resource_node_id
+             FROM gradebook_certificate
+             WHERE cat_id = :categoryId
+               AND user_id = :userId
+             ORDER BY id DESC
+             LIMIT 1',
+            [
+                'categoryId' => (int) $category->getId(),
+                'userId' => $userId,
+            ]
+        );
+
+        return false !== $certificate
+            && (int) ($certificate['id'] ?? 0) > 0
+            && (int) ($certificate['resource_node_id'] ?? 0) > 0;
+    }
+
+    /**
+     * @param array<string, int> $summary
+     */
+    public function generationLimitReached(array $summary, int $limit, bool $dryRun): bool
+    {
+        if (0 === $limit) {
+            return false;
+        }
+
+        $processed = $dryRun ? $summary['would_generate'] : $summary['generated'];
+
+        return $processed >= $limit;
+    }
+
+    public function formatNumber(float $value): string
+    {
+        return rtrim(rtrim(number_format($value, 4, '.', ''), '0'), '.');
+    }
+
+    /**
      * @return list<array<string, mixed>>
      */
     private function loadCompletionRuleComponentsForCategoryResolution(int $courseId): array
@@ -487,188 +670,5 @@ final class AchievementCertificateBatchService
         $value = (int) $value;
 
         return $value > 0 ? $value : null;
-    }
-
-    /**
-     * @return array{complete: bool, score: float|int|null, ...}
-     */
-    public function evaluateCandidate(
-        string $completionMode,
-        int $userId,
-        int $courseId,
-        string $courseCode,
-        float $minimumScore,
-        int $sessionId,
-        GradebookCategory $category
-    ): array {
-        if ('course-rule' === $completionMode) {
-            return $this->evaluator->evaluate(
-                $userId,
-                $courseId,
-                $courseCode,
-                $minimumScore,
-                $sessionId
-            );
-        }
-
-        $score = Category::getCurrentScore(
-            $userId,
-            $category,
-            true,
-            $courseId,
-            $sessionId
-        );
-
-        return [
-            'complete' => (float) $score >= $minimumScore,
-            'score' => $score,
-        ];
-    }
-
-    /**
-     * Pending students for one (course, category) context: enrolled, active,
-     * and without a certificate for that category yet. $sessionId selects
-     * the right subscription table — base-course enrollment (course_rel_user)
-     * for 0, session enrollment (session_rel_course_rel_user) otherwise, since
-     * the two use different tables *and* different "student" status codes
-     * (STUDENT = 5 for course_rel_user, Session::STUDENT = 0 for
-     * session_rel_course_rel_user).
-     *
-     * With $includeEmpty, a student whose only certificate row for that
-     * category has no resource node (the row was registered but the HTML
-     * file was never stored, e.g. after a failed generation) counts as
-     * pending too, so the certificate can be generated again.
-     *
-     * @return list<int>
-     */
-    public function loadPendingUserIds(
-        int $courseId,
-        int $categoryId,
-        int $sessionId,
-        int $afterUserId,
-        int $batchSize,
-        ?int $requestedUserId,
-        bool $includeEmpty = false
-    ): array {
-        $params = [
-            'courseId' => $courseId,
-            'categoryId' => $categoryId,
-            'afterUserId' => $afterUserId,
-        ];
-        $completeOnly = $includeEmpty ? ' AND certificate.resource_node_id IS NOT NULL' : '';
-
-        if (0 === $sessionId) {
-            $params['studentStatus'] = STUDENT;
-            $userFilter = '';
-            if (null !== $requestedUserId) {
-                $userFilter = ' AND course_user.user_id = :requestedUserId';
-                $params['requestedUserId'] = $requestedUserId;
-            }
-
-            $sql = 'SELECT DISTINCT course_user.user_id
-                    FROM course_rel_user course_user
-                    INNER JOIN user selected_user
-                       ON selected_user.id = course_user.user_id
-                      AND selected_user.active = 1
-                    LEFT JOIN gradebook_certificate certificate
-                       ON certificate.cat_id = :categoryId
-                      AND certificate.user_id = course_user.user_id'
-                .$completeOnly.'
-                    WHERE course_user.c_id = :courseId
-                      AND course_user.status = :studentStatus
-                      AND course_user.user_id > :afterUserId
-                      AND certificate.id IS NULL'
-                .$userFilter.'
-                    ORDER BY course_user.user_id ASC
-                    LIMIT '.$batchSize;
-        } else {
-            $params['sessionId'] = $sessionId;
-            $params['studentStatus'] = Session::STUDENT;
-            $userFilter = '';
-            if (null !== $requestedUserId) {
-                $userFilter = ' AND session_user.user_id = :requestedUserId';
-                $params['requestedUserId'] = $requestedUserId;
-            }
-
-            $sql = 'SELECT DISTINCT session_user.user_id
-                    FROM session_rel_course_rel_user session_user
-                    INNER JOIN user selected_user
-                       ON selected_user.id = session_user.user_id
-                      AND selected_user.active = 1
-                    LEFT JOIN gradebook_certificate certificate
-                       ON certificate.cat_id = :categoryId
-                      AND certificate.user_id = session_user.user_id'
-                .$completeOnly.'
-                    WHERE session_user.c_id = :courseId
-                      AND session_user.session_id = :sessionId
-                      AND session_user.status = :studentStatus
-                      AND session_user.user_id > :afterUserId
-                      AND certificate.id IS NULL'
-                .$userFilter.'
-                    ORDER BY session_user.user_id ASC
-                    LIMIT '.$batchSize;
-        }
-
-        $rows = $this->connection->fetchFirstColumn($sql, $params);
-
-        return array_map('intval', $rows);
-    }
-
-    /**
-     * $regenerateEmpty lets an existing certificate row without a resource
-     * node be generated again, instead of being skipped as already existing.
-     *
-     * @param array{subject: string, message: string, sender_id: int} $notification
-     */
-    public function generateCertificate(
-        GradebookCategory $category,
-        int $userId,
-        bool $sendNotification,
-        array $notification,
-        bool $regenerateEmpty = false
-    ): bool {
-        Category::generateUserCertificate(
-            $category,
-            $userId,
-            $sendNotification,
-            !$regenerateEmpty,
-            $notification
-        );
-
-        $certificate = $this->connection->fetchAssociative(
-            'SELECT id, resource_node_id
-             FROM gradebook_certificate
-             WHERE cat_id = :categoryId
-               AND user_id = :userId
-             ORDER BY id DESC
-             LIMIT 1',
-            [
-                'categoryId' => (int) $category->getId(),
-                'userId' => $userId,
-            ]
-        );
-
-        return false !== $certificate
-            && (int) ($certificate['id'] ?? 0) > 0
-            && (int) ($certificate['resource_node_id'] ?? 0) > 0;
-    }
-
-    /**
-     * @param array<string, int> $summary
-     */
-    public function generationLimitReached(array $summary, int $limit, bool $dryRun): bool
-    {
-        if (0 === $limit) {
-            return false;
-        }
-
-        $processed = $dryRun ? $summary['would_generate'] : $summary['generated'];
-
-        return $processed >= $limit;
-    }
-
-    public function formatNumber(float $value): string
-    {
-        return rtrim(rtrim(number_format($value, 4, '.', ''), '0'), '.');
     }
 }

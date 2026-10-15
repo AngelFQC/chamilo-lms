@@ -166,8 +166,6 @@ class GradebookLink
     }
 
     /**
-     * Get createdAt.
-     *
      * @return DateTime
      */
     public function getCreatedAt()
@@ -183,8 +181,6 @@ class GradebookLink
     }
 
     /**
-     * Get weight.
-     *
      * @return float
      */
     public function getWeight()
@@ -200,8 +196,6 @@ class GradebookLink
     }
 
     /**
-     * Get visible.
-     *
      * @return int
      */
     public function getVisible()
@@ -217,8 +211,6 @@ class GradebookLink
     }
 
     /**
-     * Get locked.
-     *
      * @return int
      */
     public function getLocked()
@@ -234,8 +226,6 @@ class GradebookLink
     }
 
     /**
-     * Get id.
-     *
      * @return int
      */
     public function getId()

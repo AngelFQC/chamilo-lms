@@ -628,7 +628,7 @@ class AdminController extends BaseController
                     }
                 }
                 // Show the "Users" column only if there's any user to display
-                $showUsers = array_reduce($seen, fn ($acc, $row) => $acc || !empty($row['users']), false);
+                $showUsers = array_reduce($seen, static fn ($acc, $row) => $acc || !empty($row['users']), false);
             }
 
             /** Normalize output. */

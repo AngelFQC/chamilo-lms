@@ -457,6 +457,686 @@ class CourseHelper
         return $keys;
     }
 
+    public function useTemplateAsBasisIfRequired($courseCode, $courseTemplate): void
+    {
+        $templateSetting = $this->settingsManager->getSetting('course.course_creation_use_template', true);
+        $teacherCanSelectCourseTemplate = 'true' === $this->settingsManager->getSetting('workflows.teacher_can_select_course_template', true);
+        $courseTemplate = isset($courseTemplate) ? (int) $courseTemplate : 0;
+
+        $useTemplate = false;
+        if ($teacherCanSelectCourseTemplate && $courseTemplate > 0) {
+            $useTemplate = true;
+            $originCourse = $this->courseRepository->findCourseAsArray((int) $courseTemplate);
+        } elseif (!empty($templateSetting)) {
+            $useTemplate = true;
+            $originCourse = $this->courseRepository->findCourseAsArray((int) $templateSetting);
+        }
+
+        if ($useTemplate && !empty($originCourse)) {
+            try {
+                $originCourse['official_code'] = $originCourse['code'];
+                $cb = new CourseBuilder('', $originCourse);
+                $course = $cb->build(0, $originCourse['code']);
+                $cr = new CourseRestorer($course);
+                $cr->set_file_option();
+                $cr->restore($courseCode);
+            } catch (Exception $e) {
+                error_log('Error during course template application: '.$e->getMessage());
+            } catch (Throwable $t) {
+                error_log('Unexpected error during course template application: '.$t->getMessage());
+            }
+        }
+    }
+
+    /**
+     * Enforces the configured document quota for a document upload.
+     *
+     * The quota shown in the course configuration page is stored in course.disk_quota, in MB.
+     * document.default_document_quotum is only used as the initial value when the course is created.
+     * Do not apply a second live document quota here.
+     */
+    public function assertCanStoreDocumentBytes(Course $course, int $deltaBytes): void
+    {
+        if ($deltaBytes <= 0) {
+            return;
+        }
+
+        $quotaMb = $this->resolveCourseStorageQuotaMbForCourse($course);
+        $usedBytes = $this->getCourseDocumentUsedBytes($course);
+
+        if ($quotaMb <= 0) {
+            $this->debugLog('quota:documents:unlimited', [
+                'courseId' => (int) $course->getId(),
+                'deltaBytes' => $deltaBytes,
+                'usedBytes' => $usedBytes,
+            ]);
+
+            return;
+        }
+
+        $quotaBytes = $quotaMb * 1024 * 1024;
+        $nextUsedBytes = $usedBytes + $deltaBytes;
+
+        $this->debugLog('quota:documents:check', [
+            'courseId' => (int) $course->getId(),
+            'deltaBytes' => $deltaBytes,
+            'quotaMb' => $quotaMb,
+            'quotaBytes' => $quotaBytes,
+            'usedBytes' => $usedBytes,
+            'nextUsedBytes' => $nextUsedBytes,
+        ]);
+
+        if ($nextUsedBytes > $quotaBytes) {
+            throw new RuntimeException('Course documents quota exceeded.');
+        }
+    }
+
+    /**
+     * Course document quota in MB, as configured on the course.
+     *
+     * document.default_document_quotum is only used when a course is created
+     * and must not be applied as a second live quota here.
+     */
+    public function resolveCourseStorageQuotaMbForCourse(Course $course): int
+    {
+        return max((int) ($course->getDiskQuota() ?? 0), 0);
+    }
+
+    /**
+     * Documents tool base quota (MB) from platform settings.
+     * Prefer canonical keys first; keep compatibility keys as fallback.
+     */
+    public function resolveDocumentsToolQuotaMb(): int
+    {
+        return $this->resolveDefaultDocumentQuotaMb();
+    }
+
+    public function getGlobalUsersPerCourseLimit(): int
+    {
+        $info = $this->getGlobalUsersPerCourseLimitDebugInfo();
+
+        return $info['limit'];
+    }
+
+    public function getGlobalUsersPerCourseLimitDebugInfo(): array
+    {
+        $raw = $this->settingsManager->getSetting('platform.hosting_limit_users_per_course', true);
+        $limit = max(0, (int) ($raw ?? 0));
+
+        return [
+            'limit' => $limit,
+            'rawSettingKey' => 'platform.hosting_limit_users_per_course',
+            'rawSettingValue' => null !== $raw ? (string) $raw : null,
+        ];
+    }
+
+    public function countUsersForGlobalLimit(Course $course): int
+    {
+        $counts = $this->getCourseSubscriptionCountsByCourseIds([(int) $course->getId()]);
+
+        return (int) ($counts[(int) $course->getId()] ?? 0);
+    }
+
+    public function getCourseSubscriptionCountsByCourseIds(array $courseIds): array
+    {
+        $courseIds = array_values(array_filter(array_map('intval', $courseIds)));
+        if ([] === $courseIds) {
+            return [];
+        }
+
+        $rows = $this->entityManager
+            ->createQueryBuilder()
+            ->select('IDENTITY(cru.course) AS courseId, COUNT(DISTINCT cru.user) AS total')
+            ->from(CourseRelUser::class, 'cru')
+            ->where('cru.course IN (:courseIds)')
+            ->andWhere('cru.relationType <> :rrhhRelationType')
+            ->setParameter('courseIds', $courseIds)
+            ->setParameter('rrhhRelationType', COURSE_RELATION_TYPE_RRHH)
+            ->groupBy('cru.course')
+            ->getQuery()
+            ->getArrayResult()
+        ;
+
+        $counts = array_fill_keys($courseIds, 0);
+
+        foreach ($rows as $row) {
+            $counts[(int) $row['courseId']] = (int) $row['total'];
+        }
+
+        return $counts;
+    }
+
+    public function getCourseSubscriptionLimitInfo(Course $course, int $nbNewUsers = 1): array
+    {
+        $map = $this->getCourseSubscriptionLimitInfoMap([$course], $nbNewUsers);
+
+        return $map[(int) $course->getId()] ?? [
+            'subscriptionLimitEnabled' => false,
+            'subscriptionLimit' => 0,
+            'subscriptionCount' => 0,
+            'subscriptionLimitReached' => false,
+            'canSubscribe' => true,
+            'subscriptionLimitTooltip' => '',
+            'rawSettingKey' => 'platform.hosting_limit_users_per_course',
+            'rawSettingValue' => null,
+        ];
+    }
+
+    public function getCourseSubscriptionLimitInfoMap(array $courses, int $nbNewUsers = 1): array
+    {
+        $courses = array_values(array_filter(
+            $courses,
+            static fn ($course) => $course instanceof Course
+        ));
+
+        if ([] === $courses) {
+            return [];
+        }
+
+        $globalLimitInfo = $this->getGlobalUsersPerCourseLimitDebugInfo();
+        $globalLimit = (int) $globalLimitInfo['limit'];
+        $globalRawSettingKey = $globalLimitInfo['rawSettingKey'];
+        $globalRawSettingValue = $globalLimitInfo['rawSettingValue'];
+
+        $courseIds = array_map(
+            static fn (Course $course): int => (int) $course->getId(),
+            $courses
+        );
+
+        $buyCoursesLimits = $this->getBuyCoursesHostingLimitsByCourseIds($courseIds);
+        $counts = $this->getCourseSubscriptionCountsByCourseIds($courseIds);
+        $infoMap = [];
+
+        foreach ($courses as $course) {
+            $courseId = (int) $course->getId();
+            $courseSpecificLimit = (int) ($buyCoursesLimits[$courseId] ?? 0);
+            $limit = $courseSpecificLimit > 0 ? $courseSpecificLimit : $globalLimit;
+            $rawSettingKey = $courseSpecificLimit > 0
+                ? 'buycourses.subscription_course.hosting_limit'
+                : $globalRawSettingKey;
+            $rawSettingValue = $courseSpecificLimit > 0
+                ? (string) $courseSpecificLimit
+                : $globalRawSettingValue;
+            $current = (int) ($counts[$courseId] ?? 0);
+
+            if ($limit <= 0) {
+                $infoMap[$courseId] = [
+                    'subscriptionLimitEnabled' => false,
+                    'subscriptionLimit' => 0,
+                    'subscriptionCount' => $current,
+                    'subscriptionLimitReached' => false,
+                    'canSubscribe' => true,
+                    'subscriptionLimitTooltip' => '',
+                    'rawSettingKey' => $rawSettingKey,
+                    'rawSettingValue' => $rawSettingValue,
+                ];
+
+                continue;
+            }
+
+            $reached = $current >= $limit;
+            $canSubscribe = ($current + $nbNewUsers) <= $limit;
+
+            $tooltip = $this->translator->trans(
+                'The subscription limit for this course has been reached (%current%/%limit%).',
+                [
+                    '%current%' => $current,
+                    '%limit%' => $limit,
+                ]
+            );
+
+            $infoMap[$courseId] = [
+                'subscriptionLimitEnabled' => true,
+                'subscriptionLimit' => $limit,
+                'subscriptionCount' => $current,
+                'subscriptionLimitReached' => $reached,
+                'canSubscribe' => $canSubscribe,
+                'subscriptionLimitTooltip' => $tooltip,
+                'rawSettingKey' => $rawSettingKey,
+                'rawSettingValue' => $rawSettingValue,
+            ];
+        }
+
+        return $infoMap;
+    }
+
+    public function deleteCourse(Course $course, bool $deleteExclusiveDocuments = false): bool
+    {
+        $em = $this->entityManager;
+
+        /** @var SequenceResourceRepository $sequenceRepo */
+        $sequenceRepo = $em->getRepository(SequenceResource::class);
+        $sequenceResource = $sequenceRepo->findRequirementForResource($course->getId(), SequenceResource::COURSE_TYPE);
+
+        if ($sequenceResource) {
+            throw new RuntimeException($this->translator->trans('There is a sequence resource linked to this course. You must delete this link first.'));
+        }
+
+        $exclusiveFiles = [];
+        if ($deleteExclusiveDocuments) {
+            $exclusiveFiles = $this->getExclusiveResourceFilesForCourse($course);
+        }
+
+        $count = 0;
+        if ($this->accessUrlHelper->isMultiple()) {
+            $urlId = $this->accessUrlHelper->getCurrent()->getId();
+            UrlManager::delete_url_rel_course($course->getId(), $urlId);
+            $count = UrlManager::getCountUrlRelCourse($course->getId());
+        }
+
+        // In a multi-URL portal the course may still be linked to other URLs.
+        // In that case it was only unsubscribed from the current URL, not deleted.
+        if (0 !== $count) {
+            return false;
+        }
+
+        $groupCategories = GroupManager::get_categories($course);
+        if (!empty($groupCategories)) {
+            foreach ($groupCategories as $category) {
+                GroupManager::delete_category($category['iid'], $course->getCode());
+            }
+        }
+
+        $resourceLink = $course->getFirstResourceLink();
+
+        // Unsubscribe all users from the course
+        $em->createQuery('DELETE FROM '.CourseRelUser::class.' cru WHERE cru.course = :course')
+            ->setParameter('course', $course->getId())
+            ->execute()
+        ;
+
+        // Delete the course from the sessions tables
+        $em->createQuery('DELETE FROM '.SessionRelCourse::class.' src WHERE src.course = :course')
+            ->setParameter('course', $course->getId())
+            ->execute()
+        ;
+        $em->createQuery('DELETE FROM '.SessionRelCourseRelUser::class.' srcru WHERE srcru.course = :course')
+            ->setParameter('course', $course->getId())
+            ->execute()
+        ;
+
+        // Delete the course from the stats tables
+        $em->createQuery('DELETE FROM '.TrackEHotpotatoes::class.' t WHERE t.cId = :courseId')
+            ->setParameter('courseId', $course->getId())
+            ->execute()
+        ;
+        $em->createQuery('DELETE FROM '.TrackEAccess::class.' t WHERE t.cId = :courseId')
+            ->setParameter('courseId', $course->getId())
+            ->execute()
+        ;
+        $em->createQuery('DELETE FROM '.TrackELastaccess::class.' t WHERE t.cId = :courseId')
+            ->setParameter('courseId', $course->getId())
+            ->execute()
+        ;
+        $em->createQuery('DELETE FROM '.TrackECourseAccess::class.' t WHERE t.cId = :courseId')
+            ->setParameter('courseId', $course->getId())
+            ->execute()
+        ;
+        $em->createQuery('DELETE FROM '.TrackEOnline::class.' t WHERE t.cId = :courseId')
+            ->setParameter('courseId', $course->getId())
+            ->execute()
+        ;
+
+        // Do not delete rows from track_e_default as these include course
+        // creation and other important things that do not take much space
+        // but give information on the course history
+        if ($resourceLink) {
+            $em->createQuery('DELETE FROM '.TrackEDownloads::class.' t WHERE t.resourceLink = :resourceLink')
+                ->setParameter('resourceLink', $resourceLink->getId())
+                ->execute()
+            ;
+        }
+
+        $em->createQuery('DELETE FROM '.TrackELinks::class.' t WHERE t.cId = :courseId')
+            ->setParameter('courseId', $course->getId())
+            ->execute()
+        ;
+        $em->createQuery('DELETE FROM '.TrackEUploads::class.' t WHERE t.cId = :courseId')
+            ->setParameter('courseId', $course->getId())
+            ->execute()
+        ;
+
+        // Unlink tickets from the course before deletion (preserves ticket history)
+        $em->createQuery('UPDATE '.Ticket::class.' t SET t.course = NULL WHERE t.course = :course')
+            ->setParameter('course', $course->getId())
+            ->execute()
+        ;
+
+        $sequenceRepo->deleteSequenceResource($course->getId(), SequenceResource::COURSE_TYPE);
+
+        // Class
+        $em->createQuery('DELETE FROM '.UsergroupRelCourse::class.' urc WHERE urc.course = :course')
+            ->setParameter('course', $course->getId())
+            ->execute()
+        ;
+
+        // Skills
+        $argumentation = \sprintf(
+            $this->translator->trans('This skill was obtained through course %s which has been removed since then.'),
+            $course->getCode()
+        );
+        $em->createQuery(
+            'UPDATE '.SkillRelUser::class.' sru
+             SET sru.course = NULL, sru.session = NULL, sru.argumentation = :argumentation
+             WHERE sru.course = :course'
+        )
+            ->setParameter('course', $course->getId())
+            ->setParameter('argumentation', $argumentation)
+            ->execute()
+        ;
+
+        $this->eventDispatcher->dispatch(
+            new CourseDeletedEvent(['course' => $course], AbstractEvent::TYPE_PRE),
+            Events::COURSE_DELETED
+        );
+
+        // Purge Xapian index BEFORE deleting the course entity (resource links still exist)
+        try {
+            $this->xapianIndexService->purgeCourseIndex($course->getId());
+        } catch (Throwable $e) {
+            error_log('[Xapian] purgeCourseIndex: failed for courseId='.$course->getId().': '.$e->getMessage());
+        }
+
+        $this->entityManager->remove($course);
+        $this->entityManager->flush();
+        $this->entityManager->clear();
+
+        // Delete documents that were exclusively used by this course,
+        // if the administrator explicitly requested it.
+        if ($deleteExclusiveDocuments && !empty($exclusiveFiles)) {
+            $this->deleteExclusiveResourceFiles($exclusiveFiles);
+        }
+
+        // Delete extra course fields
+        $extraFieldValues = new ExtraFieldValue('course');
+        $extraFieldValues->deleteValuesByItem($course->getId());
+
+        // Add event to system log
+        Event::addEvent(
+            LOG_COURSE_DELETE,
+            LOG_COURSE_CODE,
+            $course->getCode(),
+            api_get_utc_datetime(),
+            api_get_user_id(),
+            $course->getId()
+        );
+
+        return true;
+    }
+
+    public function assertCanCreateCourse(array $params = []): void
+    {
+        /** @var User|null $ownerUser */
+        $ownerUser = $this->security->getUser();
+        if (!$ownerUser instanceof User) {
+            $ownerUser = $this->getFallbackAdminUser();
+        }
+
+        if (!empty($params['user_id'])) {
+            $explicitOwner = $this->userRepository->find((int) $params['user_id']);
+            if ($explicitOwner instanceof User) {
+                $ownerUser = $explicitOwner;
+            }
+        }
+
+        if ($this->security->isGranted('ROLE_ADMIN') && empty($params['user_id'])) {
+            $this->debugLog('createCourse:limit:adminBypass', [
+                'userId' => $ownerUser->getId(),
+            ]);
+
+            return;
+        }
+
+        $buyCoursesServiceSaleId = isset($params['buycourses_service_sale_id']) ? (int) $params['buycourses_service_sale_id'] : 0;
+        if ($buyCoursesServiceSaleId > 0) {
+            $selectionStatus = $this->resolveBuyCoursesServiceSaleCourseCreationSelection(
+                $ownerUser,
+                $buyCoursesServiceSaleId
+            );
+
+            if (!empty($selectionStatus['valid'])) {
+                return;
+            }
+
+            throw new RuntimeException((string) ($selectionStatus['message'] ?? $this->translator->trans('The selected BuyCourses service cannot be used to create this course.')));
+        }
+
+        $status = $this->resolveCourseCreationCapabilityForUser($ownerUser);
+
+        if (true === (bool) $status['canCreate']) {
+            return;
+        }
+
+        throw new RuntimeException(\sprintf($this->translator->trans('You have reached the maximum number of courses allowed (%d).'), (int) $status['effectiveLimit']));
+    }
+
+    public function resolveCourseCreationCapabilityForUser(User $user): array
+    {
+        $globalLimit = $this->resolveBaseMaxCoursesPerUser();
+        $serviceLimit = $this->resolveValidBuyCoursesMaxCoursesForUser($user);
+
+        if ($this->isCourseCreationAdmin($user)) {
+            return [
+                'canCreate' => true,
+                'currentCount' => 0,
+                'effectiveLimit' => 0,
+                'serviceLimit' => $serviceLimit,
+                'globalLimit' => $globalLimit,
+                'limitSource' => 'admin',
+            ];
+        }
+
+        if (!$this->isCourseCreationTeacher($user)) {
+            return [
+                'canCreate' => false,
+                'currentCount' => 0,
+                'effectiveLimit' => 0,
+                'serviceLimit' => $serviceLimit,
+                'globalLimit' => $globalLimit,
+                'limitSource' => 'role',
+            ];
+        }
+
+        if ('true' !== $this->settingsManager->getSetting('workflows.allow_users_to_create_courses', true)) {
+            return [
+                'canCreate' => false,
+                'currentCount' => 0,
+                'effectiveLimit' => 0,
+                'serviceLimit' => $serviceLimit,
+                'globalLimit' => $globalLimit,
+                'limitSource' => 'setting',
+            ];
+        }
+
+        $effectiveLimit = $serviceLimit ?? $globalLimit;
+        $currentCount = $this->countTeacherCoursesForUser($user);
+
+        $limitSource = 'unlimited';
+        if (null !== $serviceLimit) {
+            $limitSource = 'service';
+        } elseif ($globalLimit > 0) {
+            $limitSource = 'global';
+        }
+
+        return [
+            'canCreate' => $effectiveLimit <= 0 || $currentCount < $effectiveLimit,
+            'currentCount' => $currentCount,
+            'effectiveLimit' => $effectiveLimit,
+            'serviceLimit' => $serviceLimit,
+            'globalLimit' => $globalLimit,
+            'limitSource' => $limitSource,
+        ];
+    }
+
+    public function resolveMaxCoursesForUser(User $user): int
+    {
+        $status = $this->resolveCourseCreationCapabilityForUser($user);
+
+        return (int) $status['effectiveLimit'];
+    }
+
+    public function countTeacherCoursesForUser(User $user): int
+    {
+        $qb = $this->entityManager->createQueryBuilder();
+
+        $qb
+            ->select('COUNT(cru.id)')
+            ->from(CourseRelUser::class, 'cru')
+            ->andWhere('IDENTITY(cru.user) = :userId')
+            ->andWhere('cru.status = :status')
+            ->setParameter('userId', $user->getId())
+            ->setParameter('status', CourseRelUser::TEACHER)
+        ;
+
+        return (int) $qb->getQuery()->getSingleScalarResult();
+    }
+
+    public function shouldOfferBuyCoursesDocumentQuotaUpgrade(Course $course): bool
+    {
+        $baseQuotaMb = $this->resolveDocumentsToolQuotaMb();
+        if ($baseQuotaMb <= 0) {
+            return false;
+        }
+
+        $plugin = $this->getBuyCoursesPluginForUpgradeCta();
+        if (!$plugin instanceof BuyCoursesPlugin) {
+            return false;
+        }
+
+        try {
+            $effectiveQuotaMb = $plugin->getEffectiveDocumentQuotaMbForCourse(
+                (int) $course->getId(),
+                $baseQuotaMb,
+            );
+            if ($effectiveQuotaMb > $baseQuotaMb) {
+                return false;
+            }
+
+            $userId = $this->resolveBuyCoursesUpgradeUserId($course);
+            if ($userId > 0 && (int) ($plugin->getActiveDocumentQuotaMb($userId) ?? 0) > $baseQuotaMb) {
+                return false;
+            }
+
+            return $plugin->hasActiveDisplayedCourseCreationServiceBenefit(
+                BuyCoursesPlugin::EXTRA_FIELD_DOCUMENT_QUOTA,
+                $baseQuotaMb,
+            );
+        } catch (Throwable $exception) {
+            $this->debugLog('buyCourses:documentQuotaUpgradeCtaCheckFailed', [
+                'courseId' => (int) $course->getId(),
+                'message' => $exception->getMessage(),
+            ]);
+
+            return false;
+        }
+    }
+
+    public function shouldOfferBuyCoursesHostingLimitUpgrade(Course $course): bool
+    {
+        $baseLimit = $this->getGlobalUsersPerCourseLimit();
+        if ($baseLimit <= 0) {
+            return false;
+        }
+
+        $plugin = $this->getBuyCoursesPluginForUpgradeCta();
+        if (!$plugin instanceof BuyCoursesPlugin) {
+            return false;
+        }
+
+        try {
+            $effectiveLimit = $plugin->getEffectiveUsersPerCourseLimitForCourse((int) $course->getId());
+            if ($effectiveLimit > $baseLimit) {
+                return false;
+            }
+
+            $userId = $this->resolveBuyCoursesUpgradeUserId($course);
+            if ($userId > 0 && (int) ($plugin->getActiveHostingLimit($userId) ?? 0) > $baseLimit) {
+                return false;
+            }
+
+            return $plugin->hasActiveDisplayedCourseCreationServiceBenefit(
+                BuyCoursesPlugin::EXTRA_FIELD_HOSTING_LIMIT,
+                $baseLimit,
+            );
+        } catch (Throwable $exception) {
+            $this->debugLog('buyCourses:hostingLimitUpgradeCtaCheckFailed', [
+                'courseId' => (int) $course->getId(),
+                'message' => $exception->getMessage(),
+            ]);
+
+            return false;
+        }
+    }
+
+    public function shouldOfferBuyCoursesExerciseGeneratorUpgrade(Course $course): bool
+    {
+        $plugin = $this->getBuyCoursesPluginForUpgradeCta();
+        if (!$plugin instanceof BuyCoursesPlugin) {
+            return false;
+        }
+
+        try {
+            $userId = $this->resolveBuyCoursesUpgradeUserId($course);
+            if ($userId > 0 && $plugin->userHasActiveAiCourseFeatureService(
+                $userId,
+                BuyCoursesPlugin::AI_COURSE_FEATURE_EXERCISE_GENERATOR,
+            )) {
+                return false;
+            }
+
+            return $plugin->hasActiveDisplayedCourseCreationServiceAiFeature(
+                BuyCoursesPlugin::AI_COURSE_FEATURE_EXERCISE_GENERATOR,
+            );
+        } catch (Throwable $exception) {
+            $this->debugLog('buyCourses:exerciseGeneratorUpgradeCtaCheckFailed', [
+                'courseId' => (int) $course->getId(),
+                'message' => $exception->getMessage(),
+            ]);
+
+            return false;
+        }
+    }
+
+    public function resolveDocumentsToolQuotaMbForCourse(Course $course): int
+    {
+        if ($this->isGroupDocumentContext()) {
+            $groupQuotaMb = $this->resolveDefaultGroupDocumentQuotaMb();
+
+            if ($groupQuotaMb > 0) {
+                return $groupQuotaMb;
+            }
+        }
+
+        $owner = $this->getCourseOwnerForQuota($course);
+        if ($owner instanceof User) {
+            return $this->resolveEffectiveDocumentQuotaMbForUser($owner);
+        }
+
+        return $this->resolveDefaultDocumentQuotaMb();
+    }
+
+    public function resolveEffectiveDocumentQuotaMbForUser(?User $user): int
+    {
+        if ($user instanceof User) {
+            $payload = $this->getUserExtraFieldJson($user, 'buycourses_document_quota');
+
+            if (\is_array($payload)) {
+                $expiry = (string) ($payload['expiry'] ?? '');
+                $quotaMb = isset($payload['quota_mb']) ? (int) $payload['quota_mb'] : 0;
+
+                if ($quotaMb <= 0 && isset($payload['limit'])) {
+                    $quotaMb = (int) $payload['limit'];
+                }
+
+                if ($quotaMb > 0 && '' !== $expiry && date('Y-m-d') <= $expiry) {
+                    return $quotaMb;
+                }
+            }
+        }
+
+        return $this->resolveDefaultDocumentQuotaMb();
+    }
+
     private function fillCourse(Course $course, array $params): void
     {
         $this->debugLog('fillCourse:start', [
@@ -1003,37 +1683,6 @@ class CourseHelper
         $app_plugin->install_course_plugins($courseId);
     }
 
-    public function useTemplateAsBasisIfRequired($courseCode, $courseTemplate): void
-    {
-        $templateSetting = $this->settingsManager->getSetting('course.course_creation_use_template', true);
-        $teacherCanSelectCourseTemplate = 'true' === $this->settingsManager->getSetting('workflows.teacher_can_select_course_template', true);
-        $courseTemplate = isset($courseTemplate) ? (int) $courseTemplate : 0;
-
-        $useTemplate = false;
-        if ($teacherCanSelectCourseTemplate && $courseTemplate > 0) {
-            $useTemplate = true;
-            $originCourse = $this->courseRepository->findCourseAsArray((int) $courseTemplate);
-        } elseif (!empty($templateSetting)) {
-            $useTemplate = true;
-            $originCourse = $this->courseRepository->findCourseAsArray((int) $templateSetting);
-        }
-
-        if ($useTemplate && !empty($originCourse)) {
-            try {
-                $originCourse['official_code'] = $originCourse['code'];
-                $cb = new CourseBuilder('', $originCourse);
-                $course = $cb->build(0, $originCourse['code']);
-                $cr = new CourseRestorer($course);
-                $cr->set_file_option();
-                $cr->restore($courseCode);
-            } catch (Exception $e) {
-                error_log('Error during course template application: '.$e->getMessage());
-            } catch (Throwable $t) {
-                error_log('Unexpected error during course template application: '.$t->getMessage());
-            }
-        }
-    }
-
     private function prepareAndValidateCourseData(array $params): array
     {
         $title = str_replace('&amp;', '&', $params['title'] ?? '');
@@ -1194,69 +1843,6 @@ class CourseHelper
         return $user;
     }
 
-    /**
-     * Enforces the configured document quota for a document upload.
-     *
-     * The quota shown in the course configuration page is stored in course.disk_quota, in MB.
-     * document.default_document_quotum is only used as the initial value when the course is created.
-     * Do not apply a second live document quota here.
-     */
-    public function assertCanStoreDocumentBytes(Course $course, int $deltaBytes): void
-    {
-        if ($deltaBytes <= 0) {
-            return;
-        }
-
-        $quotaMb = $this->resolveCourseStorageQuotaMbForCourse($course);
-        $usedBytes = $this->getCourseDocumentUsedBytes($course);
-
-        if ($quotaMb <= 0) {
-            $this->debugLog('quota:documents:unlimited', [
-                'courseId' => (int) $course->getId(),
-                'deltaBytes' => $deltaBytes,
-                'usedBytes' => $usedBytes,
-            ]);
-
-            return;
-        }
-
-        $quotaBytes = $quotaMb * 1024 * 1024;
-        $nextUsedBytes = $usedBytes + $deltaBytes;
-
-        $this->debugLog('quota:documents:check', [
-            'courseId' => (int) $course->getId(),
-            'deltaBytes' => $deltaBytes,
-            'quotaMb' => $quotaMb,
-            'quotaBytes' => $quotaBytes,
-            'usedBytes' => $usedBytes,
-            'nextUsedBytes' => $nextUsedBytes,
-        ]);
-
-        if ($nextUsedBytes > $quotaBytes) {
-            throw new RuntimeException('Course documents quota exceeded.');
-        }
-    }
-
-    /**
-     * Course document quota in MB, as configured on the course.
-     *
-     * document.default_document_quotum is only used when a course is created
-     * and must not be applied as a second live quota here.
-     */
-    public function resolveCourseStorageQuotaMbForCourse(Course $course): int
-    {
-        return max((int) ($course->getDiskQuota() ?? 0), 0);
-    }
-
-    /**
-     * Documents tool base quota (MB) from platform settings.
-     * Prefer canonical keys first; keep compatibility keys as fallback.
-     */
-    public function resolveDocumentsToolQuotaMb(): int
-    {
-        return $this->resolveDefaultDocumentQuotaMb();
-    }
-
     private function resolveDefaultDocumentQuotaMb(): int
     {
         $preferred = [
@@ -1392,155 +1978,6 @@ class CourseHelper
         error_log('[CourseHelper] '.$message.$suffix);
     }
 
-    public function getGlobalUsersPerCourseLimit(): int
-    {
-        $info = $this->getGlobalUsersPerCourseLimitDebugInfo();
-
-        return $info['limit'];
-    }
-
-    public function getGlobalUsersPerCourseLimitDebugInfo(): array
-    {
-        $raw = $this->settingsManager->getSetting('platform.hosting_limit_users_per_course', true);
-        $limit = max(0, (int) ($raw ?? 0));
-
-        return [
-            'limit' => $limit,
-            'rawSettingKey' => 'platform.hosting_limit_users_per_course',
-            'rawSettingValue' => null !== $raw ? (string) $raw : null,
-        ];
-    }
-
-    public function countUsersForGlobalLimit(Course $course): int
-    {
-        $counts = $this->getCourseSubscriptionCountsByCourseIds([(int) $course->getId()]);
-
-        return (int) ($counts[(int) $course->getId()] ?? 0);
-    }
-
-    public function getCourseSubscriptionCountsByCourseIds(array $courseIds): array
-    {
-        $courseIds = array_values(array_filter(array_map('intval', $courseIds)));
-        if ([] === $courseIds) {
-            return [];
-        }
-
-        $rows = $this->entityManager
-            ->createQueryBuilder()
-            ->select('IDENTITY(cru.course) AS courseId, COUNT(DISTINCT cru.user) AS total')
-            ->from(CourseRelUser::class, 'cru')
-            ->where('cru.course IN (:courseIds)')
-            ->andWhere('cru.relationType <> :rrhhRelationType')
-            ->setParameter('courseIds', $courseIds)
-            ->setParameter('rrhhRelationType', COURSE_RELATION_TYPE_RRHH)
-            ->groupBy('cru.course')
-            ->getQuery()
-            ->getArrayResult()
-        ;
-
-        $counts = array_fill_keys($courseIds, 0);
-
-        foreach ($rows as $row) {
-            $counts[(int) $row['courseId']] = (int) $row['total'];
-        }
-
-        return $counts;
-    }
-
-    public function getCourseSubscriptionLimitInfo(Course $course, int $nbNewUsers = 1): array
-    {
-        $map = $this->getCourseSubscriptionLimitInfoMap([$course], $nbNewUsers);
-
-        return $map[(int) $course->getId()] ?? [
-            'subscriptionLimitEnabled' => false,
-            'subscriptionLimit' => 0,
-            'subscriptionCount' => 0,
-            'subscriptionLimitReached' => false,
-            'canSubscribe' => true,
-            'subscriptionLimitTooltip' => '',
-            'rawSettingKey' => 'platform.hosting_limit_users_per_course',
-            'rawSettingValue' => null,
-        ];
-    }
-
-    public function getCourseSubscriptionLimitInfoMap(array $courses, int $nbNewUsers = 1): array
-    {
-        $courses = array_values(array_filter(
-            $courses,
-            static fn ($course) => $course instanceof Course
-        ));
-
-        if ([] === $courses) {
-            return [];
-        }
-
-        $globalLimitInfo = $this->getGlobalUsersPerCourseLimitDebugInfo();
-        $globalLimit = (int) $globalLimitInfo['limit'];
-        $globalRawSettingKey = $globalLimitInfo['rawSettingKey'];
-        $globalRawSettingValue = $globalLimitInfo['rawSettingValue'];
-
-        $courseIds = array_map(
-            static fn (Course $course): int => (int) $course->getId(),
-            $courses
-        );
-
-        $buyCoursesLimits = $this->getBuyCoursesHostingLimitsByCourseIds($courseIds);
-        $counts = $this->getCourseSubscriptionCountsByCourseIds($courseIds);
-        $infoMap = [];
-
-        foreach ($courses as $course) {
-            $courseId = (int) $course->getId();
-            $courseSpecificLimit = (int) ($buyCoursesLimits[$courseId] ?? 0);
-            $limit = $courseSpecificLimit > 0 ? $courseSpecificLimit : $globalLimit;
-            $rawSettingKey = $courseSpecificLimit > 0
-                ? 'buycourses.subscription_course.hosting_limit'
-                : $globalRawSettingKey;
-            $rawSettingValue = $courseSpecificLimit > 0
-                ? (string) $courseSpecificLimit
-                : $globalRawSettingValue;
-            $current = (int) ($counts[$courseId] ?? 0);
-
-            if ($limit <= 0) {
-                $infoMap[$courseId] = [
-                    'subscriptionLimitEnabled' => false,
-                    'subscriptionLimit' => 0,
-                    'subscriptionCount' => $current,
-                    'subscriptionLimitReached' => false,
-                    'canSubscribe' => true,
-                    'subscriptionLimitTooltip' => '',
-                    'rawSettingKey' => $rawSettingKey,
-                    'rawSettingValue' => $rawSettingValue,
-                ];
-
-                continue;
-            }
-
-            $reached = $current >= $limit;
-            $canSubscribe = ($current + $nbNewUsers) <= $limit;
-
-            $tooltip = $this->translator->trans(
-                'The subscription limit for this course has been reached (%current%/%limit%).',
-                [
-                    '%current%' => $current,
-                    '%limit%' => $limit,
-                ]
-            );
-
-            $infoMap[$courseId] = [
-                'subscriptionLimitEnabled' => true,
-                'subscriptionLimit' => $limit,
-                'subscriptionCount' => $current,
-                'subscriptionLimitReached' => $reached,
-                'canSubscribe' => $canSubscribe,
-                'subscriptionLimitTooltip' => $tooltip,
-                'rawSettingKey' => $rawSettingKey,
-                'rawSettingValue' => $rawSettingValue,
-            ];
-        }
-
-        return $infoMap;
-    }
-
     /**
      * Returns active BuyCourses hosting limits indexed by course id.
      *
@@ -1622,170 +2059,6 @@ class CourseHelper
         return $limits;
     }
 
-    public function deleteCourse(Course $course, bool $deleteExclusiveDocuments = false): bool
-    {
-        $em = $this->entityManager;
-
-        /** @var SequenceResourceRepository $sequenceRepo */
-        $sequenceRepo = $em->getRepository(SequenceResource::class);
-        $sequenceResource = $sequenceRepo->findRequirementForResource($course->getId(), SequenceResource::COURSE_TYPE);
-
-        if ($sequenceResource) {
-            throw new RuntimeException($this->translator->trans('There is a sequence resource linked to this course. You must delete this link first.'));
-        }
-
-        $exclusiveFiles = [];
-        if ($deleteExclusiveDocuments) {
-            $exclusiveFiles = $this->getExclusiveResourceFilesForCourse($course);
-        }
-
-        $count = 0;
-        if ($this->accessUrlHelper->isMultiple()) {
-            $urlId = $this->accessUrlHelper->getCurrent()->getId();
-            UrlManager::delete_url_rel_course($course->getId(), $urlId);
-            $count = UrlManager::getCountUrlRelCourse($course->getId());
-        }
-
-        // In a multi-URL portal the course may still be linked to other URLs.
-        // In that case it was only unsubscribed from the current URL, not deleted.
-        if (0 !== $count) {
-            return false;
-        }
-
-        $groupCategories = GroupManager::get_categories($course);
-        if (!empty($groupCategories)) {
-            foreach ($groupCategories as $category) {
-                GroupManager::delete_category($category['iid'], $course->getCode());
-            }
-        }
-
-        $resourceLink = $course->getFirstResourceLink();
-
-        // Unsubscribe all users from the course
-        $em->createQuery('DELETE FROM '.CourseRelUser::class.' cru WHERE cru.course = :course')
-            ->setParameter('course', $course->getId())
-            ->execute()
-        ;
-
-        // Delete the course from the sessions tables
-        $em->createQuery('DELETE FROM '.SessionRelCourse::class.' src WHERE src.course = :course')
-            ->setParameter('course', $course->getId())
-            ->execute()
-        ;
-        $em->createQuery('DELETE FROM '.SessionRelCourseRelUser::class.' srcru WHERE srcru.course = :course')
-            ->setParameter('course', $course->getId())
-            ->execute()
-        ;
-
-        // Delete the course from the stats tables
-        $em->createQuery('DELETE FROM '.TrackEHotpotatoes::class.' t WHERE t.cId = :courseId')
-            ->setParameter('courseId', $course->getId())
-            ->execute()
-        ;
-        $em->createQuery('DELETE FROM '.TrackEAccess::class.' t WHERE t.cId = :courseId')
-            ->setParameter('courseId', $course->getId())
-            ->execute()
-        ;
-        $em->createQuery('DELETE FROM '.TrackELastaccess::class.' t WHERE t.cId = :courseId')
-            ->setParameter('courseId', $course->getId())
-            ->execute()
-        ;
-        $em->createQuery('DELETE FROM '.TrackECourseAccess::class.' t WHERE t.cId = :courseId')
-            ->setParameter('courseId', $course->getId())
-            ->execute()
-        ;
-        $em->createQuery('DELETE FROM '.TrackEOnline::class.' t WHERE t.cId = :courseId')
-            ->setParameter('courseId', $course->getId())
-            ->execute()
-        ;
-
-        // Do not delete rows from track_e_default as these include course
-        // creation and other important things that do not take much space
-        // but give information on the course history
-        if ($resourceLink) {
-            $em->createQuery('DELETE FROM '.TrackEDownloads::class.' t WHERE t.resourceLink = :resourceLink')
-                ->setParameter('resourceLink', $resourceLink->getId())
-                ->execute()
-            ;
-        }
-
-        $em->createQuery('DELETE FROM '.TrackELinks::class.' t WHERE t.cId = :courseId')
-            ->setParameter('courseId', $course->getId())
-            ->execute()
-        ;
-        $em->createQuery('DELETE FROM '.TrackEUploads::class.' t WHERE t.cId = :courseId')
-            ->setParameter('courseId', $course->getId())
-            ->execute()
-        ;
-
-        // Unlink tickets from the course before deletion (preserves ticket history)
-        $em->createQuery('UPDATE '.Ticket::class.' t SET t.course = NULL WHERE t.course = :course')
-            ->setParameter('course', $course->getId())
-            ->execute()
-        ;
-
-        $sequenceRepo->deleteSequenceResource($course->getId(), SequenceResource::COURSE_TYPE);
-
-        // Class
-        $em->createQuery('DELETE FROM '.UsergroupRelCourse::class.' urc WHERE urc.course = :course')
-            ->setParameter('course', $course->getId())
-            ->execute()
-        ;
-
-        // Skills
-        $argumentation = \sprintf(
-            $this->translator->trans('This skill was obtained through course %s which has been removed since then.'),
-            $course->getCode()
-        );
-        $em->createQuery(
-            'UPDATE '.SkillRelUser::class.' sru
-             SET sru.course = NULL, sru.session = NULL, sru.argumentation = :argumentation
-             WHERE sru.course = :course'
-        )
-            ->setParameter('course', $course->getId())
-            ->setParameter('argumentation', $argumentation)
-            ->execute()
-        ;
-
-        $this->eventDispatcher->dispatch(
-            new CourseDeletedEvent(['course' => $course], AbstractEvent::TYPE_PRE),
-            Events::COURSE_DELETED
-        );
-
-        // Purge Xapian index BEFORE deleting the course entity (resource links still exist)
-        try {
-            $this->xapianIndexService->purgeCourseIndex($course->getId());
-        } catch (Throwable $e) {
-            error_log('[Xapian] purgeCourseIndex: failed for courseId='.$course->getId().': '.$e->getMessage());
-        }
-
-        $this->entityManager->remove($course);
-        $this->entityManager->flush();
-        $this->entityManager->clear();
-
-        // Delete documents that were exclusively used by this course,
-        // if the administrator explicitly requested it.
-        if ($deleteExclusiveDocuments && !empty($exclusiveFiles)) {
-            $this->deleteExclusiveResourceFiles($exclusiveFiles);
-        }
-
-        // Delete extra course fields
-        $extraFieldValues = new ExtraFieldValue('course');
-        $extraFieldValues->deleteValuesByItem($course->getId());
-
-        // Add event to system log
-        Event::addEvent(
-            LOG_COURSE_DELETE,
-            LOG_COURSE_CODE,
-            $course->getCode(),
-            api_get_utc_datetime(),
-            api_get_user_id(),
-            $course->getId()
-        );
-
-        return true;
-    }
-
     /**
      * Returns ResourceFile entries that are exclusively linked to the given course
      * (i.e. not shared with any other course via another ResourceLink).
@@ -1859,133 +2132,6 @@ class CourseHelper
         }
 
         $this->entityManager->flush();
-    }
-
-    public function assertCanCreateCourse(array $params = []): void
-    {
-        /** @var User|null $ownerUser */
-        $ownerUser = $this->security->getUser();
-        if (!$ownerUser instanceof User) {
-            $ownerUser = $this->getFallbackAdminUser();
-        }
-
-        if (!empty($params['user_id'])) {
-            $explicitOwner = $this->userRepository->find((int) $params['user_id']);
-            if ($explicitOwner instanceof User) {
-                $ownerUser = $explicitOwner;
-            }
-        }
-
-        if ($this->security->isGranted('ROLE_ADMIN') && empty($params['user_id'])) {
-            $this->debugLog('createCourse:limit:adminBypass', [
-                'userId' => $ownerUser->getId(),
-            ]);
-
-            return;
-        }
-
-        $buyCoursesServiceSaleId = isset($params['buycourses_service_sale_id']) ? (int) $params['buycourses_service_sale_id'] : 0;
-        if ($buyCoursesServiceSaleId > 0) {
-            $selectionStatus = $this->resolveBuyCoursesServiceSaleCourseCreationSelection(
-                $ownerUser,
-                $buyCoursesServiceSaleId
-            );
-
-            if (!empty($selectionStatus['valid'])) {
-                return;
-            }
-
-            throw new RuntimeException((string) ($selectionStatus['message'] ?? $this->translator->trans('The selected BuyCourses service cannot be used to create this course.')));
-        }
-
-        $status = $this->resolveCourseCreationCapabilityForUser($ownerUser);
-
-        if (true === (bool) $status['canCreate']) {
-            return;
-        }
-
-        throw new RuntimeException(\sprintf($this->translator->trans('You have reached the maximum number of courses allowed (%d).'), (int) $status['effectiveLimit']));
-    }
-
-    public function resolveCourseCreationCapabilityForUser(User $user): array
-    {
-        $globalLimit = $this->resolveBaseMaxCoursesPerUser();
-        $serviceLimit = $this->resolveValidBuyCoursesMaxCoursesForUser($user);
-
-        if ($this->isCourseCreationAdmin($user)) {
-            return [
-                'canCreate' => true,
-                'currentCount' => 0,
-                'effectiveLimit' => 0,
-                'serviceLimit' => $serviceLimit,
-                'globalLimit' => $globalLimit,
-                'limitSource' => 'admin',
-            ];
-        }
-
-        if (!$this->isCourseCreationTeacher($user)) {
-            return [
-                'canCreate' => false,
-                'currentCount' => 0,
-                'effectiveLimit' => 0,
-                'serviceLimit' => $serviceLimit,
-                'globalLimit' => $globalLimit,
-                'limitSource' => 'role',
-            ];
-        }
-
-        if ('true' !== $this->settingsManager->getSetting('workflows.allow_users_to_create_courses', true)) {
-            return [
-                'canCreate' => false,
-                'currentCount' => 0,
-                'effectiveLimit' => 0,
-                'serviceLimit' => $serviceLimit,
-                'globalLimit' => $globalLimit,
-                'limitSource' => 'setting',
-            ];
-        }
-
-        $effectiveLimit = $serviceLimit ?? $globalLimit;
-        $currentCount = $this->countTeacherCoursesForUser($user);
-
-        $limitSource = 'unlimited';
-        if (null !== $serviceLimit) {
-            $limitSource = 'service';
-        } elseif ($globalLimit > 0) {
-            $limitSource = 'global';
-        }
-
-        return [
-            'canCreate' => $effectiveLimit <= 0 || $currentCount < $effectiveLimit,
-            'currentCount' => $currentCount,
-            'effectiveLimit' => $effectiveLimit,
-            'serviceLimit' => $serviceLimit,
-            'globalLimit' => $globalLimit,
-            'limitSource' => $limitSource,
-        ];
-    }
-
-    public function resolveMaxCoursesForUser(User $user): int
-    {
-        $status = $this->resolveCourseCreationCapabilityForUser($user);
-
-        return (int) $status['effectiveLimit'];
-    }
-
-    public function countTeacherCoursesForUser(User $user): int
-    {
-        $qb = $this->entityManager->createQueryBuilder();
-
-        $qb
-            ->select('COUNT(cru.id)')
-            ->from(CourseRelUser::class, 'cru')
-            ->andWhere('IDENTITY(cru.user) = :userId')
-            ->andWhere('cru.status = :status')
-            ->setParameter('userId', $user->getId())
-            ->setParameter('status', CourseRelUser::TEACHER)
-        ;
-
-        return (int) $qb->getQuery()->getSingleScalarResult();
     }
 
     private function isCourseCreationAdmin(User $user): bool
@@ -2087,112 +2233,6 @@ class CourseHelper
         }
     }
 
-    public function shouldOfferBuyCoursesDocumentQuotaUpgrade(Course $course): bool
-    {
-        $baseQuotaMb = $this->resolveDocumentsToolQuotaMb();
-        if ($baseQuotaMb <= 0) {
-            return false;
-        }
-
-        $plugin = $this->getBuyCoursesPluginForUpgradeCta();
-        if (!$plugin instanceof BuyCoursesPlugin) {
-            return false;
-        }
-
-        try {
-            $effectiveQuotaMb = $plugin->getEffectiveDocumentQuotaMbForCourse(
-                (int) $course->getId(),
-                $baseQuotaMb,
-            );
-            if ($effectiveQuotaMb > $baseQuotaMb) {
-                return false;
-            }
-
-            $userId = $this->resolveBuyCoursesUpgradeUserId($course);
-            if ($userId > 0 && (int) ($plugin->getActiveDocumentQuotaMb($userId) ?? 0) > $baseQuotaMb) {
-                return false;
-            }
-
-            return $plugin->hasActiveDisplayedCourseCreationServiceBenefit(
-                BuyCoursesPlugin::EXTRA_FIELD_DOCUMENT_QUOTA,
-                $baseQuotaMb,
-            );
-        } catch (Throwable $exception) {
-            $this->debugLog('buyCourses:documentQuotaUpgradeCtaCheckFailed', [
-                'courseId' => (int) $course->getId(),
-                'message' => $exception->getMessage(),
-            ]);
-
-            return false;
-        }
-    }
-
-    public function shouldOfferBuyCoursesHostingLimitUpgrade(Course $course): bool
-    {
-        $baseLimit = $this->getGlobalUsersPerCourseLimit();
-        if ($baseLimit <= 0) {
-            return false;
-        }
-
-        $plugin = $this->getBuyCoursesPluginForUpgradeCta();
-        if (!$plugin instanceof BuyCoursesPlugin) {
-            return false;
-        }
-
-        try {
-            $effectiveLimit = $plugin->getEffectiveUsersPerCourseLimitForCourse((int) $course->getId());
-            if ($effectiveLimit > $baseLimit) {
-                return false;
-            }
-
-            $userId = $this->resolveBuyCoursesUpgradeUserId($course);
-            if ($userId > 0 && (int) ($plugin->getActiveHostingLimit($userId) ?? 0) > $baseLimit) {
-                return false;
-            }
-
-            return $plugin->hasActiveDisplayedCourseCreationServiceBenefit(
-                BuyCoursesPlugin::EXTRA_FIELD_HOSTING_LIMIT,
-                $baseLimit,
-            );
-        } catch (Throwable $exception) {
-            $this->debugLog('buyCourses:hostingLimitUpgradeCtaCheckFailed', [
-                'courseId' => (int) $course->getId(),
-                'message' => $exception->getMessage(),
-            ]);
-
-            return false;
-        }
-    }
-
-    public function shouldOfferBuyCoursesExerciseGeneratorUpgrade(Course $course): bool
-    {
-        $plugin = $this->getBuyCoursesPluginForUpgradeCta();
-        if (!$plugin instanceof BuyCoursesPlugin) {
-            return false;
-        }
-
-        try {
-            $userId = $this->resolveBuyCoursesUpgradeUserId($course);
-            if ($userId > 0 && $plugin->userHasActiveAiCourseFeatureService(
-                $userId,
-                BuyCoursesPlugin::AI_COURSE_FEATURE_EXERCISE_GENERATOR,
-            )) {
-                return false;
-            }
-
-            return $plugin->hasActiveDisplayedCourseCreationServiceAiFeature(
-                BuyCoursesPlugin::AI_COURSE_FEATURE_EXERCISE_GENERATOR,
-            );
-        } catch (Throwable $exception) {
-            $this->debugLog('buyCourses:exerciseGeneratorUpgradeCtaCheckFailed', [
-                'courseId' => (int) $course->getId(),
-                'message' => $exception->getMessage(),
-            ]);
-
-            return false;
-        }
-    }
-
     private function getBuyCoursesPluginForUpgradeCta(): ?BuyCoursesPlugin
     {
         if (!$this->pluginHelper->isPluginEnabled('BuyCourses')) {
@@ -2222,46 +2262,6 @@ class CourseHelper
         $owner = $this->getCourseOwnerForQuota($course);
 
         return $owner instanceof User ? (int) $owner->getId() : 0;
-    }
-
-    public function resolveDocumentsToolQuotaMbForCourse(Course $course): int
-    {
-        if ($this->isGroupDocumentContext()) {
-            $groupQuotaMb = $this->resolveDefaultGroupDocumentQuotaMb();
-
-            if ($groupQuotaMb > 0) {
-                return $groupQuotaMb;
-            }
-        }
-
-        $owner = $this->getCourseOwnerForQuota($course);
-        if ($owner instanceof User) {
-            return $this->resolveEffectiveDocumentQuotaMbForUser($owner);
-        }
-
-        return $this->resolveDefaultDocumentQuotaMb();
-    }
-
-    public function resolveEffectiveDocumentQuotaMbForUser(?User $user): int
-    {
-        if ($user instanceof User) {
-            $payload = $this->getUserExtraFieldJson($user, 'buycourses_document_quota');
-
-            if (\is_array($payload)) {
-                $expiry = (string) ($payload['expiry'] ?? '');
-                $quotaMb = isset($payload['quota_mb']) ? (int) $payload['quota_mb'] : 0;
-
-                if ($quotaMb <= 0 && isset($payload['limit'])) {
-                    $quotaMb = (int) $payload['limit'];
-                }
-
-                if ($quotaMb > 0 && '' !== $expiry && date('Y-m-d') <= $expiry) {
-                    return $quotaMb;
-                }
-            }
-        }
-
-        return $this->resolveDefaultDocumentQuotaMb();
     }
 
     private function getCourseOwnerForQuota(Course $course): ?User

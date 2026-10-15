@@ -36,8 +36,6 @@ class CWikiMailcue
     protected int $userId;
 
     /**
-     * Set type.
-     *
      * @return CWikiMailcue
      */
     public function setType(string $type)
@@ -48,8 +46,6 @@ class CWikiMailcue
     }
 
     /**
-     * Get type.
-     *
      * @return string
      */
     public function getType()
@@ -58,8 +54,6 @@ class CWikiMailcue
     }
 
     /**
-     * Set groupId.
-     *
      * @return CWikiMailcue
      */
     public function setGroupId(int $groupId)
@@ -70,8 +64,6 @@ class CWikiMailcue
     }
 
     /**
-     * Get groupId.
-     *
      * @return int
      */
     public function getGroupId()
@@ -80,8 +72,6 @@ class CWikiMailcue
     }
 
     /**
-     * Set sessionId.
-     *
      * @return CWikiMailcue
      */
     public function setSessionId(int $sessionId)
@@ -92,8 +82,6 @@ class CWikiMailcue
     }
 
     /**
-     * Get sessionId.
-     *
      * @return int
      */
     public function getSessionId()
@@ -102,8 +90,6 @@ class CWikiMailcue
     }
 
     /**
-     * Set cId.
-     *
      * @return CWikiMailcue
      */
     public function setCId(int $cId)
@@ -114,8 +100,6 @@ class CWikiMailcue
     }
 
     /**
-     * Get cId.
-     *
      * @return int
      */
     public function getCId()
@@ -124,8 +108,6 @@ class CWikiMailcue
     }
 
     /**
-     * Set userId.
-     *
      * @return CWikiMailcue
      */
     public function setUserId(int $userId)
@@ -136,8 +118,6 @@ class CWikiMailcue
     }
 
     /**
-     * Get userId.
-     *
      * @return int
      */
     public function getUserId()

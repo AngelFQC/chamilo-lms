@@ -34,8 +34,6 @@ class ExtraFieldOptionRelFieldOption
     protected ?int $roleId = null;
 
     /**
-     * Get id.
-     *
      * @return int
      */
     public function getId()
@@ -44,8 +42,6 @@ class ExtraFieldOptionRelFieldOption
     }
 
     /**
-     * Get roleId.
-     *
      * @return int
      */
     public function getRoleId()
@@ -54,8 +50,6 @@ class ExtraFieldOptionRelFieldOption
     }
 
     /**
-     * Set roleId.
-     *
      * @return ExtraFieldOptionRelFieldOption
      */
     public function setRoleId(int $roleId)

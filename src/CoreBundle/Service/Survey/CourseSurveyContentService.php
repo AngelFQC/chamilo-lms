@@ -431,28 +431,6 @@ final readonly class CourseSurveyContentService
     }
 
     /**
-     * @return array{get: callable(CSurvey): string, set: callable(CSurvey, string): void}
-     */
-    private function resolveSurveyTextFieldAccessor(string $field): array
-    {
-        return match ($field) {
-            'subtitle' => [
-                'get' => static fn (CSurvey $survey): string => (string) $survey->getSubtitle(),
-                'set' => static function (CSurvey $survey, string $html): void {
-                    $survey->setSubtitle($html);
-                },
-            ],
-            'thanks' => [
-                'get' => static fn (CSurvey $survey): string => (string) $survey->getSurveythanks(),
-                'set' => static function (CSurvey $survey, string $html): void {
-                    $survey->setSurveythanks($html);
-                },
-            ],
-            default => throw new InvalidArgumentException(\sprintf('Unsupported survey text field "%s". Use "subtitle" or "thanks" (title is not translatable — it is used as a lookup key).', $field)),
-        };
-    }
-
-    /**
      * @return array{updated: true, action: 'created'|'replaced'}&array<string, mixed>
      */
     public function upsertQuestionDescriptionLanguage(
@@ -548,6 +526,28 @@ final readonly class CourseSurveyContentService
             'has_markers' => $result['has_markers'],
             'per_language' => $result['per_language'],
         ];
+    }
+
+    /**
+     * @return array{get: callable(CSurvey): string, set: callable(CSurvey, string): void}
+     */
+    private function resolveSurveyTextFieldAccessor(string $field): array
+    {
+        return match ($field) {
+            'subtitle' => [
+                'get' => static fn (CSurvey $survey): string => (string) $survey->getSubtitle(),
+                'set' => static function (CSurvey $survey, string $html): void {
+                    $survey->setSubtitle($html);
+                },
+            ],
+            'thanks' => [
+                'get' => static fn (CSurvey $survey): string => (string) $survey->getSurveythanks(),
+                'set' => static function (CSurvey $survey, string $html): void {
+                    $survey->setSurveythanks($html);
+                },
+            ],
+            default => throw new InvalidArgumentException(\sprintf('Unsupported survey text field "%s". Use "subtitle" or "thanks" (title is not translatable — it is used as a lookup key).', $field)),
+        };
     }
 
     private function resolveRequiredLanguageIsoCode(string $language): string

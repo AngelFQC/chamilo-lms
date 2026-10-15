@@ -17,6 +17,11 @@ class Basic extends Toolbar
     public array $plugins = [];
     private string $toolbarSet;
 
+    /**
+     * @var array<string,string>
+     */
+    private array $detectedExternalPlugins = [];
+
     public function __construct(
         $router,
         $toolbar = null,
@@ -109,11 +114,6 @@ class Basic extends Toolbar
     }
 
     /**
-     * @var array<string,string>
-     */
-    private array $detectedExternalPlugins = [];
-
-    /**
      * Get the toolbar config.
      *
      * Do NOT define the base plugin list or the full toolbar here.
@@ -173,6 +173,11 @@ class Basic extends Toolbar
         return $this->config;
     }
 
+    public function getNewPageBlock()
+    {
+        return ['NewPage', 'Templates', '-', 'PasteFromWord', 'inserthtml'];
+    }
+
     /**
      * Legacy stubs: we do not define complete toolbars here; tiny-settings.js controls them.
      */
@@ -196,11 +201,6 @@ class Basic extends Toolbar
             $this->getNewPageBlock(),
             // Legacy stub: the real toolbar is defined in tiny-settings.js
         ];
-    }
-
-    public function getNewPageBlock()
-    {
-        return ['NewPage', 'Templates', '-', 'PasteFromWord', 'inserthtml'];
     }
 
     /**

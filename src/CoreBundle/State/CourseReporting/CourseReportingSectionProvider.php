@@ -15,7 +15,9 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 
-/** @implements ProviderInterface<CourseReportingSection> */
+/**
+ * @implements ProviderInterface<CourseReportingSection>
+ */
 final readonly class CourseReportingSectionProvider implements ProviderInterface
 {
     public function __construct(

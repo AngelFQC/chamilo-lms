@@ -34,8 +34,7 @@ use Symfony\Component\Validator\Constraints as Assert;
         'groups' => ['extra_field_values:write'],
     ],
     security: "is_granted('ROLE_ADMIN')"
-),
-]
+),]
 #[ApiFilter(filterClass: SearchFilter::class, properties: ['field' => 'exact', 'value' => 'exact'])]
 #[ORM\Table(name: 'extra_field_values')]
 #[ORM\Index(columns: ['field_id', 'item_id'], name: 'idx_efv_fiii')]
@@ -120,8 +119,6 @@ class ExtraFieldValues
     }
 
     /**
-     * Get id.
-     *
      * @return int
      */
     public function getId()

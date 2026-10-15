@@ -813,7 +813,8 @@ INNER JOIN resource_link link
    AND link.user_id IS NULL
 WHERE entity.%s IN (:ids)
 ORDER BY entity.%s
-SQL,
+SQL
+            ,
             $idColumn,
             $tableName,
             $idColumn,
@@ -861,7 +862,8 @@ FROM gradebook_evaluation
 WHERE c_id = :courseId
   AND id IN (:ids)
 ORDER BY id
-SQL,
+SQL
+                ,
                 ['courseId' => $courseId, 'ids' => $ids],
                 ['ids' => ArrayParameterType::INTEGER]
             )
@@ -1360,7 +1362,8 @@ GROUP BY
     current_attempt.exe_exo_id,
     quiz.title
 ORDER BY backup.exe_exo_id, mapped_rows DESC, current_attempt.exe_exo_id
-SQL,
+SQL
+            ,
             ['courseId' => $courseId, 'linkedCourseId' => $courseId, 'ids' => $legacyIds],
             ['ids' => ArrayParameterType::INTEGER]
         );
@@ -1400,7 +1403,8 @@ WHERE field.item_type = :itemType
   AND field.variable = :variable
   AND values_table.item_id = :courseId
 ORDER BY values_table.id
-SQL,
+SQL
+            ,
             [
                 'itemType' => ExtraField::COURSE_FIELD_TYPE,
                 'variable' => CourseCompletionRuleEvaluator::COURSE_RULE_FIELD_VARIABLE,
@@ -1518,7 +1522,8 @@ INNER JOIN resource_link course_link
 WHERE field.item_type = 17
   AND field.variable = :variable
 ORDER BY values_table.item_id
-SQL,
+SQL
+                ,
                 [
                     'courseId' => $courseId,
                     'variable' => self::EXERCISE_RULE_FIELD_VARIABLE,
@@ -1856,14 +1861,14 @@ SQL,
             $summary['exercise_'.$status] += $courseReport['exercises'][$status];
         }
 
-        $summary['exercise_verified_references'] +=
-            $courseReport['exercises']['resolved_from_history']
+        $summary['exercise_verified_references']
+            += $courseReport['exercises']['resolved_from_history']
             + $courseReport['exercises']['resolved_from_final_exam_rule']
             + $courseReport['exercises']['verified_direct_with_context']
             + $courseReport['exercises']['verified_persisted_rule_with_context']
             + $courseReport['exercises']['resolved_from_course_sequence_anchor'];
-        $summary['exercise_review_required'] +=
-            $courseReport['exercises']['candidate_role_match']
+        $summary['exercise_review_required']
+            += $courseReport['exercises']['candidate_role_match']
             + $courseReport['exercises']['candidate_display_order']
             + $courseReport['exercises']['ambiguous_candidates']
             + $courseReport['exercises']['unresolved'];

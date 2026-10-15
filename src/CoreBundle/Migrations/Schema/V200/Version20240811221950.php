@@ -46,6 +46,8 @@ final class Version20240811221950 extends AbstractMigrationChamilo
         $this->dropIndexIfExists($schema, 'c_blog_task_rel_user', 'task');
     }
 
+    public function down(Schema $schema): void {}
+
     private function dropColumnIfExists(Schema $schema, string $tableName, string $columnName): void
     {
         if ($this->columnExists($schema, $tableName, $columnName)) {
@@ -93,6 +95,4 @@ final class Version20240811221950 extends AbstractMigrationChamilo
             $foreignKeyName
         )) > 0;
     }
-
-    public function down(Schema $schema): void {}
 }

@@ -27,6 +27,36 @@ class PartialSearchOrFilterTest extends WebTestCase
 {
     use ChamiloTestTrait;
 
+    public function testScopedGlobalAdminOnlySeesUsersInTheirOwnSubtree(): void
+    {
+        $client = static::createClient();
+        $child = $this->createChildUrl();
+        $scopedAdmin = $this->createUserOnUrl('psof_scoped_admin', $child, 'ROLE_GLOBAL_ADMIN');
+        $childUser = $this->createUserOnUrl('psof_child_user', $child);
+        $rootOnlyUser = $this->createUserOnUrl('psof_root_only_user', $this->getAccessUrl());
+
+        $client->loginUser($scopedAdmin);
+        $usernames = $this->requestUsernames($client);
+
+        $this->assertContains($childUser->getUsername(), $usernames);
+        $this->assertNotContains($rootOnlyUser->getUsername(), $usernames);
+    }
+
+    public function testUnrestrictedGlobalAdminSeesUsersFromEveryUrl(): void
+    {
+        $client = static::createClient();
+        $child = $this->createChildUrl();
+        $rootAdmin = $this->createUserOnUrl('psof_root_admin', $this->getAccessUrl(), 'ROLE_GLOBAL_ADMIN');
+        $childUser = $this->createUserOnUrl('psof_child_user_2', $child);
+        $rootOnlyUser = $this->createUserOnUrl('psof_root_only_user_2', $this->getAccessUrl());
+
+        $client->loginUser($rootAdmin);
+        $usernames = $this->requestUsernames($client);
+
+        $this->assertContains($childUser->getUsername(), $usernames);
+        $this->assertContains($rootOnlyUser->getUsername(), $usernames);
+    }
+
     private function createUserOnUrl(string $username, AccessUrl $url, string $role = ''): User
     {
         /** @var UserRepository $repo */
@@ -83,35 +113,5 @@ class PartialSearchOrFilterTest extends WebTestCase
         $data = json_decode((string) $client->getResponse()->getContent(), true);
 
         return array_column($data['hydra:member'] ?? [], 'username');
-    }
-
-    public function testScopedGlobalAdminOnlySeesUsersInTheirOwnSubtree(): void
-    {
-        $client = static::createClient();
-        $child = $this->createChildUrl();
-        $scopedAdmin = $this->createUserOnUrl('psof_scoped_admin', $child, 'ROLE_GLOBAL_ADMIN');
-        $childUser = $this->createUserOnUrl('psof_child_user', $child);
-        $rootOnlyUser = $this->createUserOnUrl('psof_root_only_user', $this->getAccessUrl());
-
-        $client->loginUser($scopedAdmin);
-        $usernames = $this->requestUsernames($client);
-
-        $this->assertContains($childUser->getUsername(), $usernames);
-        $this->assertNotContains($rootOnlyUser->getUsername(), $usernames);
-    }
-
-    public function testUnrestrictedGlobalAdminSeesUsersFromEveryUrl(): void
-    {
-        $client = static::createClient();
-        $child = $this->createChildUrl();
-        $rootAdmin = $this->createUserOnUrl('psof_root_admin', $this->getAccessUrl(), 'ROLE_GLOBAL_ADMIN');
-        $childUser = $this->createUserOnUrl('psof_child_user_2', $child);
-        $rootOnlyUser = $this->createUserOnUrl('psof_root_only_user_2', $this->getAccessUrl());
-
-        $client->loginUser($rootAdmin);
-        $usernames = $this->requestUsernames($client);
-
-        $this->assertContains($childUser->getUsername(), $usernames);
-        $this->assertContains($rootOnlyUser->getUsername(), $usernames);
     }
 }

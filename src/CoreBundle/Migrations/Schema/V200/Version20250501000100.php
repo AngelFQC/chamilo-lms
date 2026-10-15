@@ -111,7 +111,8 @@ WHERE publication.resource_node_id IS NOT NULL
   AND (%s)
 ORDER BY publication.iid
 LIMIT %d
-SQL,
+SQL
+                ,
                 $urlExpression,
                 $correctionExpression,
                 implode(' OR ', $pathPredicates),
@@ -239,7 +240,8 @@ WHERE comment.resource_node_id IS NOT NULL
   AND comment.iid > :lastIid
 ORDER BY comment.iid
 LIMIT %d
-SQL,
+SQL
+                    ,
                     self::READ_BATCH_SIZE
                 ),
                 ['lastIid' => $lastIid]
@@ -348,7 +350,8 @@ SQL,
 SELECT resource_node_id, title, original_name
 FROM resource_file
 WHERE resource_node_id IN (:nodeIds)
-SQL,
+SQL
+            ,
             ['nodeIds' => array_values($nodeIds)],
             ['nodeIds' => ArrayParameterType::INTEGER]
         )->fetchAllAssociative();

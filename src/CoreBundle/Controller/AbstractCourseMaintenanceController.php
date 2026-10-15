@@ -107,19 +107,6 @@ abstract class AbstractCourseMaintenanceController extends AbstractController
         return min($u1, $u2);
     }
 
-    private function toBool(string $raw, bool $default = false): bool
-    {
-        $v = strtolower(trim($raw));
-        if (\in_array($v, ['1', 'true', 'yes', 'on'], true)) {
-            return true;
-        }
-        if (\in_array($v, ['0', 'false', 'no', 'off'], true)) {
-            return false;
-        }
-
-        return $default;
-    }
-
     // -----------------------------------------------------------------------------
     // Tools normalization helpers
     // -----------------------------------------------------------------------------
@@ -608,7 +595,7 @@ abstract class AbstractCourseMaintenanceController extends AbstractController
         }
 
         $need = [];
-        $addNeed = function (string $type, $id) use (&$need): void {
+        $addNeed = static function (string $type, $id) use (&$need): void {
             $t = (string) $type;
             $i = is_numeric($id) ? (int) $id : (string) $id;
             if ('' === (string) $i || 0 === (int) $i) {
@@ -698,7 +685,7 @@ abstract class AbstractCourseMaintenanceController extends AbstractController
         $this->logDebug('[LP-deps] hydrated', [
             'types' => array_keys($need),
             'counts' => array_map(
-                fn ($t) => isset($course->resources[$t]) && \is_array($course->resources[$t]) ? \count($course->resources[$t]) : 0,
+                static fn ($t) => isset($course->resources[$t]) && \is_array($course->resources[$t]) ? \count($course->resources[$t]) : 0,
                 array_keys($need)
             ),
         ]);
@@ -731,7 +718,7 @@ abstract class AbstractCourseMaintenanceController extends AbstractController
         if (!empty($resources['document']) && \is_array($resources['document'])) {
             $docs = $resources['document'];
 
-            $normalize = function (string $rawPath, string $title, string $filetype): string {
+            $normalize = static function (string $rawPath, string $title, string $filetype): string {
                 $p = trim($rawPath, '/');
                 $p = (string) preg_replace('~^(?:document/)+~i', '', $p);
                 $parts = array_values(array_filter(explode('/', $p), 'strlen'));
@@ -836,7 +823,7 @@ abstract class AbstractCourseMaintenanceController extends AbstractController
             }
 
             $sortTree = null;
-            $sortTree = function (array &$nodes) use (&$sortTree): void {
+            $sortTree = static function (array &$nodes) use (&$sortTree): void {
                 usort($nodes, static fn ($a, $b) => strcasecmp((string) $a['label'], (string) $b['label']));
                 foreach ($nodes as &$n) {
                     if (isset($n['children']) && \is_array($n['children'])) {
@@ -856,8 +843,8 @@ abstract class AbstractCourseMaintenanceController extends AbstractController
         }
 
         // Forums block
-        $hasForumData =
-            (!empty($resources['forum']) || !empty($resources['Forum']))
+        $hasForumData
+            = (!empty($resources['forum']) || !empty($resources['Forum']))
             || (!empty($resources['forum_category']) || !empty($resources['Forum_Category']))
             || (!empty($resources['forum_topic']) || !empty($resources['ForumTopic']))
             || (!empty($resources['thread']) || !empty($resources['post']) || !empty($resources['forum_post']));
@@ -876,8 +863,8 @@ abstract class AbstractCourseMaintenanceController extends AbstractController
         }
 
         // Links block (Category → Link)
-        $hasLinkData =
-            (!empty($resources['link']) || !empty($resources['Link']))
+        $hasLinkData
+            = (!empty($resources['link']) || !empty($resources['Link']))
             || (!empty($resources['link_category']) || !empty($resources['Link_Category']));
 
         if ($hasLinkData) {
@@ -982,7 +969,7 @@ abstract class AbstractCourseMaintenanceController extends AbstractController
             $this->logDebug(
                 '[buildResourceTreeForVue] end groups',
                 array_map(
-                    fn ($g) => [
+                    static fn ($g) => [
                         'type' => $g['type'],
                         'items' => \count($g['items'] ?? []),
                         'children' => \count($g['children'] ?? []),
@@ -1019,7 +1006,7 @@ abstract class AbstractCourseMaintenanceController extends AbstractController
         ]);
 
         // Quick classifiers (defensive)
-        $isForum = function (object $o): bool {
+        $isForum = static function (object $o): bool {
             $e = (isset($o->obj) && \is_object($o->obj)) ? $o->obj : $o;
             if (isset($e->forum_title) && \is_string($e->forum_title)) {
                 return true;
@@ -1033,7 +1020,7 @@ abstract class AbstractCourseMaintenanceController extends AbstractController
 
             return false;
         };
-        $isTopic = function (object $o) use ($isForum): bool {
+        $isTopic = static function (object $o) use ($isForum): bool {
             $e = (isset($o->obj) && \is_object($o->obj)) ? $o->obj : $o;
             if (isset($e->forum_id) && (isset($e->thread_title) || isset($e->thread_date) || isset($e->poster_name))) {
                 return true;
@@ -1047,7 +1034,7 @@ abstract class AbstractCourseMaintenanceController extends AbstractController
 
             return false;
         };
-        $getForumCategoryId = function (object $forum): int {
+        $getForumCategoryId = static function (object $forum): int {
             $e = (isset($forum->obj) && \is_object($forum->obj)) ? $forum->obj : $forum;
             $cid = (int) ($e->forum_category ?? 0);
             if ($cid <= 0) {
@@ -1815,7 +1802,7 @@ abstract class AbstractCourseMaintenanceController extends AbstractController
             }
         }
 
-        $getBucket = fn (array $a, string $key): array => (isset($a[$key]) && \is_array($a[$key])) ? $a[$key] : [];
+        $getBucket = static fn (array $a, string $key): array => (isset($a[$key]) && \is_array($a[$key])) ? $a[$key] : [];
 
         // ---------- Forums flow ----------
         if (!empty($selected['forum'])) {
@@ -1874,27 +1861,27 @@ abstract class AbstractCourseMaintenanceController extends AbstractController
                 $postBucket = $this->findBucket($orig, 'forum_post');
 
                 if (!empty($forumCat) && !empty($catsToKeep)) {
-                    $out[$this->findBucketKey($orig, 'forum_category') ?? 'Forum_Category'] =
-                        array_intersect_key(
+                    $out[$this->findBucketKey($orig, 'forum_category') ?? 'Forum_Category']
+                        = array_intersect_key(
                             $forumCat,
                             array_fill_keys(array_map('strval', array_keys($catsToKeep)), true)
                         );
                 }
 
                 if (!empty($forumBucket)) {
-                    $out[$this->findBucketKey($orig, 'forum') ?? 'forum'] =
-                        array_intersect_key($forumBucket, $selForums);
+                    $out[$this->findBucketKey($orig, 'forum') ?? 'forum']
+                        = array_intersect_key($forumBucket, $selForums);
                 }
                 if (!empty($threadBucket)) {
-                    $out[$this->findBucketKey($orig, 'forum_topic') ?? 'thread'] =
-                        array_intersect_key(
+                    $out[$this->findBucketKey($orig, 'forum_topic') ?? 'thread']
+                        = array_intersect_key(
                             $threadBucket,
                             array_fill_keys(array_map('strval', array_keys($threadToKeep)), true)
                         );
                 }
                 if (!empty($postBucket)) {
-                    $out[$this->findBucketKey($orig, 'forum_post') ?? 'post'] =
-                        array_intersect_key(
+                    $out[$this->findBucketKey($orig, 'forum_post') ?? 'post']
+                        = array_intersect_key(
                             $postBucket,
                             array_fill_keys(array_map('strval', array_keys($postToKeep)), true)
                         );
@@ -2180,5 +2167,18 @@ abstract class AbstractCourseMaintenanceController extends AbstractController
         }
 
         $course->resources = array_filter($out);
+    }
+
+    private function toBool(string $raw, bool $default = false): bool
+    {
+        $v = strtolower(trim($raw));
+        if (\in_array($v, ['1', 'true', 'yes', 'on'], true)) {
+            return true;
+        }
+        if (\in_array($v, ['0', 'false', 'no', 'off'], true)) {
+            return false;
+        }
+
+        return $default;
     }
 }

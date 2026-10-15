@@ -68,9 +68,6 @@ class CThematic extends AbstractResource implements ResourceInterface, Stringabl
         return $this;
     }
 
-    /**
-     * Get title.
-     */
     public function getTitle(): string
     {
         return $this->title;
@@ -95,9 +92,6 @@ class CThematic extends AbstractResource implements ResourceInterface, Stringabl
         return $this;
     }
 
-    /**
-     * Get active.
-     */
     public function getActive(): bool
     {
         return $this->active;

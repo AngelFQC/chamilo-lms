@@ -40,8 +40,6 @@ class Chat
     protected int $recd = 0;
 
     /**
-     * Get id.
-     *
      * @return int
      */
     public function getId()
@@ -50,8 +48,6 @@ class Chat
     }
 
     /**
-     * Get fromUser.
-     *
      * @return int
      */
     public function getFromUser()
@@ -60,8 +56,6 @@ class Chat
     }
 
     /**
-     * Set fromUser.
-     *
      * @return Chat
      */
     public function setFromUser(int $fromUser)
@@ -72,8 +66,6 @@ class Chat
     }
 
     /**
-     * Get toUser.
-     *
      * @return int
      */
     public function getToUser()
@@ -82,8 +74,6 @@ class Chat
     }
 
     /**
-     * Set toUser.
-     *
      * @return Chat
      */
     public function setToUser(int $toUser)
@@ -94,8 +84,6 @@ class Chat
     }
 
     /**
-     * Get message.
-     *
      * @return string
      */
     public function getMessage()
@@ -104,8 +92,6 @@ class Chat
     }
 
     /**
-     * Set message.
-     *
      * @return Chat
      */
     public function setMessage(string $message)
@@ -116,8 +102,6 @@ class Chat
     }
 
     /**
-     * Get sent.
-     *
      * @return DateTime
      */
     public function getSent()
@@ -126,8 +110,6 @@ class Chat
     }
 
     /**
-     * Set sent.
-     *
      * @return Chat
      */
     public function setSent(DateTime $sent)
@@ -138,8 +120,6 @@ class Chat
     }
 
     /**
-     * Get recd.
-     *
      * @return int
      */
     public function getRecd()
@@ -148,8 +128,6 @@ class Chat
     }
 
     /**
-     * Set recd.
-     *
      * @return Chat
      */
     public function setRecd(int $recd)

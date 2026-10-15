@@ -211,7 +211,7 @@ class ProfileType extends AbstractType
             ],
         ];
 
-        $isCoreVisible = function (
+        $isCoreVisible = static function (
             string $key
         ) use (
             $fieldsVisibility,
@@ -248,7 +248,7 @@ class ProfileType extends AbstractType
             return \in_array($key, $visibleHigh, true);
         };
 
-        $isCoreEditable = function (
+        $isCoreEditable = static function (
             string $key
         ) use (
             $fieldsVisibility,

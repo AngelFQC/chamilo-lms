@@ -290,7 +290,8 @@ WHERE p.iid IN (:postIds)
 GROUP BY p.iid
 HAVING COUNT(DISTINCT context_link.c_id) = 1
 ORDER BY p.iid
-SQL,
+SQL
+                ,
                 ['postIds' => $batchIds],
                 ['postIds' => ArrayParameterType::INTEGER]
             )->fetchAllAssociative();
@@ -348,7 +349,8 @@ GROUP BY
     parent.level
 HAVING COUNT(DISTINCT context_link.c_id) = 1
 ORDER BY p.iid
-SQL,
+SQL
+            ,
             ['postIds' => $postIds],
             ['postIds' => ArrayParameterType::INTEGER]
         )->fetchAllAssociative();

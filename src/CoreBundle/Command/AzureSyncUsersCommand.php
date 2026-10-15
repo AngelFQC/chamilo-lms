@@ -114,7 +114,7 @@ class AzureSyncUsersCommand extends AzureSyncAbstractCommand
             $users = $this->userRepository->findByAuthsource(UserAuthSource::AZURE);
 
             $chamiloUserIdList = array_map(
-                fn (User $user) => $user->getId(),
+                static fn (User $user) => $user->getId(),
                 $users
             );
 

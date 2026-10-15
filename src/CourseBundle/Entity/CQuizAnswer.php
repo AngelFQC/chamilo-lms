@@ -154,17 +154,11 @@ class CQuizAnswer
         return $this;
     }
 
-    /**
-     * Get answerCode.
-     */
     public function getAnswerCode(): ?string
     {
         return $this->answerCode;
     }
 
-    /**
-     * Get iid.
-     */
     public function getIid(): ?int
     {
         return $this->iid;

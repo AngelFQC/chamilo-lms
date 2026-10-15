@@ -61,7 +61,8 @@ INNER JOIN portfolio item ON item.id = comment.item_id
 WHERE comment.id > :lastId
 ORDER BY comment.id ASC
 LIMIT %d
-SQL,
+SQL
+                    ,
                     self::READ_BATCH_SIZE
                 ),
                 ['lastId' => $lastId]

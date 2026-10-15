@@ -23,20 +23,6 @@ use Symfony\Contracts\Translation\TranslatorInterface;
  */
 final class PasswordPolicyValidatorTest extends KernelTestCase
 {
-    private function getValidator(): PasswordPolicyValidator
-    {
-        self::bootKernel();
-        LegacyContainer::setContainer(self::getContainer());
-
-        /** @var PasswordPolicyValidator $validator */
-        return self::getContainer()->get(PasswordPolicyValidator::class);
-    }
-
-    private function getTranslator(): TranslatorInterface
-    {
-        return self::getContainer()->get(TranslatorInterface::class);
-    }
-
     public function testPasswordMeetingDefaultRequirementsHasNoViolations(): void
     {
         $validator = $this->getValidator();
@@ -73,5 +59,18 @@ final class PasswordPolicyValidatorTest extends KernelTestCase
         $expected = $this->getTranslator()->trans('Password must contain at least %count% special characters.', ['%count%' => 1]);
 
         $this->assertSame([$expected], $errors);
+    }
+    private function getValidator(): PasswordPolicyValidator
+    {
+        self::bootKernel();
+        LegacyContainer::setContainer(self::getContainer());
+
+        /** @var PasswordPolicyValidator $validator */
+        return self::getContainer()->get(PasswordPolicyValidator::class);
+    }
+
+    private function getTranslator(): TranslatorInterface
+    {
+        return self::getContainer()->get(TranslatorInterface::class);
     }
 }

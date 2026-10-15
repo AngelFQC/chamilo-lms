@@ -27,8 +27,6 @@ class SequenceTypeEntity
     protected string $entityTable;
 
     /**
-     * Get id.
-     *
      * @return int
      */
     public function getId()

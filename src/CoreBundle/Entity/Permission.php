@@ -35,6 +35,11 @@ class Permission implements Stringable
     #[ORM\Column(type: 'text', nullable: true)]
     private ?string $description = null;
 
+    public function __toString(): string
+    {
+        return $this->title;
+    }
+
     public function getId(): ?int
     {
         return $this->id;
@@ -74,10 +79,5 @@ class Permission implements Stringable
         $this->description = $description;
 
         return $this;
-    }
-
-    public function __toString(): string
-    {
-        return $this->title;
     }
 }

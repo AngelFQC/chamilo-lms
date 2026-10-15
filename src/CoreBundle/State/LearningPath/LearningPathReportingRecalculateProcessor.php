@@ -24,7 +24,9 @@ use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Throwable;
 
-/** @implements ProcessorInterface<LearningPathReportingRecalculateInput, void> */
+/**
+ * @implements ProcessorInterface<LearningPathReportingRecalculateInput, void>
+ */
 final readonly class LearningPathReportingRecalculateProcessor implements ProcessorInterface
 {
     use LearningPathStateHelperTrait;

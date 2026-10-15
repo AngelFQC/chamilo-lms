@@ -14,7 +14,9 @@ use Chamilo\CoreBundle\Service\GlobalReporting\GlobalReportingQueryService;
 
 use const PHP_SESSION_ACTIVE;
 
-/** @implements ProviderInterface<GlobalReportingDashboard> */
+/**
+ * @implements ProviderInterface<GlobalReportingDashboard>
+ */
 final readonly class GlobalReportingDashboardProvider implements ProviderInterface
 {
     public function __construct(

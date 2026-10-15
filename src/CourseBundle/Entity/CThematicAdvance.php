@@ -65,8 +65,6 @@ class CThematicAdvance implements Stringable // extends AbstractResource impleme
     }
 
     /**
-     * Get content.
-     *
      * @return string
      */
     public function getContent()
@@ -82,8 +80,6 @@ class CThematicAdvance implements Stringable // extends AbstractResource impleme
     }
 
     /**
-     * Get startDate.
-     *
      * @return DateTime
      */
     public function getStartDate()
@@ -99,8 +95,6 @@ class CThematicAdvance implements Stringable // extends AbstractResource impleme
     }
 
     /**
-     * Get duration.
-     *
      * @return int
      */
     public function getDuration()
@@ -116,8 +110,6 @@ class CThematicAdvance implements Stringable // extends AbstractResource impleme
     }
 
     /**
-     * Get doneAdvance.
-     *
      * @return bool
      */
     public function getDoneAdvance()

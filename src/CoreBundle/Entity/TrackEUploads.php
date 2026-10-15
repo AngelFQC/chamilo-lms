@@ -40,8 +40,6 @@ class TrackEUploads
     protected int $sessionId;
 
     /**
-     * Get uploadUserId.
-     *
      * @return int
      */
     public function getUploadUserId()
@@ -50,8 +48,6 @@ class TrackEUploads
     }
 
     /**
-     * Set uploadUserId.
-     *
      * @return TrackEUploads
      */
     public function setUploadUserId(int $uploadUserId)
@@ -62,8 +58,6 @@ class TrackEUploads
     }
 
     /**
-     * Get uploadDate.
-     *
      * @return DateTime
      */
     public function getUploadDate()
@@ -72,8 +66,6 @@ class TrackEUploads
     }
 
     /**
-     * Set uploadDate.
-     *
      * @return TrackEUploads
      */
     public function setUploadDate(DateTime $uploadDate)
@@ -84,8 +76,6 @@ class TrackEUploads
     }
 
     /**
-     * Get cId.
-     *
      * @return int
      */
     public function getCId()
@@ -94,8 +84,6 @@ class TrackEUploads
     }
 
     /**
-     * Set cId.
-     *
      * @return TrackEUploads
      */
     public function setCId(int $cId)
@@ -106,8 +94,6 @@ class TrackEUploads
     }
 
     /**
-     * Get uploadWorkId.
-     *
      * @return int
      */
     public function getUploadWorkId()
@@ -116,8 +102,6 @@ class TrackEUploads
     }
 
     /**
-     * Set uploadWorkId.
-     *
      * @return TrackEUploads
      */
     public function setUploadWorkId(int $uploadWorkId)
@@ -128,8 +112,6 @@ class TrackEUploads
     }
 
     /**
-     * Get sessionId.
-     *
      * @return int
      */
     public function getSessionId()
@@ -138,8 +120,6 @@ class TrackEUploads
     }
 
     /**
-     * Set sessionId.
-     *
      * @return TrackEUploads
      */
     public function setSessionId(int $sessionId)
@@ -150,8 +130,6 @@ class TrackEUploads
     }
 
     /**
-     * Get uploadId.
-     *
      * @return int
      */
     public function getUploadId()

@@ -21,16 +21,6 @@ final class AiHelper
         private readonly RequestStack $requestStack
     ) {}
 
-    private function getSession(): ?SessionInterface
-    {
-        $request = $this->requestStack->getCurrentRequest();
-        if (null === $request || !$request->hasSession()) {
-            return null;
-        }
-
-        return $request->getSession();
-    }
-
     /**
      * Returns true when the user is in any test context:
      * - at least one exercise attempt marked as active (current_exercises)
@@ -109,6 +99,16 @@ final class AiHelper
         $this->removeCurrentExercisesMap();
         $this->writeLpInTestFlag(false);
         $this->removeAggregateInTestFlag();
+    }
+
+    private function getSession(): ?SessionInterface
+    {
+        $request = $this->requestStack->getCurrentRequest();
+        if (null === $request || !$request->hasSession()) {
+            return null;
+        }
+
+        return $request->getSession();
     }
 
     // ------------------------------------------------------------------

@@ -30,8 +30,6 @@ class CourseType
     protected ?string $props = null;
 
     /**
-     * Get title.
-     *
      * @return string
      */
     public function getTitle()
@@ -47,8 +45,6 @@ class CourseType
     }
 
     /**
-     * Get translationVar.
-     *
      * @return string
      */
     public function getTranslationVar()
@@ -64,8 +60,6 @@ class CourseType
     }
 
     /**
-     * Get description.
-     *
      * @return string
      */
     public function getDescription()
@@ -81,8 +75,6 @@ class CourseType
     }
 
     /**
-     * Get props.
-     *
      * @return string
      */
     public function getProps()
@@ -98,8 +90,6 @@ class CourseType
     }
 
     /**
-     * Get id.
-     *
      * @return int
      */
     public function getId()

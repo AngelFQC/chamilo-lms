@@ -193,8 +193,6 @@ class BranchSync
     }
 
     /**
-     * Get id.
-     *
      * @return int
      */
     public function getId()
@@ -203,8 +201,6 @@ class BranchSync
     }
 
     /**
-     * Get title.
-     *
      * @return string
      */
     public function getTitle()
@@ -231,9 +227,6 @@ class BranchSync
         return $this;
     }
 
-    /**
-     * Get latitude.
-     */
     public function getLatitude(): ?string
     {
         return $this->latitude;
@@ -246,9 +239,6 @@ class BranchSync
         return $this;
     }
 
-    /**
-     * Get longitude.
-     */
     public function getLongitude(): ?string
     {
         return $this->longitude;
@@ -334,8 +324,6 @@ class BranchSync
     }
 
     /**
-     * Get lastSyncTransId.
-     *
      * @return int
      */
     public function getLastSyncTransId()
@@ -344,8 +332,6 @@ class BranchSync
     }
 
     /**
-     * Set lastSyncTransId.
-     *
      * @return BranchSync
      */
     public function setLastSyncTransId(?int $lastSyncTransId)
@@ -356,8 +342,6 @@ class BranchSync
     }
 
     /**
-     * Get sslPubKey.
-     *
      * @return string
      */
     public function getSslPubKey()
@@ -366,8 +350,6 @@ class BranchSync
     }
 
     /**
-     * Set sslPubKey.
-     *
      * @return BranchSync
      */
     public function setSslPubKey(?string $sslPubKey)
@@ -400,8 +382,6 @@ class BranchSync
     }
 
     /**
-     * Get lastSyncTransDate.
-     *
      * @return DateTime
      */
     public function getLastSyncTransDate()
@@ -410,8 +390,6 @@ class BranchSync
     }
 
     /**
-     * Set lastSyncTransDate.
-     *
      * @return BranchSync
      */
     public function setLastSyncTransDate(?DateTime $lastSyncTransDate)
@@ -422,8 +400,6 @@ class BranchSync
     }
 
     /**
-     * Get lastSyncType.
-     *
      * @return string
      */
     public function getLastSyncType()
@@ -432,8 +408,6 @@ class BranchSync
     }
 
     /**
-     * Set lastSyncType.
-     *
      * @return BranchSync
      */
     public function setLastSyncType(?string $lastSyncType)
@@ -444,8 +418,6 @@ class BranchSync
     }
 
     /**
-     * Get lft.
-     *
      * @return int
      */
     public function getLft()
@@ -454,8 +426,6 @@ class BranchSync
     }
 
     /**
-     * Set lft.
-     *
      * @return BranchSync
      */
     public function setLft(int $lft)
@@ -466,8 +436,6 @@ class BranchSync
     }
 
     /**
-     * Get rgt.
-     *
      * @return int
      */
     public function getRgt()
@@ -476,8 +444,6 @@ class BranchSync
     }
 
     /**
-     * Set rgt.
-     *
      * @return BranchSync
      */
     public function setRgt(int $rgt)
@@ -488,8 +454,6 @@ class BranchSync
     }
 
     /**
-     * Get lvl.
-     *
      * @return int
      */
     public function getLvl()
@@ -498,8 +462,6 @@ class BranchSync
     }
 
     /**
-     * Set lvl.
-     *
      * @return BranchSync
      */
     public function setLvl(int $lvl)
@@ -510,8 +472,6 @@ class BranchSync
     }
 
     /**
-     * Get root.
-     *
      * @return int
      */
     public function getRoot()
@@ -520,8 +480,6 @@ class BranchSync
     }
 
     /**
-     * Set root.
-     *
      * @return BranchSync
      */
     public function setRoot(int $root)

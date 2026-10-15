@@ -19,20 +19,6 @@ class CourseRelUserTest extends AbstractApiTest
     use ChamiloTestTrait;
 
     // -------------------------------------------------------------------------
-    // Helpers
-    // -------------------------------------------------------------------------
-
-    private function createAdminUser(string $suffix): User
-    {
-        return $this->createUser('cru_admin_'.$suffix, 'cru_admin_'.$suffix, '', 'ROLE_ADMIN');
-    }
-
-    private function getCourseIri(Course $course): string
-    {
-        return '/api/courses/'.$course->getId();
-    }
-
-    // -------------------------------------------------------------------------
     // GET /api/course_rel_users/{id}
     // -------------------------------------------------------------------------
 
@@ -821,5 +807,19 @@ class CourseRelUserTest extends AbstractApiTest
         $count = $repo->countTaughtCoursesForUser($teacher);
 
         $this->assertGreaterThanOrEqual(1, $count);
+    }
+
+    // -------------------------------------------------------------------------
+    // Helpers
+    // -------------------------------------------------------------------------
+
+    private function createAdminUser(string $suffix): User
+    {
+        return $this->createUser('cru_admin_'.$suffix, 'cru_admin_'.$suffix, '', 'ROLE_ADMIN');
+    }
+
+    private function getCourseIri(Course $course): string
+    {
+        return '/api/courses/'.$course->getId();
     }
 }

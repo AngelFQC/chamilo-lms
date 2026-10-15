@@ -320,6 +320,8 @@ class Version20180319145700 extends AbstractMigrationChamilo
         }
     }
 
+    public function down(Schema $schema): void {}
+
     private function validateLegacySurveyReferences(): void
     {
         $duplicateLegacySurveyIds = (int) $this->connection->fetchOne(
@@ -385,6 +387,4 @@ class Version20180319145700 extends AbstractMigrationChamilo
             }
         }
     }
-
-    public function down(Schema $schema): void {}
 }

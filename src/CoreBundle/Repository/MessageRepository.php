@@ -136,29 +136,6 @@ class MessageRepository extends ServiceEntityRepository
         ;
     }
 
-    protected function addReceiverQueryBuilder(User $user, ?QueryBuilder $qb = null): QueryBuilder
-    {
-        $qb = $this->getOrCreateQueryBuilder($qb, 'm');
-        $qb
-            ->join('m.receivers', 'r')
-            ->andWhere('r.receiver = :user')
-            ->setParameter('user', $user)
-        ;
-
-        return $qb;
-    }
-
-    protected function addMessageTypeQueryBuilder(int $type, ?QueryBuilder $qb = null): QueryBuilder
-    {
-        $qb = $this->getOrCreateQueryBuilder($qb, 'm');
-        $qb
-            ->andWhere('m.msgType = :type')
-            ->setParameter('type', $type)
-        ;
-
-        return $qb;
-    }
-
     public function findByGroupId(int $groupId)
     {
         $qb = $this->createQueryBuilder('m');
@@ -289,30 +266,6 @@ class MessageRepository extends ServiceEntityRepository
         return $qb->getQuery()->getResult();
     }
 
-    private function friendshipOrRequestExists(User $user, User $friend): bool
-    {
-        $repository = $this->getEntityManager()->getRepository(UserRelUser::class);
-        $relationTypes = [
-            UserRelUser::USER_RELATION_TYPE_FRIEND,
-            UserRelUser::USER_RELATION_TYPE_GOODFRIEND,
-            UserRelUser::USER_RELATION_TYPE_FRIEND_REQUEST,
-        ];
-
-        foreach ([[$user, $friend], [$friend, $user]] as [$source, $target]) {
-            foreach ($relationTypes as $relationType) {
-                if (null !== $repository->findOneBy([
-                    'user' => $source,
-                    'friend' => $target,
-                    'relationType' => $relationType,
-                ])) {
-                    return true;
-                }
-            }
-        }
-
-        return false;
-    }
-
     public function invitationAccepted(User $sender, User $receiver): bool
     {
         $queryBuilder = $this->getEntityManager()->createQueryBuilder();
@@ -346,47 +299,6 @@ class MessageRepository extends ServiceEntityRepository
         }
 
         return false;
-    }
-
-    private function ensureFriendship(User $user, User $friend): void
-    {
-        $repository = $this->getEntityManager()->getRepository(UserRelUser::class);
-
-        $existingFriendship = $repository->findOneBy([
-            'user' => $user,
-            'friend' => $friend,
-            'relationType' => UserRelUser::USER_RELATION_TYPE_FRIEND,
-        ]);
-        if ($existingFriendship instanceof UserRelUser) {
-            return;
-        }
-
-        $goodFriendship = $repository->findOneBy([
-            'user' => $user,
-            'friend' => $friend,
-            'relationType' => UserRelUser::USER_RELATION_TYPE_GOODFRIEND,
-        ]);
-        if ($goodFriendship instanceof UserRelUser) {
-            return;
-        }
-
-        $pendingRequest = $repository->findOneBy([
-            'user' => $user,
-            'friend' => $friend,
-            'relationType' => UserRelUser::USER_RELATION_TYPE_FRIEND_REQUEST,
-        ]);
-        if ($pendingRequest instanceof UserRelUser) {
-            $pendingRequest->setRelationType(UserRelUser::USER_RELATION_TYPE_FRIEND);
-
-            return;
-        }
-
-        $friendship = (new UserRelUser())
-            ->setUser($user)
-            ->setFriend($friend)
-            ->setRelationType(UserRelUser::USER_RELATION_TYPE_FRIEND)
-        ;
-        $this->getEntityManager()->persist($friendship);
     }
 
     public function invitationDenied(User $sender, User $receiver): bool
@@ -455,6 +367,113 @@ class MessageRepository extends ServiceEntityRepository
         $entityManager->flush();
     }
 
+    public function usersHaveSharedMessages(?User $currentUser, ?User $targetUser): bool
+    {
+        if (null === $currentUser || null === $targetUser) {
+            return false;
+        }
+
+        $qb = $this->createQueryBuilder('m');
+        $qb->select('m')
+            ->innerJoin('m.receivers', 'mr')
+            ->where('mr.receiver = :userTwo')
+            ->andWhere('m.sender = :userOne')
+            ->setParameter('userOne', $targetUser)
+            ->setParameter('userTwo', $currentUser)
+            ->setMaxResults(1)
+        ;
+
+        return \count($qb->getQuery()->getResult()) > 0;
+    }
+
+    protected function addReceiverQueryBuilder(User $user, ?QueryBuilder $qb = null): QueryBuilder
+    {
+        $qb = $this->getOrCreateQueryBuilder($qb, 'm');
+        $qb
+            ->join('m.receivers', 'r')
+            ->andWhere('r.receiver = :user')
+            ->setParameter('user', $user)
+        ;
+
+        return $qb;
+    }
+
+    protected function addMessageTypeQueryBuilder(int $type, ?QueryBuilder $qb = null): QueryBuilder
+    {
+        $qb = $this->getOrCreateQueryBuilder($qb, 'm');
+        $qb
+            ->andWhere('m.msgType = :type')
+            ->setParameter('type', $type)
+        ;
+
+        return $qb;
+    }
+
+    private function friendshipOrRequestExists(User $user, User $friend): bool
+    {
+        $repository = $this->getEntityManager()->getRepository(UserRelUser::class);
+        $relationTypes = [
+            UserRelUser::USER_RELATION_TYPE_FRIEND,
+            UserRelUser::USER_RELATION_TYPE_GOODFRIEND,
+            UserRelUser::USER_RELATION_TYPE_FRIEND_REQUEST,
+        ];
+
+        foreach ([[$user, $friend], [$friend, $user]] as [$source, $target]) {
+            foreach ($relationTypes as $relationType) {
+                if (null !== $repository->findOneBy([
+                    'user' => $source,
+                    'friend' => $target,
+                    'relationType' => $relationType,
+                ])) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
+    private function ensureFriendship(User $user, User $friend): void
+    {
+        $repository = $this->getEntityManager()->getRepository(UserRelUser::class);
+
+        $existingFriendship = $repository->findOneBy([
+            'user' => $user,
+            'friend' => $friend,
+            'relationType' => UserRelUser::USER_RELATION_TYPE_FRIEND,
+        ]);
+        if ($existingFriendship instanceof UserRelUser) {
+            return;
+        }
+
+        $goodFriendship = $repository->findOneBy([
+            'user' => $user,
+            'friend' => $friend,
+            'relationType' => UserRelUser::USER_RELATION_TYPE_GOODFRIEND,
+        ]);
+        if ($goodFriendship instanceof UserRelUser) {
+            return;
+        }
+
+        $pendingRequest = $repository->findOneBy([
+            'user' => $user,
+            'friend' => $friend,
+            'relationType' => UserRelUser::USER_RELATION_TYPE_FRIEND_REQUEST,
+        ]);
+        if ($pendingRequest instanceof UserRelUser) {
+            $pendingRequest->setRelationType(UserRelUser::USER_RELATION_TYPE_FRIEND);
+
+            return;
+        }
+
+        $friendship = (new UserRelUser())
+            ->setUser($user)
+            ->setFriend($friend)
+            ->setRelationType(UserRelUser::USER_RELATION_TYPE_FRIEND)
+        ;
+        $this->getEntityManager()->persist($friendship);
+    }
+
     /**
      * Filters messages starting from a specific message ID.
      * This function first adds the message with the given start ID to the filtered list.
@@ -495,7 +514,7 @@ class MessageRepository extends ServiceEntityRepository
                 return true;
             }
 
-            $filteredMessages = array_filter($allMessages, function ($m) use ($parent) {
+            $filteredMessages = array_filter($allMessages, static function ($m) use ($parent) {
                 return $m->getId() === $parent->getId();
             });
 
@@ -507,24 +526,5 @@ class MessageRepository extends ServiceEntityRepository
         }
 
         return false;
-    }
-
-    public function usersHaveSharedMessages(?User $currentUser, ?User $targetUser): bool
-    {
-        if (null === $currentUser || null === $targetUser) {
-            return false;
-        }
-
-        $qb = $this->createQueryBuilder('m');
-        $qb->select('m')
-            ->innerJoin('m.receivers', 'mr')
-            ->where('mr.receiver = :userTwo')
-            ->andWhere('m.sender = :userOne')
-            ->setParameter('userOne', $targetUser)
-            ->setParameter('userTwo', $currentUser)
-            ->setMaxResults(1)
-        ;
-
-        return \count($qb->getQuery()->getResult()) > 0;
     }
 }

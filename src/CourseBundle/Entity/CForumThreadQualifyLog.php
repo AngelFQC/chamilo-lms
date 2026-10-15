@@ -45,8 +45,6 @@ class CForumThreadQualifyLog
     protected ?int $sessionId = null;
 
     /**
-     * Set userId.
-     *
      * @return CForumThreadQualifyLog
      */
     public function setUserId(int $userId)
@@ -57,8 +55,6 @@ class CForumThreadQualifyLog
     }
 
     /**
-     * Get userId.
-     *
      * @return int
      */
     public function getUserId()
@@ -67,8 +63,6 @@ class CForumThreadQualifyLog
     }
 
     /**
-     * Set threadId.
-     *
      * @return CForumThreadQualifyLog
      */
     public function setThreadId(int $threadId)
@@ -79,8 +73,6 @@ class CForumThreadQualifyLog
     }
 
     /**
-     * Get threadId.
-     *
      * @return int
      */
     public function getThreadId()
@@ -89,8 +81,6 @@ class CForumThreadQualifyLog
     }
 
     /**
-     * Set qualify.
-     *
      * @return CForumThreadQualifyLog
      */
     public function setQualify(float $qualify)
@@ -101,8 +91,6 @@ class CForumThreadQualifyLog
     }
 
     /**
-     * Get qualify.
-     *
      * @return float
      */
     public function getQualify()
@@ -111,8 +99,6 @@ class CForumThreadQualifyLog
     }
 
     /**
-     * Set qualifyUserId.
-     *
      * @return CForumThreadQualifyLog
      */
     public function setQualifyUserId(int $qualifyUserId)
@@ -123,8 +109,6 @@ class CForumThreadQualifyLog
     }
 
     /**
-     * Get qualifyUserId.
-     *
      * @return int
      */
     public function getQualifyUserId()
@@ -133,8 +117,6 @@ class CForumThreadQualifyLog
     }
 
     /**
-     * Set qualifyTime.
-     *
      * @return CForumThreadQualifyLog
      */
     public function setQualifyTime(DateTime $qualifyTime)
@@ -145,8 +127,6 @@ class CForumThreadQualifyLog
     }
 
     /**
-     * Get qualifyTime.
-     *
      * @return DateTime
      */
     public function getQualifyTime()
@@ -155,8 +135,6 @@ class CForumThreadQualifyLog
     }
 
     /**
-     * Set sessionId.
-     *
      * @return CForumThreadQualifyLog
      */
     public function setSessionId(int $sessionId)
@@ -167,8 +145,6 @@ class CForumThreadQualifyLog
     }
 
     /**
-     * Get sessionId.
-     *
      * @return int
      */
     public function getSessionId()
@@ -177,8 +153,6 @@ class CForumThreadQualifyLog
     }
 
     /**
-     * Set cId.
-     *
      * @return CForumThreadQualifyLog
      */
     public function setCId(int $cId)
@@ -189,8 +163,6 @@ class CForumThreadQualifyLog
     }
 
     /**
-     * Get cId.
-     *
      * @return int
      */
     public function getCId()

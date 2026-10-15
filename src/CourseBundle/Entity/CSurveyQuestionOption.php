@@ -50,8 +50,6 @@ class CSurveyQuestionOption
     }
 
     /**
-     * Get optionText.
-     *
      * @return string
      */
     public function getOptionText()
@@ -67,8 +65,6 @@ class CSurveyQuestionOption
     }
 
     /**
-     * Get sort.
-     *
      * @return int
      */
     public function getSort()
@@ -84,8 +80,6 @@ class CSurveyQuestionOption
     }
 
     /**
-     * Get value.
-     *
      * @return int
      */
     public function getValue()

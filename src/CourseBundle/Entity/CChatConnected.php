@@ -40,8 +40,6 @@ class CChatConnected
     protected DateTime $lastConnection;
 
     /**
-     * Set sessionId.
-     *
      * @return CChatConnected
      */
     public function setSessionId(int $sessionId)
@@ -52,8 +50,6 @@ class CChatConnected
     }
 
     /**
-     * Get sessionId.
-     *
      * @return int
      */
     public function getSessionId()
@@ -62,8 +58,6 @@ class CChatConnected
     }
 
     /**
-     * Set toGroupId.
-     *
      * @return CChatConnected
      */
     public function setToGroupId(int $toGroupId)
@@ -74,8 +68,6 @@ class CChatConnected
     }
 
     /**
-     * Get toGroupId.
-     *
      * @return int
      */
     public function getToGroupId()
@@ -84,8 +76,6 @@ class CChatConnected
     }
 
     /**
-     * Set cId.
-     *
      * @return CChatConnected
      */
     public function setCId(int $cId)
@@ -96,8 +86,6 @@ class CChatConnected
     }
 
     /**
-     * Get cId.
-     *
      * @return int
      */
     public function getCId()
@@ -106,8 +94,6 @@ class CChatConnected
     }
 
     /**
-     * Set userId.
-     *
      * @return CChatConnected
      */
     public function setUserId(int $userId)
@@ -118,8 +104,6 @@ class CChatConnected
     }
 
     /**
-     * Get userId.
-     *
      * @return int
      */
     public function getUserId()
@@ -128,8 +112,6 @@ class CChatConnected
     }
 
     /**
-     * Set lastConnection.
-     *
      * @return CChatConnected
      */
     public function setLastConnection(DateTime $lastConnection)
@@ -140,8 +122,6 @@ class CChatConnected
     }
 
     /**
-     * Get lastConnection.
-     *
      * @return DateTime
      */
     public function getLastConnection()

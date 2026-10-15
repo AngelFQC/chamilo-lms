@@ -50,8 +50,6 @@ class CLpIvObjective
     protected ?float $progressMeasure = null;
 
     /**
-     * Set lpIvId.
-     *
      * @return CLpIvObjective
      */
     public function setLpIvId(int $lpIvId)
@@ -62,8 +60,6 @@ class CLpIvObjective
     }
 
     /**
-     * Get lpIvId.
-     *
      * @return int
      */
     public function getLpIvId()
@@ -72,8 +68,6 @@ class CLpIvObjective
     }
 
     /**
-     * Set orderId.
-     *
      * @return CLpIvObjective
      */
     public function setOrderId(int $orderId)
@@ -84,8 +78,6 @@ class CLpIvObjective
     }
 
     /**
-     * Get orderId.
-     *
      * @return int
      */
     public function getOrderId()
@@ -94,8 +86,6 @@ class CLpIvObjective
     }
 
     /**
-     * Set objectiveId.
-     *
      * @return CLpIvObjective
      */
     public function setObjectiveId(string $objectiveId)
@@ -106,8 +96,6 @@ class CLpIvObjective
     }
 
     /**
-     * Get objectiveId.
-     *
      * @return string
      */
     public function getObjectiveId()
@@ -116,8 +104,6 @@ class CLpIvObjective
     }
 
     /**
-     * Set scoreRaw.
-     *
      * @return CLpIvObjective
      */
     public function setScoreRaw(float $scoreRaw)
@@ -128,8 +114,6 @@ class CLpIvObjective
     }
 
     /**
-     * Get scoreRaw.
-     *
      * @return float
      */
     public function getScoreRaw()
@@ -138,8 +122,6 @@ class CLpIvObjective
     }
 
     /**
-     * Set scoreMax.
-     *
      * @return CLpIvObjective
      */
     public function setScoreMax(float $scoreMax)
@@ -150,8 +132,6 @@ class CLpIvObjective
     }
 
     /**
-     * Get scoreMax.
-     *
      * @return float
      */
     public function getScoreMax()
@@ -160,8 +140,6 @@ class CLpIvObjective
     }
 
     /**
-     * Set scoreMin.
-     *
      * @return CLpIvObjective
      */
     public function setScoreMin(float $scoreMin)
@@ -172,8 +150,6 @@ class CLpIvObjective
     }
 
     /**
-     * Get scoreMin.
-     *
      * @return float
      */
     public function getScoreMin()
@@ -182,8 +158,6 @@ class CLpIvObjective
     }
 
     /**
-     * Set status.
-     *
      * @return CLpIvObjective
      */
     public function setStatus(string $status)
@@ -194,8 +168,6 @@ class CLpIvObjective
     }
 
     /**
-     * Get status.
-     *
      * @return string
      */
     public function getStatus()
@@ -204,8 +176,6 @@ class CLpIvObjective
     }
 
     /**
-     * Set progressMeasure.
-     *
      * @return CLpIvObjective
      */
     public function setProgressMeasure(?float $progressMeasure)
@@ -216,8 +186,6 @@ class CLpIvObjective
     }
 
     /**
-     * Get progressMeasure.
-     *
      * @return float|null
      */
     public function getProgressMeasure()
@@ -226,8 +194,6 @@ class CLpIvObjective
     }
 
     /**
-     * Set cId.
-     *
      * @return CLpIvObjective
      */
     public function setCId(int $cId)
@@ -238,8 +204,6 @@ class CLpIvObjective
     }
 
     /**
-     * Get cId.
-     *
      * @return int
      */
     public function getCId()

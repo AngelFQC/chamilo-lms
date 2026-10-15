@@ -44,8 +44,6 @@ class TrackEAccess
     protected string $userIp;
 
     /**
-     * Get accessUserId.
-     *
      * @return int
      */
     public function getAccessUserId()
@@ -54,8 +52,6 @@ class TrackEAccess
     }
 
     /**
-     * Set accessUserId.
-     *
      * @return TrackEAccess
      */
     public function setAccessUserId(int $accessUserId)
@@ -66,8 +62,6 @@ class TrackEAccess
     }
 
     /**
-     * Get accessDate.
-     *
      * @return DateTime
      */
     public function getAccessDate()
@@ -76,8 +70,6 @@ class TrackEAccess
     }
 
     /**
-     * Set accessDate.
-     *
      * @return TrackEAccess
      */
     public function setAccessDate(DateTime $accessDate)
@@ -88,8 +80,6 @@ class TrackEAccess
     }
 
     /**
-     * Get cId.
-     *
      * @return int
      */
     public function getCId()
@@ -98,8 +88,6 @@ class TrackEAccess
     }
 
     /**
-     * Set cId.
-     *
      * @return TrackEAccess
      */
     public function setCId(int $cId)
@@ -110,8 +98,6 @@ class TrackEAccess
     }
 
     /**
-     * Get accessTool.
-     *
      * @return string
      */
     public function getAccessTool()
@@ -120,8 +106,6 @@ class TrackEAccess
     }
 
     /**
-     * Set accessTool.
-     *
      * @return TrackEAccess
      */
     public function setAccessTool(string $accessTool)
@@ -132,8 +116,6 @@ class TrackEAccess
     }
 
     /**
-     * Get sessionId.
-     *
      * @return int
      */
     public function getSessionId()
@@ -142,8 +124,6 @@ class TrackEAccess
     }
 
     /**
-     * Set sessionId.
-     *
      * @return TrackEAccess
      */
     public function setSessionId(int $sessionId)
@@ -154,8 +134,6 @@ class TrackEAccess
     }
 
     /**
-     * Get userIp.
-     *
      * @return string
      */
     public function getUserIp()
@@ -164,8 +142,6 @@ class TrackEAccess
     }
 
     /**
-     * Set userIp.
-     *
      * @return TrackEAccess
      */
     public function setUserIp(string $userIp)
@@ -176,8 +152,6 @@ class TrackEAccess
     }
 
     /**
-     * Get accessId.
-     *
      * @return int
      */
     public function getAccessId()

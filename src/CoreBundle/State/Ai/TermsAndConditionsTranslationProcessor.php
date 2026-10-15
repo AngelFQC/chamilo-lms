@@ -17,7 +17,9 @@ use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 use Symfony\Component\HttpKernel\Exception\UnprocessableEntityHttpException;
 
-/** @implements ProcessorInterface<TermsAndConditionsTranslation, TermsAndConditionsTranslation> */
+/**
+ * @implements ProcessorInterface<TermsAndConditionsTranslation, TermsAndConditionsTranslation>
+ */
 final readonly class TermsAndConditionsTranslationProcessor implements ProcessorInterface
 {
     public function __construct(

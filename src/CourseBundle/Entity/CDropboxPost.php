@@ -46,8 +46,6 @@ class CDropboxPost
     protected int $destUserId;
 
     /**
-     * Set feedbackDate.
-     *
      * @return CDropboxPost
      */
     public function setFeedbackDate(DateTime $feedbackDate)
@@ -58,8 +56,6 @@ class CDropboxPost
     }
 
     /**
-     * Get feedbackDate.
-     *
      * @return DateTime
      */
     public function getFeedbackDate()
@@ -68,8 +64,6 @@ class CDropboxPost
     }
 
     /**
-     * Set feedback.
-     *
      * @return CDropboxPost
      */
     public function setFeedback(string $feedback)
@@ -80,8 +74,6 @@ class CDropboxPost
     }
 
     /**
-     * Get feedback.
-     *
      * @return string
      */
     public function getFeedback()
@@ -90,8 +82,6 @@ class CDropboxPost
     }
 
     /**
-     * Set catId.
-     *
      * @return CDropboxPost
      */
     public function setCatId(int $catId)
@@ -102,8 +92,6 @@ class CDropboxPost
     }
 
     /**
-     * Get catId.
-     *
      * @return int
      */
     public function getCatId()
@@ -112,8 +100,6 @@ class CDropboxPost
     }
 
     /**
-     * Set sessionId.
-     *
      * @return CDropboxPost
      */
     public function setSessionId(int $sessionId)
@@ -124,8 +110,6 @@ class CDropboxPost
     }
 
     /**
-     * Get sessionId.
-     *
      * @return int
      */
     public function getSessionId()
@@ -134,8 +118,6 @@ class CDropboxPost
     }
 
     /**
-     * Set cId.
-     *
      * @return CDropboxPost
      */
     public function setCId(int $cId)
@@ -146,8 +128,6 @@ class CDropboxPost
     }
 
     /**
-     * Get cId.
-     *
      * @return int
      */
     public function getCId()
@@ -156,8 +136,6 @@ class CDropboxPost
     }
 
     /**
-     * Set fileId.
-     *
      * @return CDropboxPost
      */
     public function setFileId(int $fileId)
@@ -168,8 +146,6 @@ class CDropboxPost
     }
 
     /**
-     * Get fileId.
-     *
      * @return int
      */
     public function getFileId()
@@ -178,8 +154,6 @@ class CDropboxPost
     }
 
     /**
-     * Set destUserId.
-     *
      * @return CDropboxPost
      */
     public function setDestUserId(int $destUserId)
@@ -190,8 +164,6 @@ class CDropboxPost
     }
 
     /**
-     * Get destUserId.
-     *
      * @return int
      */
     public function getDestUserId()

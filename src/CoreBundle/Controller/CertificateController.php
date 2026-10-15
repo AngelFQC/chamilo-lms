@@ -74,7 +74,8 @@ SELECT
 FROM gradebook_certificate_legacy_reference
 WHERE certificate_id = :certificateId
 LIMIT 1
-SQL,
+SQL
+            ,
             ['certificateId' => $certificateId]
         );
 

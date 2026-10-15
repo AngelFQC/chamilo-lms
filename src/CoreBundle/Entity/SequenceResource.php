@@ -32,8 +32,6 @@ class SequenceResource
     protected int $resourceId;
 
     /**
-     * Get id.
-     *
      * @return int
      */
     public function getId()

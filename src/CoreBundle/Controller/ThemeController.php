@@ -312,7 +312,7 @@ class ThemeController extends AbstractController
             return $conditionalResponse;
         }
 
-        $response = new StreamedResponse(function () use ($filesystem, $filePath): void {
+        $response = new StreamedResponse(static function () use ($filesystem, $filePath): void {
             $out = fopen('php://output', 'wb');
             $in = $filesystem->readStream($filePath);
 

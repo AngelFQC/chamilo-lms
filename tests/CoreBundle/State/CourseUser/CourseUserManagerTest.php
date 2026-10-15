@@ -30,18 +30,6 @@ class CourseUserManagerTest extends AbstractApiTest
 {
     use ChamiloTestTrait;
 
-    private function subscribeStudent(EntityManagerInterface $em, User $user, Course $course): void
-    {
-        $subscription = (new CourseRelUser())
-            ->setCourse($course)
-            ->setUser($user)
-            ->setStatus(CourseRelUser::STUDENT)
-            ->setRelationType(0)
-        ;
-        $em->persist($subscription);
-        $em->flush();
-    }
-
     public function testListSortsAndPaginatesAcrossTheFullCourseNotJustOnePage(): void
     {
         $em = $this->getEntityManager();
@@ -233,5 +221,17 @@ class CourseUserManagerTest extends AbstractApiTest
         $this->assertSame(2, $data['totalItems']);
         $this->assertCount(2, $data['items']);
         $this->assertSame(['Amir', 'Bella'], array_column($data['items'], 'firstname'));
+    }
+
+    private function subscribeStudent(EntityManagerInterface $em, User $user, Course $course): void
+    {
+        $subscription = (new CourseRelUser())
+            ->setCourse($course)
+            ->setUser($user)
+            ->setStatus(CourseRelUser::STUDENT)
+            ->setRelationType(0)
+        ;
+        $em->persist($subscription);
+        $em->flush();
     }
 }

@@ -33,12 +33,12 @@ class CAnnouncementAttachment extends AbstractResource implements ResourceInterf
     #[ORM\Column(name: 'size', type: 'integer', nullable: false)]
     protected int $size;
 
+    #[ORM\Column(name: 'filename', type: 'string', length: 255, nullable: false)]
+    protected string $filename;
+
     #[ORM\ManyToOne(targetEntity: CAnnouncement::class, inversedBy: 'attachments')]
     #[ORM\JoinColumn(name: 'announcement_id', referencedColumnName: 'iid', onDelete: 'CASCADE')]
     private ?CAnnouncement $announcement = null;
-
-    #[ORM\Column(name: 'filename', type: 'string', length: 255, nullable: false)]
-    protected string $filename;
 
     public function __construct()
     {
@@ -58,8 +58,6 @@ class CAnnouncementAttachment extends AbstractResource implements ResourceInterf
     }
 
     /**
-     * Get path.
-     *
      * @return string
      */
     public function getPath()
@@ -75,8 +73,6 @@ class CAnnouncementAttachment extends AbstractResource implements ResourceInterf
     }
 
     /**
-     * Get comment.
-     *
      * @return string
      */
     public function getComment()
@@ -92,8 +88,6 @@ class CAnnouncementAttachment extends AbstractResource implements ResourceInterf
     }
 
     /**
-     * Get size.
-     *
      * @return int
      */
     public function getSize()
@@ -114,8 +108,6 @@ class CAnnouncementAttachment extends AbstractResource implements ResourceInterf
     }
 
     /**
-     * Get filename.
-     *
      * @return string
      */
     public function getFilename()

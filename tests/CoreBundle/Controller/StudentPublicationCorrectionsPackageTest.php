@@ -25,6 +25,19 @@ final class StudentPublicationCorrectionsPackageTest extends AbstractApiTest
 {
     use ChamiloTestTrait;
 
+    public function testExtractionDirectoryIsRemovedAfterTheUpload(): void
+    {
+        $ctx = $this->bootstrapAssignment('cleanup');
+        $zipPath = $this->buildZip(2);
+        $before = $this->extractionDirectories();
+
+        $this->upload($ctx['teacher'], $ctx['assignment'], $zipPath);
+        @unlink($zipPath);
+
+        $this->assertResponseIsSuccessful();
+        $this->assertSame($before, $this->extractionDirectories());
+    }
+
     /**
      * @return array{teacher: User, assignment: CStudentPublication}
      */
@@ -86,18 +99,5 @@ final class StudentPublicationCorrectionsPackageTest extends AbstractApiTest
     private function extractionDirectories(): array
     {
         return glob(self::getContainer()->getParameter('kernel.cache_dir').'/corrections_*') ?: [];
-    }
-
-    public function testExtractionDirectoryIsRemovedAfterTheUpload(): void
-    {
-        $ctx = $this->bootstrapAssignment('cleanup');
-        $zipPath = $this->buildZip(2);
-        $before = $this->extractionDirectories();
-
-        $this->upload($ctx['teacher'], $ctx['assignment'], $zipPath);
-        @unlink($zipPath);
-
-        $this->assertResponseIsSuccessful();
-        $this->assertSame($before, $this->extractionDirectories());
     }
 }

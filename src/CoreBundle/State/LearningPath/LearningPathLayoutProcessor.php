@@ -217,7 +217,8 @@ final readonly class LearningPathLayoutProcessor implements ProcessorInterface
                   AND link.deleted_at IS NULL
                 ORDER BY link.display_order, category.iid
                 FOR UPDATE
-                SQL,
+                SQL
+            ,
             ['courseId' => $courseId],
             ['courseId' => ParameterType::INTEGER],
         );
@@ -247,7 +248,8 @@ final readonly class LearningPathLayoutProcessor implements ProcessorInterface
                   AND link.deleted_at IS NULL
                 ORDER BY link.display_order, learning_path.iid
                 FOR UPDATE
-                SQL,
+                SQL
+            ,
             ['courseId' => $courseId],
             ['courseId' => ParameterType::INTEGER],
         );
@@ -334,7 +336,8 @@ final readonly class LearningPathLayoutProcessor implements ProcessorInterface
                   AND usergroup_id IS NULL
                   AND user_id IS NULL
                   AND deleted_at IS NULL
-                SQL,
+                SQL
+            ,
             [
                 'position' => $position,
                 'resourceLinkId' => $resourceLinkId,

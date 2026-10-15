@@ -28,80 +28,6 @@ final class UpdateUserRolesToolTest extends KernelTestCase
 {
     use ChamiloTestTrait;
 
-    private function createUserOnUrl(string $username, AccessUrl $url, string $role = ''): User
-    {
-        /** @var UserRepository $repo */
-        $repo = self::getContainer()->get(UserRepository::class);
-        $admin = $this->getAdmin();
-
-        $user = $repo->createUser()
-            ->setLastname($username)
-            ->setFirstname($username)
-            ->setUsername($username)
-            ->setStatus(1)
-            ->setPlainPassword($username)
-            ->setEmail($username.'@example.com')
-            ->setCreator($admin)
-            ->setCurrentUrl($url)
-            ->addAuthSourceByAuthentication(UserAuthSource::PLATFORM, $url)
-        ;
-
-        if ('' !== $role) {
-            $user->addRole($role);
-        }
-
-        $repo->updateUser($user);
-
-        return $user;
-    }
-
-    /**
-     * root (fixture default) -> child -> grandchild, with a plain admin and a
-     * (non-unrestricted) global admin both registered on "child", and a plain user on
-     * "grandchild".
-     *
-     * @return array{root: AccessUrl, child: AccessUrl, grandchild: AccessUrl, rootAdmin: User,
-     *               childPlainAdmin: User, childGlobalAdmin: User, grandchildUser: User}
-     */
-    private function buildTree(): array
-    {
-        /** @var AccessUrlRepository $urlRepo */
-        $urlRepo = self::getContainer()->get(AccessUrlRepository::class);
-        $admin = $this->getAdmin();
-        $root = $this->getAccessUrl();
-
-        $child = (new AccessUrl())
-            ->setUrl('https://update-user-roles-child-'.uniqid().'.example.org/')
-            ->setActive(1)
-            ->setCreator($admin)
-            ->setSuperior($root)
-        ;
-        $urlRepo->create($child);
-
-        $grandchild = (new AccessUrl())
-            ->setUrl('https://update-user-roles-grandchild-'.uniqid().'.example.org/')
-            ->setActive(1)
-            ->setCreator($admin)
-            ->setSuperior($child)
-        ;
-        $urlRepo->create($grandchild);
-
-        $rootAdmin = $this->createUserOnUrl('uurRoot_'.uniqid(), $root, 'ROLE_ADMIN');
-        $childPlainAdmin = $this->createUserOnUrl('uurChildPlain_'.uniqid(), $child, 'ROLE_ADMIN');
-        $childGlobalAdmin = $this->createUserOnUrl('uurChildGlobal_'.uniqid(), $child, 'ROLE_ADMIN');
-        $childGlobalAdmin->addRole('ROLE_GLOBAL_ADMIN');
-        $grandchildUser = $this->createUserOnUrl('uurGrandchildUser_'.uniqid(), $grandchild);
-
-        return compact('root', 'child', 'grandchild', 'rootAdmin', 'childPlainAdmin', 'childGlobalAdmin', 'grandchildUser');
-    }
-
-    private function actAs(User $user): void
-    {
-        self::getContainer()->get(TokenStorageInterface::class)->setToken(
-            new UsernamePasswordToken($user, 'api', $user->getRoles())
-        );
-    }
-
     public function testAdminCanGrantAndRevokeARoleForAPeerOnTheExactSameUrl(): void
     {
         self::bootKernel();
@@ -239,5 +165,79 @@ final class UpdateUserRolesToolTest extends KernelTestCase
         $this->expectException(ToolCallException::class);
         $this->expectExceptionMessage('Provide exactly one of userId or username to identify the target user.');
         $tool->updateUserRoles(addRoles: ['TEACHER']);
+    }
+
+    private function createUserOnUrl(string $username, AccessUrl $url, string $role = ''): User
+    {
+        /** @var UserRepository $repo */
+        $repo = self::getContainer()->get(UserRepository::class);
+        $admin = $this->getAdmin();
+
+        $user = $repo->createUser()
+            ->setLastname($username)
+            ->setFirstname($username)
+            ->setUsername($username)
+            ->setStatus(1)
+            ->setPlainPassword($username)
+            ->setEmail($username.'@example.com')
+            ->setCreator($admin)
+            ->setCurrentUrl($url)
+            ->addAuthSourceByAuthentication(UserAuthSource::PLATFORM, $url)
+        ;
+
+        if ('' !== $role) {
+            $user->addRole($role);
+        }
+
+        $repo->updateUser($user);
+
+        return $user;
+    }
+
+    /**
+     * root (fixture default) -> child -> grandchild, with a plain admin and a
+     * (non-unrestricted) global admin both registered on "child", and a plain user on
+     * "grandchild".
+     *
+     * @return array{root: AccessUrl, child: AccessUrl, grandchild: AccessUrl, rootAdmin: User,
+     *               childPlainAdmin: User, childGlobalAdmin: User, grandchildUser: User}
+     */
+    private function buildTree(): array
+    {
+        /** @var AccessUrlRepository $urlRepo */
+        $urlRepo = self::getContainer()->get(AccessUrlRepository::class);
+        $admin = $this->getAdmin();
+        $root = $this->getAccessUrl();
+
+        $child = (new AccessUrl())
+            ->setUrl('https://update-user-roles-child-'.uniqid().'.example.org/')
+            ->setActive(1)
+            ->setCreator($admin)
+            ->setSuperior($root)
+        ;
+        $urlRepo->create($child);
+
+        $grandchild = (new AccessUrl())
+            ->setUrl('https://update-user-roles-grandchild-'.uniqid().'.example.org/')
+            ->setActive(1)
+            ->setCreator($admin)
+            ->setSuperior($child)
+        ;
+        $urlRepo->create($grandchild);
+
+        $rootAdmin = $this->createUserOnUrl('uurRoot_'.uniqid(), $root, 'ROLE_ADMIN');
+        $childPlainAdmin = $this->createUserOnUrl('uurChildPlain_'.uniqid(), $child, 'ROLE_ADMIN');
+        $childGlobalAdmin = $this->createUserOnUrl('uurChildGlobal_'.uniqid(), $child, 'ROLE_ADMIN');
+        $childGlobalAdmin->addRole('ROLE_GLOBAL_ADMIN');
+        $grandchildUser = $this->createUserOnUrl('uurGrandchildUser_'.uniqid(), $grandchild);
+
+        return compact('root', 'child', 'grandchild', 'rootAdmin', 'childPlainAdmin', 'childGlobalAdmin', 'grandchildUser');
+    }
+
+    private function actAs(User $user): void
+    {
+        self::getContainer()->get(TokenStorageInterface::class)->setToken(
+            new UsernamePasswordToken($user, 'api', $user->getRoles())
+        );
     }
 }

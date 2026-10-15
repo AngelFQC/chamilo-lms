@@ -248,85 +248,6 @@ final class AiDisclosureHelper
         }
     }
 
-    private function prefixFirstMeaningfulLine(array $lines, string $prefix): array
-    {
-        // Find the first non-empty line and prefix it.
-        foreach ($lines as $i => $line) {
-            $line = (string) $line;
-            if ('' === trim($line)) {
-                continue;
-            }
-
-            if (!str_starts_with($line, $prefix)) {
-                $lines[$i] = $prefix.$line;
-            }
-
-            break;
-        }
-
-        return $lines;
-    }
-
-    private function prefixIfMissing(string $s, string $prefix): string
-    {
-        $s = (string) $s;
-        if ('' === trim($s)) {
-            return $s;
-        }
-
-        if (str_starts_with($s, $prefix)) {
-            return $s;
-        }
-
-        // Avoid double-tagging if HTML tag already injected somewhere else.
-        if (str_contains($s, 'data-ai-assistance="1"')) {
-            return $s;
-        }
-
-        return $prefix.$s;
-    }
-
-    private function looksLikeHtmlFragment(string $s): bool
-    {
-        $s = trim($s);
-        if ('' === $s) {
-            return false;
-        }
-
-        if (str_contains($s, '<html') || str_contains($s, '<body') || str_contains($s, '</body>')) {
-            return true;
-        }
-
-        return (bool) preg_match('#</?(p|div|span|h[1-6]|ul|ol|li|table|tr|td|img|a)\b#i', $s);
-    }
-
-    private function buildDisclosureTagHtml(): string
-    {
-        // Keep it compact and neutral. No provider/model details here.
-        return '<div data-ai-assistance="1" style="display:inline-flex;align-items:center;gap:6px;padding:2px 10px;border:1px solid #cbd5e1;border-radius:9999px;font-size:12px;line-height:16px;opacity:.85;margin:0 0 10px 0;">'
-            .'<span aria-hidden="true">🤖</span>'
-            .'<span>AI-assisted</span>'
-            .'</div>';
-    }
-
-    private function getSettingValue(string $key): mixed
-    {
-        // Legacy global helper (works in most Chamilo contexts).
-        try {
-            if (\function_exists('api_get_setting')) {
-                return api_get_setting($key);
-            }
-
-            if (\function_exists('api_get_configuration_value')) {
-                return api_get_configuration_value($key);
-            }
-        } catch (Throwable) {
-            return null;
-        }
-
-        return null;
-    }
-
     public function isAiAssistedExtraField(string $type, int $itemId): bool
     {
         if ($itemId <= 0) {
@@ -413,5 +334,84 @@ final class AiDisclosureHelper
         }
 
         return $prefix.$title;
+    }
+
+    private function prefixFirstMeaningfulLine(array $lines, string $prefix): array
+    {
+        // Find the first non-empty line and prefix it.
+        foreach ($lines as $i => $line) {
+            $line = (string) $line;
+            if ('' === trim($line)) {
+                continue;
+            }
+
+            if (!str_starts_with($line, $prefix)) {
+                $lines[$i] = $prefix.$line;
+            }
+
+            break;
+        }
+
+        return $lines;
+    }
+
+    private function prefixIfMissing(string $s, string $prefix): string
+    {
+        $s = (string) $s;
+        if ('' === trim($s)) {
+            return $s;
+        }
+
+        if (str_starts_with($s, $prefix)) {
+            return $s;
+        }
+
+        // Avoid double-tagging if HTML tag already injected somewhere else.
+        if (str_contains($s, 'data-ai-assistance="1"')) {
+            return $s;
+        }
+
+        return $prefix.$s;
+    }
+
+    private function looksLikeHtmlFragment(string $s): bool
+    {
+        $s = trim($s);
+        if ('' === $s) {
+            return false;
+        }
+
+        if (str_contains($s, '<html') || str_contains($s, '<body') || str_contains($s, '</body>')) {
+            return true;
+        }
+
+        return (bool) preg_match('#</?(p|div|span|h[1-6]|ul|ol|li|table|tr|td|img|a)\b#i', $s);
+    }
+
+    private function buildDisclosureTagHtml(): string
+    {
+        // Keep it compact and neutral. No provider/model details here.
+        return '<div data-ai-assistance="1" style="display:inline-flex;align-items:center;gap:6px;padding:2px 10px;border:1px solid #cbd5e1;border-radius:9999px;font-size:12px;line-height:16px;opacity:.85;margin:0 0 10px 0;">'
+            .'<span aria-hidden="true">🤖</span>'
+            .'<span>AI-assisted</span>'
+            .'</div>';
+    }
+
+    private function getSettingValue(string $key): mixed
+    {
+        // Legacy global helper (works in most Chamilo contexts).
+        try {
+            if (\function_exists('api_get_setting')) {
+                return api_get_setting($key);
+            }
+
+            if (\function_exists('api_get_configuration_value')) {
+                return api_get_configuration_value($key);
+            }
+        } catch (Throwable) {
+            return null;
+        }
+
+        return null;
     }
 }

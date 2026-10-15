@@ -76,8 +76,6 @@ class MessageAttachment extends AbstractResource implements ResourceInterface, S
     }
 
     /**
-     * Get path.
-     *
      * @return string
      */
     public function getPath()
@@ -93,8 +91,6 @@ class MessageAttachment extends AbstractResource implements ResourceInterface, S
     }
 
     /**
-     * Get comment.
-     *
      * @return string
      */
     public function getComment()
@@ -127,8 +123,6 @@ class MessageAttachment extends AbstractResource implements ResourceInterface, S
     }
 
     /**
-     * Get id.
-     *
      * @return int
      */
     public function getId()

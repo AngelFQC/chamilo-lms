@@ -314,25 +314,6 @@ final readonly class SurveyAnswerProvider implements ProviderInterface
         return $answerUser;
     }
 
-    private function getCourseFromSurveyResource(CSurvey $survey): ?Course
-    {
-        if (!method_exists($survey, 'getResourceNode') || null === $survey->getResourceNode()) {
-            return null;
-        }
-
-        foreach ($survey->getResourceNode()->getResourceLinks() as $resourceLink) {
-            if (method_exists($resourceLink, 'getDeletedAt') && null !== $resourceLink->getDeletedAt()) {
-                continue;
-            }
-
-            if (method_exists($resourceLink, 'getCourse') && $resourceLink->getCourse() instanceof Course) {
-                return $resourceLink->getCourse();
-            }
-        }
-
-        return null;
-    }
-
     /**
      * @return array<int, CSurveyQuestion>
      */
@@ -359,6 +340,25 @@ final readonly class SurveyAnswerProvider implements ProviderInterface
         usort($options, static fn (CSurveyQuestionOption $first, CSurveyQuestionOption $second): int => $first->getSort() <=> $second->getSort());
 
         return $options;
+    }
+
+    private function getCourseFromSurveyResource(CSurvey $survey): ?Course
+    {
+        if (!method_exists($survey, 'getResourceNode') || null === $survey->getResourceNode()) {
+            return null;
+        }
+
+        foreach ($survey->getResourceNode()->getResourceLinks() as $resourceLink) {
+            if (method_exists($resourceLink, 'getDeletedAt') && null !== $resourceLink->getDeletedAt()) {
+                continue;
+            }
+
+            if (method_exists($resourceLink, 'getCourse') && $resourceLink->getCourse() instanceof Course) {
+                return $resourceLink->getCourse();
+            }
+        }
+
+        return null;
     }
 
     /**

@@ -56,8 +56,6 @@ class Career
     }
 
     /**
-     * Get id.
-     *
      * @return int
      */
     public function getId()

@@ -114,6 +114,13 @@ abstract class AbstractAuthenticator extends OAuth2Authenticator implements Auth
     }
 
     /**
+     * Find or create and save the new user.
+     */
+    abstract protected function userLoader(AccessToken $accessToken): User;
+
+    abstract protected function getCustomBadge(): ?BadgeInterface;
+
+    /**
      * On invalid OAuth2 state (session lost between the redirect and the callback), restart
      * the auth flow transparently. The retry marker lives in its own short-lived cookie — not
      * in the session, whose loss is precisely what triggers this failure — so a second
@@ -171,11 +178,4 @@ abstract class AbstractAuthenticator extends OAuth2Authenticator implements Auth
     {
         return 'oauth2_state_retry_'.$this->providerName;
     }
-
-    /**
-     * Find or create and save the new user.
-     */
-    abstract protected function userLoader(AccessToken $accessToken): User;
-
-    abstract protected function getCustomBadge(): ?BadgeInterface;
 }

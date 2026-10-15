@@ -304,194 +304,6 @@ final class CourseReportingQueryService
     }
 
     /**
-     * @param array<string, mixed> $filters
-     *
-     * @return array<string, mixed>
-     */
-    private function buildLearnerGroupSummary(
-        CourseReportingContext $context,
-        array $filters,
-    ): array {
-        $summaryFilters = $filters;
-        $summaryFilters['page'] = 1;
-        $summaryFilters['itemsPerPage'] = 100000;
-        $summaryFilters['keyword'] = '';
-        $summaryFilters['groupFilter'] = '';
-        $summaryFilters['showTeachers'] = false;
-
-        $participants = $this->fetchParticipantRows($context, $summaryFilters)['items'];
-        $participantIds = array_values(array_map(
-            static fn (array $participant): int => (int) $participant['id'],
-            $participants
-        ));
-        $metrics = $this->loadLearnerMetrics($context, $participantIds);
-        $items = [];
-        $hasGroups = false;
-
-        if (
-            [] !== $participantIds
-            && $this->hasTables(['c_group_info', 'c_group_rel_user', 'resource_link'])
-        ) {
-            $sessionCondition = $context->sessionId() > 0
-                ? 'AND (resource_link.session_id IS NULL OR resource_link.session_id = 0 OR resource_link.session_id = :sessionId)'
-                : 'AND (resource_link.session_id IS NULL OR resource_link.session_id = 0)';
-            $parameters = [
-                'courseId' => $context->courseId(),
-                'participantIds' => $participantIds,
-            ];
-            if ($context->sessionId() > 0) {
-                $parameters['sessionId'] = $context->sessionId();
-            }
-
-            $groupRows = $this->connection->fetchAllAssociative(
-                "SELECT group_info.iid AS group_id,
-                        group_info.title,
-                        group_user.user_id
-                   FROM c_group_info group_info
-                   INNER JOIN resource_link resource_link
-                           ON resource_link.resource_node_id = group_info.resource_node_id
-                   LEFT JOIN c_group_rel_user group_user
-                          ON group_user.group_id = group_info.iid
-                         AND group_user.c_id = :courseId
-                         AND group_user.user_id IN (:participantIds)
-                  WHERE resource_link.c_id = :courseId
-                    AND resource_link.deleted_at IS NULL
-                    $sessionCondition
-               ORDER BY group_info.title ASC, group_user.user_id ASC",
-                $parameters,
-                ['participantIds' => ArrayParameterType::INTEGER]
-            );
-
-            $groups = [];
-            foreach ($groupRows as $groupRow) {
-                $groupId = (int) $groupRow['group_id'];
-                $groups[$groupId] ??= [
-                    'title' => (string) $groupRow['title'],
-                    'userIds' => [],
-                ];
-                if (null !== $groupRow['user_id']) {
-                    $groups[$groupId]['userIds'][] = (int) $groupRow['user_id'];
-                }
-            }
-
-            $hasGroups = [] !== $groups;
-            foreach ($groups as $groupId => $group) {
-                $groupUserIds = array_values(array_unique($group['userIds']));
-                $items[] = $this->buildLearnerSummaryRow(
-                    (string) $group['title'],
-                    $groupUserIds,
-                    $metrics,
-                    'group',
-                    $groupId,
-                );
-            }
-        }
-
-        if ($this->normalizeBoolean($filters['showActiveUsers'] ?? false)) {
-            foreach ($participants as $participant) {
-                if ('active' !== (string) ($participant['report_role'] ?? '')) {
-                    continue;
-                }
-
-                $userId = (int) $participant['id'];
-                $items[] = $this->buildLearnerSummaryRow(
-                    $this->fullName($participant).' (free)',
-                    [$userId],
-                    $metrics,
-                    'active-user',
-                    $userId,
-                );
-            }
-        }
-
-        if ($hasGroups) {
-            $totalLearners = array_sum(array_column($items, 'learners'));
-            $totalTime = array_sum(array_column($items, 'timeSeconds'));
-            $weightedProgress = 0.0;
-            $weightedExerciseAverage = 0.0;
-            foreach ($items as $item) {
-                $weightedProgress += (float) $item['learningPathProgress'] * (int) $item['learners'];
-                $weightedExerciseAverage += (float) $item['exerciseAverage'] * (int) $item['learners'];
-            }
-
-            $items[] = [
-                'id' => 'total-0',
-                'rowType' => 'total',
-                'sourceId' => 0,
-                'title' => 'Total',
-                'learners' => $totalLearners,
-                'timeSeconds' => $totalTime,
-                'averageTimeSeconds' => $totalLearners > 0 ? (int) round($totalTime / $totalLearners) : 0,
-                'learningPathProgress' => $totalLearners > 0
-                    ? round($weightedProgress / $totalLearners, 2)
-                    : 0.0,
-                'exerciseAverage' => $totalLearners > 0
-                    ? round($weightedExerciseAverage / $totalLearners, 2)
-                    : 0.0,
-            ];
-        } else {
-            $items[] = $this->buildLearnerSummaryRow(
-                'Total',
-                $participantIds,
-                $metrics,
-                'total',
-                0,
-            );
-        }
-
-        return [
-            'columns' => [
-                ['key' => 'title', 'label' => 'Name', 'type' => 'text'],
-                ['key' => 'timeSeconds', 'label' => 'Time', 'type' => 'duration'],
-                ['key' => 'averageTimeSeconds', 'label' => 'Average time in the course', 'type' => 'duration'],
-                ['key' => 'learningPathProgress', 'label' => 'Course progress', 'type' => 'percent'],
-                ['key' => 'exerciseAverage', 'label' => 'Exercise average', 'type' => 'percent'],
-            ],
-            'items' => $items,
-        ];
-    }
-
-    /**
-     * @param int[]                            $userIds
-     * @param array<int, array<string, mixed>> $metrics
-     *
-     * @return array<string, mixed>
-     */
-    private function buildLearnerSummaryRow(
-        string $title,
-        array $userIds,
-        array $metrics,
-        string $rowType,
-        int $sourceId,
-    ): array {
-        $userIds = array_values(array_unique(array_filter(array_map('intval', $userIds))));
-        $totalTime = 0;
-        $progressTotal = 0.0;
-        $exerciseTotal = 0.0;
-
-        foreach ($userIds as $userId) {
-            $userMetrics = $metrics[$userId] ?? $this->emptyMetrics();
-            $totalTime += (int) $userMetrics['timeSeconds'];
-            $progressTotal += (float) $userMetrics['learningPathProgress'];
-            $exerciseTotal += (float) $userMetrics['bestScore'];
-        }
-
-        $count = \count($userIds);
-
-        return [
-            'id' => $rowType.'-'.$sourceId,
-            'rowType' => $rowType,
-            'sourceId' => $sourceId,
-            'title' => $title,
-            'learners' => $count,
-            'timeSeconds' => $totalTime,
-            'averageTimeSeconds' => $count > 0 ? (int) round($totalTime / $count) : 0,
-            'learningPathProgress' => $count > 0 ? round($progressTotal / $count, 2) : 0.0,
-            'exerciseAverage' => $count > 0 ? round($exerciseTotal / $count, 2) : 0.0,
-        ];
-    }
-
-    /**
      * @return array<string, mixed>
      */
     public function getLearnerDetail(
@@ -697,6 +509,194 @@ final class CourseReportingQueryService
     /**
      * @param array<string, mixed> $filters
      *
+     * @return array<string, mixed>
+     */
+    private function buildLearnerGroupSummary(
+        CourseReportingContext $context,
+        array $filters,
+    ): array {
+        $summaryFilters = $filters;
+        $summaryFilters['page'] = 1;
+        $summaryFilters['itemsPerPage'] = 100000;
+        $summaryFilters['keyword'] = '';
+        $summaryFilters['groupFilter'] = '';
+        $summaryFilters['showTeachers'] = false;
+
+        $participants = $this->fetchParticipantRows($context, $summaryFilters)['items'];
+        $participantIds = array_values(array_map(
+            static fn (array $participant): int => (int) $participant['id'],
+            $participants
+        ));
+        $metrics = $this->loadLearnerMetrics($context, $participantIds);
+        $items = [];
+        $hasGroups = false;
+
+        if (
+            [] !== $participantIds
+            && $this->hasTables(['c_group_info', 'c_group_rel_user', 'resource_link'])
+        ) {
+            $sessionCondition = $context->sessionId() > 0
+                ? 'AND (resource_link.session_id IS NULL OR resource_link.session_id = 0 OR resource_link.session_id = :sessionId)'
+                : 'AND (resource_link.session_id IS NULL OR resource_link.session_id = 0)';
+            $parameters = [
+                'courseId' => $context->courseId(),
+                'participantIds' => $participantIds,
+            ];
+            if ($context->sessionId() > 0) {
+                $parameters['sessionId'] = $context->sessionId();
+            }
+
+            $groupRows = $this->connection->fetchAllAssociative(
+                "SELECT group_info.iid AS group_id,
+                        group_info.title,
+                        group_user.user_id
+                   FROM c_group_info group_info
+                   INNER JOIN resource_link resource_link
+                           ON resource_link.resource_node_id = group_info.resource_node_id
+                   LEFT JOIN c_group_rel_user group_user
+                          ON group_user.group_id = group_info.iid
+                         AND group_user.c_id = :courseId
+                         AND group_user.user_id IN (:participantIds)
+                  WHERE resource_link.c_id = :courseId
+                    AND resource_link.deleted_at IS NULL
+                    $sessionCondition
+               ORDER BY group_info.title ASC, group_user.user_id ASC",
+                $parameters,
+                ['participantIds' => ArrayParameterType::INTEGER]
+            );
+
+            $groups = [];
+            foreach ($groupRows as $groupRow) {
+                $groupId = (int) $groupRow['group_id'];
+                $groups[$groupId] ??= [
+                    'title' => (string) $groupRow['title'],
+                    'userIds' => [],
+                ];
+                if (null !== $groupRow['user_id']) {
+                    $groups[$groupId]['userIds'][] = (int) $groupRow['user_id'];
+                }
+            }
+
+            $hasGroups = [] !== $groups;
+            foreach ($groups as $groupId => $group) {
+                $groupUserIds = array_values(array_unique($group['userIds']));
+                $items[] = $this->buildLearnerSummaryRow(
+                    (string) $group['title'],
+                    $groupUserIds,
+                    $metrics,
+                    'group',
+                    $groupId,
+                );
+            }
+        }
+
+        if ($this->normalizeBoolean($filters['showActiveUsers'] ?? false)) {
+            foreach ($participants as $participant) {
+                if ('active' !== (string) ($participant['report_role'] ?? '')) {
+                    continue;
+                }
+
+                $userId = (int) $participant['id'];
+                $items[] = $this->buildLearnerSummaryRow(
+                    $this->fullName($participant).' (free)',
+                    [$userId],
+                    $metrics,
+                    'active-user',
+                    $userId,
+                );
+            }
+        }
+
+        if ($hasGroups) {
+            $totalLearners = array_sum(array_column($items, 'learners'));
+            $totalTime = array_sum(array_column($items, 'timeSeconds'));
+            $weightedProgress = 0.0;
+            $weightedExerciseAverage = 0.0;
+            foreach ($items as $item) {
+                $weightedProgress += (float) $item['learningPathProgress'] * (int) $item['learners'];
+                $weightedExerciseAverage += (float) $item['exerciseAverage'] * (int) $item['learners'];
+            }
+
+            $items[] = [
+                'id' => 'total-0',
+                'rowType' => 'total',
+                'sourceId' => 0,
+                'title' => 'Total',
+                'learners' => $totalLearners,
+                'timeSeconds' => $totalTime,
+                'averageTimeSeconds' => $totalLearners > 0 ? (int) round($totalTime / $totalLearners) : 0,
+                'learningPathProgress' => $totalLearners > 0
+                    ? round($weightedProgress / $totalLearners, 2)
+                    : 0.0,
+                'exerciseAverage' => $totalLearners > 0
+                    ? round($weightedExerciseAverage / $totalLearners, 2)
+                    : 0.0,
+            ];
+        } else {
+            $items[] = $this->buildLearnerSummaryRow(
+                'Total',
+                $participantIds,
+                $metrics,
+                'total',
+                0,
+            );
+        }
+
+        return [
+            'columns' => [
+                ['key' => 'title', 'label' => 'Name', 'type' => 'text'],
+                ['key' => 'timeSeconds', 'label' => 'Time', 'type' => 'duration'],
+                ['key' => 'averageTimeSeconds', 'label' => 'Average time in the course', 'type' => 'duration'],
+                ['key' => 'learningPathProgress', 'label' => 'Course progress', 'type' => 'percent'],
+                ['key' => 'exerciseAverage', 'label' => 'Exercise average', 'type' => 'percent'],
+            ],
+            'items' => $items,
+        ];
+    }
+
+    /**
+     * @param int[]                            $userIds
+     * @param array<int, array<string, mixed>> $metrics
+     *
+     * @return array<string, mixed>
+     */
+    private function buildLearnerSummaryRow(
+        string $title,
+        array $userIds,
+        array $metrics,
+        string $rowType,
+        int $sourceId,
+    ): array {
+        $userIds = array_values(array_unique(array_filter(array_map('intval', $userIds))));
+        $totalTime = 0;
+        $progressTotal = 0.0;
+        $exerciseTotal = 0.0;
+
+        foreach ($userIds as $userId) {
+            $userMetrics = $metrics[$userId] ?? $this->emptyMetrics();
+            $totalTime += (int) $userMetrics['timeSeconds'];
+            $progressTotal += (float) $userMetrics['learningPathProgress'];
+            $exerciseTotal += (float) $userMetrics['bestScore'];
+        }
+
+        $count = \count($userIds);
+
+        return [
+            'id' => $rowType.'-'.$sourceId,
+            'rowType' => $rowType,
+            'sourceId' => $sourceId,
+            'title' => $title,
+            'learners' => $count,
+            'timeSeconds' => $totalTime,
+            'averageTimeSeconds' => $count > 0 ? (int) round($totalTime / $count) : 0,
+            'learningPathProgress' => $count > 0 ? round($progressTotal / $count, 2) : 0.0,
+            'exerciseAverage' => $count > 0 ? round($exerciseTotal / $count, 2) : 0.0,
+        ];
+    }
+
+    /**
+     * @param array<string, mixed> $filters
+     *
      * @return array{total: int, page: int, itemsPerPage: int, items: array<int, array<string, mixed>>}
      */
     private function fetchParticipantRows(
@@ -829,9 +829,9 @@ final class CourseReportingQueryService
                     ON user.id = subscription.user_id
                 WHERE subscription.c_id = :courseId
                     AND subscription.session_id = :sessionId
-                    AND subscription.status IN (".
-                        self::SESSION_STUDENT_STATUS.', '.self::SESSION_COURSE_COACH_STATUS.
-                    ')
+                    AND subscription.status IN ("
+                        .self::SESSION_STUDENT_STATUS.', '.self::SESSION_COURSE_COACH_STATUS
+                    .')
                     AND user.active = 1';
         } else {
             $enrolledSql = 'SELECT DISTINCT
@@ -850,9 +850,9 @@ final class CourseReportingQueryService
                 INNER JOIN `user` user
                     ON user.id = subscription.user_id
                 WHERE subscription.c_id = :courseId
-                    AND subscription.status IN (".
-                        self::COURSE_STUDENT_STATUS.', '.self::COURSE_TEACHER_STATUS.
-                    ')
+                    AND subscription.status IN ("
+                        .self::COURSE_STUDENT_STATUS.', '.self::COURSE_TEACHER_STATUS
+                    .')
                     AND subscription.relation_type <> '.self::HUMAN_RESOURCES_RELATION_TYPE.'
                     AND user.active = 1';
         }

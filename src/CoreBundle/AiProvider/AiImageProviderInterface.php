@@ -9,8 +9,6 @@ namespace Chamilo\CoreBundle\AiProvider;
 interface AiImageProviderInterface
 {
     /**
-     * Generate an image.
-     *
      * @param string $prompt   The prompt to generate an image from
      * @param string $toolName A tag, e.g. 'document_image_generate'
      * @param ?array $options  Provider-specific options

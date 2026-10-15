@@ -174,7 +174,7 @@ final class AiProviderFactory
 
     public function getProvider(?string $provider = null, ?string $serviceType = 'text'): object
     {
-        $serviceType = $serviceType ?? 'text';
+        $serviceType ??= 'text';
 
         if (null === $provider) {
             if (isset($this->providers[$this->defaultProvider][$serviceType])) {

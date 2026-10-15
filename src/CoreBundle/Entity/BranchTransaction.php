@@ -57,8 +57,6 @@ class BranchTransaction
     protected BranchSync $branch;
 
     /**
-     * Get id.
-     *
      * @return int
      */
     public function getId()
@@ -67,8 +65,6 @@ class BranchTransaction
     }
 
     /**
-     * Get action.
-     *
      * @return string
      */
     public function getAction()
@@ -84,8 +80,6 @@ class BranchTransaction
     }
 
     /**
-     * Get itemId.
-     *
      * @return string
      */
     public function getItemId()
@@ -94,8 +88,6 @@ class BranchTransaction
     }
 
     /**
-     * Set itemId.
-     *
      * @return BranchTransaction
      */
     public function setItemId(string $itemId)
@@ -106,8 +98,6 @@ class BranchTransaction
     }
 
     /**
-     * Get destId.
-     *
      * @return string
      */
     public function getDestId()
@@ -116,8 +106,6 @@ class BranchTransaction
     }
 
     /**
-     * Set destId.
-     *
      * @return BranchTransaction
      */
     public function setDestId(string $destId)
@@ -128,8 +116,6 @@ class BranchTransaction
     }
 
     /**
-     * Get timeInsert.
-     *
      * @return DateTime
      */
     public function getTimeInsert()
@@ -138,8 +124,6 @@ class BranchTransaction
     }
 
     /**
-     * Set timeInsert.
-     *
      * @return BranchTransaction
      */
     public function setTimeInsert(DateTime $timeInsert)
@@ -150,8 +134,6 @@ class BranchTransaction
     }
 
     /**
-     * Get timeUpdate.
-     *
      * @return DateTime
      */
     public function getTimeUpdate()
@@ -160,8 +142,6 @@ class BranchTransaction
     }
 
     /**
-     * Set timeUpdate.
-     *
      * @return BranchTransaction
      */
     public function setTimeUpdate(DateTime $timeUpdate)

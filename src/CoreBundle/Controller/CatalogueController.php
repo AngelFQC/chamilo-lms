@@ -96,7 +96,7 @@ class CatalogueController extends AbstractController
             $sessions = $this->sessionRepository->findAll();
         } else {
             $userGroups = $userGroupRepo->findBy(['user' => $user]);
-            $userGroupIds = array_map(fn ($ug) => $ug->getUsergroup()->getId(), $userGroups);
+            $userGroupIds = array_map(static fn ($ug) => $ug->getUsergroup()->getId(), $userGroups);
 
             $visibleSessions = [];
 
@@ -112,7 +112,7 @@ class CatalogueController extends AbstractController
             $sessions = array_values($visibleSessions);
         }
 
-        $data = array_map(function (Session $session) use ($voteRepo, $user) {
+        $data = array_map(static function (Session $session) use ($voteRepo, $user) {
             $courses = [];
 
             foreach ($session->getCourses() as $rel) {
@@ -175,24 +175,6 @@ class CatalogueController extends AbstractController
         return $this->json($data);
     }
 
-    private function readCatalogueSettings(SettingsManager $settingsManager): array
-    {
-        $raw = $settingsManager->getSetting('catalog.course_catalog_settings');
-        if (empty($raw)) {
-            return [];
-        }
-
-        if (\is_string($raw)) {
-            $raw = json_decode($raw, true) ?? [];
-        }
-
-        if (isset($raw['courses']) && \is_array($raw['courses'])) {
-            return $raw['courses'];
-        }
-
-        return \is_array($raw) ? $raw : [];
-    }
-
     #[IsGranted('ROLE_USER')]
     #[Route('/course-extra-fields', name: 'chamilo_core_catalogue_course_extra_fields', methods: ['GET'])]
     public function getCourseExtraFields(SettingsManager $settingsManager): JsonResponse
@@ -218,7 +200,7 @@ class CatalogueController extends AbstractController
             'option_order'
         );
 
-        $mapped = array_map(function ($f) {
+        $mapped = array_map(static function ($f) {
             $type = (int) $f['value_type'];
 
             $base = [
@@ -415,5 +397,23 @@ class CatalogueController extends AbstractController
             'sessionId' => $session?->getId(),
             'limitInfo' => $this->courseHelper->getCourseSubscriptionLimitInfo($course, 1),
         ]);
+    }
+
+    private function readCatalogueSettings(SettingsManager $settingsManager): array
+    {
+        $raw = $settingsManager->getSetting('catalog.course_catalog_settings');
+        if (empty($raw)) {
+            return [];
+        }
+
+        if (\is_string($raw)) {
+            $raw = json_decode($raw, true) ?? [];
+        }
+
+        if (isset($raw['courses']) && \is_array($raw['courses'])) {
+            return $raw['courses'];
+        }
+
+        return \is_array($raw) ? $raw : [];
     }
 }

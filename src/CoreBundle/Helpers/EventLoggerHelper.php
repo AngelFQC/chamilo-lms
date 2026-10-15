@@ -33,9 +33,9 @@ class EventLoggerHelper
             return false;
         }
 
-        $courseId = $courseId ?? $this->cidReqHelper->getCourseId();
-        $sessionId = $sessionId ?? $this->cidReqHelper->getSessionId();
-        $userId = $userId ?? $this->security->getUser()->getId();
+        $courseId ??= $this->cidReqHelper->getCourseId();
+        $sessionId ??= $this->cidReqHelper->getSessionId();
+        $userId ??= $this->security->getUser()->getId();
 
         $value = $this->serializeEventValue($value);
 

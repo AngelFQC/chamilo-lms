@@ -23,9 +23,6 @@ use Doctrine\ORM\QueryBuilder;
 use Doctrine\Persistence\ManagerRegistry;
 use Exception;
 
-/**
- * @author Julio Montoya <gugli100@gmail.com>
- */
 class SessionRepository extends ServiceEntityRepository
 {
     public function __construct(
@@ -118,7 +115,7 @@ class SessionRepository extends ServiceEntityRepository
         $sessions = $this->getSubscribedSessionsOfUserInUrl($user, $url);
         $now = new DateTime();
 
-        $filterPastSessions = function (Session $session) use ($user, $now): bool {
+        $filterPastSessions = static function (Session $session) use ($user, $now): bool {
             $userIsCoach = $session->hasCoach($user);
 
             // Duration sessions: past only for learners when expired (coaches never see them as past)
@@ -433,25 +430,9 @@ class SessionRepository extends ServiceEntityRepository
         return $qb->getQuery()->getResult();
     }
 
-    private function addSessionRelUserFilterByUrl(Session $session, AccessUrl $url): QueryBuilder
-    {
-        $qb = $this->getEntityManager()->createQueryBuilder();
-        $qb
-            ->select('sru')
-            ->from(SessionRelUser::class, 'sru')
-            ->innerJoin('sru.user', 'u')
-            ->innerJoin('u.portals', 'p')
-            ->andWhere('sru.session = :session AND p.url = :url')
-            ->setParameter('session', $session)
-            ->setParameter('url', $url)
-        ;
-
-        return $qb;
-    }
-
     public function getUserFollowedSessionsInAccessUrl(User $user, AccessUrl $url): QueryBuilder
     {
-        $callback = fn (Session $session) => $session->getId();
+        $callback = static fn (Session $session) => $session->getId();
 
         if ($user->isHRM()) {
             $idList = array_map($callback, $user->getDRHSessions());
@@ -492,7 +473,7 @@ class SessionRepository extends ServiceEntityRepository
     ): array {
         $sessions = $this->getSessionsByUser($user, $url)->getQuery()->getResult();
 
-        $filterSessions = function (Session $session) use ($user, $ignoreVisibilityForAdmins) {
+        $filterSessions = static function (Session $session) use ($user, $ignoreVisibilityForAdmins) {
             $visibility = $session->setAccessVisibilityByUser($user, $ignoreVisibilityForAdmins);
 
             if (Session::VISIBLE !== $visibility) {
@@ -603,8 +584,6 @@ class SessionRepository extends ServiceEntityRepository
     }
 
     /**
-     * Find sessions without child and ready for repetition.
-     *
      * @return Session[]
      */
     public function findSessionsWithoutChildAndReadyForRepetition()
@@ -640,5 +619,21 @@ class SessionRepository extends ServiceEntityRepository
         ;
 
         return (int) $qb->getQuery()->getSingleScalarResult();
+    }
+
+    private function addSessionRelUserFilterByUrl(Session $session, AccessUrl $url): QueryBuilder
+    {
+        $qb = $this->getEntityManager()->createQueryBuilder();
+        $qb
+            ->select('sru')
+            ->from(SessionRelUser::class, 'sru')
+            ->innerJoin('sru.user', 'u')
+            ->innerJoin('u.portals', 'p')
+            ->andWhere('sru.session = :session AND p.url = :url')
+            ->setParameter('session', $session)
+            ->setParameter('url', $url)
+        ;
+
+        return $qb;
     }
 }

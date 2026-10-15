@@ -36,170 +36,6 @@ final class CBlogSecurityTest extends AbstractApiTest
 {
     use ChamiloTestTrait;
 
-    /**
-     * Builds a private (REGISTERED) course, subscribes a teacher and a student,
-     * creates a blog inside it owned by the teacher, plus one post and one
-     * comment authored by the teacher.
-     *
-     * @return array{
-     *     course: Course,
-     *     teacher: User,
-     *     student: User,
-     *     attacker: User,
-     *     blog: CBlog,
-     *     post: CBlogPost,
-     *     comment: CBlogComment
-     * }
-     */
-    private function bootstrapBlogScenario(string $suffix): array
-    {
-        /** @var CourseRepository $courseRepo */
-        $courseRepo = self::getContainer()->get(CourseRepository::class);
-
-        $course = $this->createCourse('Blog Sec Course '.$suffix);
-        // REGISTERED → only enrolled users gain ROLE_CURRENT_COURSE_* via CourseVoter.
-        $course->setVisibility(Course::REGISTERED);
-
-        $teacher = $this->createUser('blog_sec_teacher_'.$suffix);
-        $student = $this->createUser('blog_sec_student_'.$suffix);
-        $attacker = $this->createUser('blog_sec_attacker_'.$suffix);
-
-        $course->addUserAsTeacher($teacher);
-        $course->addUserAsStudent($student);
-        $courseRepo->update($course);
-
-        $em = $this->getEntityManager();
-
-        $blog = (new CBlog())
-            ->setTitle('Victim Blog '.$suffix)
-            ->setBlogSubtitle('subtitle')
-            ->setParent($course)
-            ->setCreator($teacher)
-            ->addCourseLink($course)
-        ;
-        $em->persist($blog);
-        $em->flush();
-
-        $post = (new CBlogPost())
-            ->setTitle('Victim Post '.$suffix)
-            ->setFullText('Victim post body')
-            ->setBlog($blog)
-            ->setAuthor($teacher)
-        ;
-        $em->persist($post);
-
-        $comment = (new CBlogComment())
-            ->setTitle('Victim Comment '.$suffix)
-            ->setComment('Victim comment body')
-            ->setBlog($blog)
-            ->setPost($post)
-            ->setAuthor($teacher)
-        ;
-        $em->persist($comment);
-
-        $em->flush();
-
-        return [
-            'course' => $course,
-            'teacher' => $teacher,
-            'student' => $student,
-            'attacker' => $attacker,
-            'blog' => $blog,
-            'post' => $post,
-            'comment' => $comment,
-        ];
-    }
-
-    /**
-     * Builds one base-course blog and one blog in each of two sessions.
-     *
-     * @return array{
-     *     course: Course,
-     *     baseStudent: User,
-     *     sessionOneStudent: User,
-     *     sessionTwoStudent: User,
-     *     sessionOneCoach: User,
-     *     sessionOne: Session,
-     *     sessionTwo: Session,
-     *     baseBlog: CBlog,
-     *     sessionOneBlog: CBlog,
-     *     sessionTwoBlog: CBlog
-     * }
-     */
-    private function bootstrapBlogSessionScenario(string $suffix): array
-    {
-        /** @var CourseRepository $courseRepo */
-        $courseRepo = self::getContainer()->get(CourseRepository::class);
-
-        /** @var SessionRepository $sessionRepo */
-        $sessionRepo = self::getContainer()->get(SessionRepository::class);
-
-        $course = $this->createCourse('Blog Session Course '.$suffix);
-        $course->setVisibility(Course::REGISTERED);
-
-        $baseStudent = $this->createUser('blog_base_student_'.$suffix);
-        $sessionOneStudent = $this->createUser('blog_session_one_student_'.$suffix);
-        $sessionTwoStudent = $this->createUser('blog_session_two_student_'.$suffix);
-        $sessionOneCoach = $this->createUser('blog_session_one_coach_'.$suffix, '', '', 'ROLE_TEACHER');
-
-        $course->addUserAsStudent($baseStudent);
-        $courseRepo->update($course);
-
-        $sessionOne = $this->createSession('Blog Session One '.$suffix);
-        $sessionTwo = $this->createSession('Blog Session Two '.$suffix);
-
-        $sessionOne->addCourse($course);
-        $sessionTwo->addCourse($course);
-        $sessionRepo->update($sessionOne);
-        $sessionRepo->update($sessionTwo);
-
-        $sessionRepo->addUserInCourse(Session::STUDENT, $sessionOneStudent, $course, $sessionOne);
-        $sessionRepo->addUserInCourse(Session::STUDENT, $sessionTwoStudent, $course, $sessionTwo);
-        $sessionRepo->addUserInCourse(Session::COURSE_COACH, $sessionOneCoach, $course, $sessionOne);
-        $sessionRepo->update($sessionOne);
-        $sessionRepo->update($sessionTwo);
-
-        $em = $this->getEntityManager();
-        $admin = $this->getUser('admin');
-
-        $baseBlog = (new CBlog())
-            ->setTitle('Base Blog '.$suffix)
-            ->setParent($course)
-            ->setCreator($admin)
-            ->addCourseLink($course)
-        ;
-        $sessionOneBlog = (new CBlog())
-            ->setTitle('Session One Blog '.$suffix)
-            ->setParent($course)
-            ->setCreator($admin)
-            ->addCourseLink($course, $sessionOne)
-        ;
-        $sessionTwoBlog = (new CBlog())
-            ->setTitle('Session Two Blog '.$suffix)
-            ->setParent($course)
-            ->setCreator($admin)
-            ->addCourseLink($course, $sessionTwo)
-        ;
-
-        $em->persist($baseBlog);
-        $em->persist($sessionOneBlog);
-        $em->persist($sessionTwoBlog);
-        $em->flush();
-
-        return [
-            'course' => $course,
-            'baseStudent' => $baseStudent,
-            'sessionOneStudent' => $sessionOneStudent,
-            'sessionTwoStudent' => $sessionTwoStudent,
-            'sessionOneCoach' => $sessionOneCoach,
-            'sessionOne' => $sessionOne,
-            'sessionTwo' => $sessionTwo,
-            'baseBlog' => $baseBlog,
-            'sessionOneBlog' => $sessionOneBlog,
-            'sessionTwoBlog' => $sessionTwoBlog,
-        ];
-    }
-
     // -------------------------------------------------------------------------
     // Session-only blog context (#1777)
     // -------------------------------------------------------------------------
@@ -595,5 +431,169 @@ final class CBlogSecurityTest extends AbstractApiTest
         );
 
         $this->assertResponseStatusCodeSame(200);
+    }
+
+    /**
+     * Builds a private (REGISTERED) course, subscribes a teacher and a student,
+     * creates a blog inside it owned by the teacher, plus one post and one
+     * comment authored by the teacher.
+     *
+     * @return array{
+     *     course: Course,
+     *     teacher: User,
+     *     student: User,
+     *     attacker: User,
+     *     blog: CBlog,
+     *     post: CBlogPost,
+     *     comment: CBlogComment
+     * }
+     */
+    private function bootstrapBlogScenario(string $suffix): array
+    {
+        /** @var CourseRepository $courseRepo */
+        $courseRepo = self::getContainer()->get(CourseRepository::class);
+
+        $course = $this->createCourse('Blog Sec Course '.$suffix);
+        // REGISTERED → only enrolled users gain ROLE_CURRENT_COURSE_* via CourseVoter.
+        $course->setVisibility(Course::REGISTERED);
+
+        $teacher = $this->createUser('blog_sec_teacher_'.$suffix);
+        $student = $this->createUser('blog_sec_student_'.$suffix);
+        $attacker = $this->createUser('blog_sec_attacker_'.$suffix);
+
+        $course->addUserAsTeacher($teacher);
+        $course->addUserAsStudent($student);
+        $courseRepo->update($course);
+
+        $em = $this->getEntityManager();
+
+        $blog = (new CBlog())
+            ->setTitle('Victim Blog '.$suffix)
+            ->setBlogSubtitle('subtitle')
+            ->setParent($course)
+            ->setCreator($teacher)
+            ->addCourseLink($course)
+        ;
+        $em->persist($blog);
+        $em->flush();
+
+        $post = (new CBlogPost())
+            ->setTitle('Victim Post '.$suffix)
+            ->setFullText('Victim post body')
+            ->setBlog($blog)
+            ->setAuthor($teacher)
+        ;
+        $em->persist($post);
+
+        $comment = (new CBlogComment())
+            ->setTitle('Victim Comment '.$suffix)
+            ->setComment('Victim comment body')
+            ->setBlog($blog)
+            ->setPost($post)
+            ->setAuthor($teacher)
+        ;
+        $em->persist($comment);
+
+        $em->flush();
+
+        return [
+            'course' => $course,
+            'teacher' => $teacher,
+            'student' => $student,
+            'attacker' => $attacker,
+            'blog' => $blog,
+            'post' => $post,
+            'comment' => $comment,
+        ];
+    }
+
+    /**
+     * Builds one base-course blog and one blog in each of two sessions.
+     *
+     * @return array{
+     *     course: Course,
+     *     baseStudent: User,
+     *     sessionOneStudent: User,
+     *     sessionTwoStudent: User,
+     *     sessionOneCoach: User,
+     *     sessionOne: Session,
+     *     sessionTwo: Session,
+     *     baseBlog: CBlog,
+     *     sessionOneBlog: CBlog,
+     *     sessionTwoBlog: CBlog
+     * }
+     */
+    private function bootstrapBlogSessionScenario(string $suffix): array
+    {
+        /** @var CourseRepository $courseRepo */
+        $courseRepo = self::getContainer()->get(CourseRepository::class);
+
+        /** @var SessionRepository $sessionRepo */
+        $sessionRepo = self::getContainer()->get(SessionRepository::class);
+
+        $course = $this->createCourse('Blog Session Course '.$suffix);
+        $course->setVisibility(Course::REGISTERED);
+
+        $baseStudent = $this->createUser('blog_base_student_'.$suffix);
+        $sessionOneStudent = $this->createUser('blog_session_one_student_'.$suffix);
+        $sessionTwoStudent = $this->createUser('blog_session_two_student_'.$suffix);
+        $sessionOneCoach = $this->createUser('blog_session_one_coach_'.$suffix, '', '', 'ROLE_TEACHER');
+
+        $course->addUserAsStudent($baseStudent);
+        $courseRepo->update($course);
+
+        $sessionOne = $this->createSession('Blog Session One '.$suffix);
+        $sessionTwo = $this->createSession('Blog Session Two '.$suffix);
+
+        $sessionOne->addCourse($course);
+        $sessionTwo->addCourse($course);
+        $sessionRepo->update($sessionOne);
+        $sessionRepo->update($sessionTwo);
+
+        $sessionRepo->addUserInCourse(Session::STUDENT, $sessionOneStudent, $course, $sessionOne);
+        $sessionRepo->addUserInCourse(Session::STUDENT, $sessionTwoStudent, $course, $sessionTwo);
+        $sessionRepo->addUserInCourse(Session::COURSE_COACH, $sessionOneCoach, $course, $sessionOne);
+        $sessionRepo->update($sessionOne);
+        $sessionRepo->update($sessionTwo);
+
+        $em = $this->getEntityManager();
+        $admin = $this->getUser('admin');
+
+        $baseBlog = (new CBlog())
+            ->setTitle('Base Blog '.$suffix)
+            ->setParent($course)
+            ->setCreator($admin)
+            ->addCourseLink($course)
+        ;
+        $sessionOneBlog = (new CBlog())
+            ->setTitle('Session One Blog '.$suffix)
+            ->setParent($course)
+            ->setCreator($admin)
+            ->addCourseLink($course, $sessionOne)
+        ;
+        $sessionTwoBlog = (new CBlog())
+            ->setTitle('Session Two Blog '.$suffix)
+            ->setParent($course)
+            ->setCreator($admin)
+            ->addCourseLink($course, $sessionTwo)
+        ;
+
+        $em->persist($baseBlog);
+        $em->persist($sessionOneBlog);
+        $em->persist($sessionTwoBlog);
+        $em->flush();
+
+        return [
+            'course' => $course,
+            'baseStudent' => $baseStudent,
+            'sessionOneStudent' => $sessionOneStudent,
+            'sessionTwoStudent' => $sessionTwoStudent,
+            'sessionOneCoach' => $sessionOneCoach,
+            'sessionOne' => $sessionOne,
+            'sessionTwo' => $sessionTwo,
+            'baseBlog' => $baseBlog,
+            'sessionOneBlog' => $sessionOneBlog,
+            'sessionTwoBlog' => $sessionTwoBlog,
+        ];
     }
 }

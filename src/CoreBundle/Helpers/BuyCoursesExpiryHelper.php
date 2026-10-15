@@ -92,6 +92,100 @@ final class BuyCoursesExpiryHelper
         return false !== $result && null !== $result;
     }
 
+    /**
+     * Reopens every course this user had closed via closeCourseAndTrackSubscription(),
+     * restoring each course's pre-closure visibility. Meant to be called from the
+     * service-sale renewal path (BuyCoursesPlugin::applyServiceBenefitsFromSale()) so
+     * that paying again actually restores access, not just the benefit extra-field
+     * payload.
+     *
+     * Only acts on courses tracked in plugin_buycourses_subscription_course; a managed
+     * course that was never linked to a BuyCourses subscription is left untouched, same
+     * as before this method existed.
+     *
+     * When $serviceSaleId/$serviceId are given (the sale that just completed and
+     * triggered this call), a reactivated row belonging to that same service also gets
+     * its service_sale_id repointed to that sale. Without this, the row stays linked
+     * forever to the original (now permanently expired) sale it was created under: the
+     * recurring subscriptions processor's own expiry sweep (process_recurring_subscriptions.php)
+     * re-matches that stale, long-expired sale on every run and re-closes the course, even
+     * though the buyer has since paid again and holds a currently active sale for it.
+     * Scoped to matching service_id so a renewal of one service never reassigns a course
+     * tracked under a different service the same buyer also happens to hold.
+     */
+    public function reactivateClosedCoursesForUser(int $userId, int $serviceSaleId = 0, int $serviceId = 0): int
+    {
+        if ($userId <= 0 || !$this->isBuyCoursesAvailable()) {
+            return 0;
+        }
+
+        $rows = $this->connection->fetchAllAssociative(
+            'SELECT id, course_id, service_id, context_json
+             FROM '.self::TABLE_SUBSCRIPTION_COURSE.'
+             WHERE user_id = :userId
+               AND status IN (:closed, :hidden)',
+            [
+                'userId' => $userId,
+                'closed' => self::SUBSCRIPTION_COURSE_STATUS_CLOSED,
+                'hidden' => self::SUBSCRIPTION_COURSE_STATUS_HIDDEN,
+            ]
+        );
+
+        if ([] === $rows) {
+            return 0;
+        }
+
+        $now = $this->getUtcNow();
+        $reactivated = 0;
+
+        foreach ($rows as $row) {
+            $courseId = (int) ($row['course_id'] ?? 0);
+
+            if ($courseId <= 0) {
+                continue;
+            }
+
+            $context = $this->decodeContext($row['context_json'] ?? null);
+            $previousVisibility = (int) ($context['previous_visibility'] ?? 0);
+
+            if ($previousVisibility <= 0) {
+                $previousVisibility = self::COURSE_VISIBILITY_REGISTERED;
+            }
+
+            $context['last_action'] = 'reactivated';
+            $context['reactivated_at'] = $now;
+
+            $this->connection->update(
+                self::TABLE_COURSE,
+                ['visibility' => $previousVisibility],
+                ['id' => $courseId]
+            );
+
+            $updateData = [
+                'status' => self::SUBSCRIPTION_COURSE_STATUS_ACTIVE,
+                'context_json' => json_encode($context, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES),
+                'closed_at' => null,
+                'hidden_at' => null,
+                'updated_at' => $now,
+                'last_action' => 'reactivated',
+            ];
+
+            if ($serviceSaleId > 0 && $serviceId > 0 && $serviceId === (int) ($row['service_id'] ?? 0)) {
+                $updateData['service_sale_id'] = $serviceSaleId;
+            }
+
+            $this->connection->update(
+                self::TABLE_SUBSCRIPTION_COURSE,
+                $updateData,
+                ['id' => (int) $row['id']]
+            );
+
+            $reactivated++;
+        }
+
+        return $reactivated;
+    }
+
     private function isBuyCoursesAvailable(): bool
     {
         if (null !== $this->buyCoursesAvailable) {
@@ -200,100 +294,6 @@ final class BuyCoursesExpiryHelper
             ['visibility' => self::COURSE_VISIBILITY_CLOSED],
             ['id' => $courseId]
         );
-    }
-
-    /**
-     * Reopens every course this user had closed via closeCourseAndTrackSubscription(),
-     * restoring each course's pre-closure visibility. Meant to be called from the
-     * service-sale renewal path (BuyCoursesPlugin::applyServiceBenefitsFromSale()) so
-     * that paying again actually restores access, not just the benefit extra-field
-     * payload.
-     *
-     * Only acts on courses tracked in plugin_buycourses_subscription_course; a managed
-     * course that was never linked to a BuyCourses subscription is left untouched, same
-     * as before this method existed.
-     *
-     * When $serviceSaleId/$serviceId are given (the sale that just completed and
-     * triggered this call), a reactivated row belonging to that same service also gets
-     * its service_sale_id repointed to that sale. Without this, the row stays linked
-     * forever to the original (now permanently expired) sale it was created under: the
-     * recurring subscriptions processor's own expiry sweep (process_recurring_subscriptions.php)
-     * re-matches that stale, long-expired sale on every run and re-closes the course, even
-     * though the buyer has since paid again and holds a currently active sale for it.
-     * Scoped to matching service_id so a renewal of one service never reassigns a course
-     * tracked under a different service the same buyer also happens to hold.
-     */
-    public function reactivateClosedCoursesForUser(int $userId, int $serviceSaleId = 0, int $serviceId = 0): int
-    {
-        if ($userId <= 0 || !$this->isBuyCoursesAvailable()) {
-            return 0;
-        }
-
-        $rows = $this->connection->fetchAllAssociative(
-            'SELECT id, course_id, service_id, context_json
-             FROM '.self::TABLE_SUBSCRIPTION_COURSE.'
-             WHERE user_id = :userId
-               AND status IN (:closed, :hidden)',
-            [
-                'userId' => $userId,
-                'closed' => self::SUBSCRIPTION_COURSE_STATUS_CLOSED,
-                'hidden' => self::SUBSCRIPTION_COURSE_STATUS_HIDDEN,
-            ]
-        );
-
-        if ([] === $rows) {
-            return 0;
-        }
-
-        $now = $this->getUtcNow();
-        $reactivated = 0;
-
-        foreach ($rows as $row) {
-            $courseId = (int) ($row['course_id'] ?? 0);
-
-            if ($courseId <= 0) {
-                continue;
-            }
-
-            $context = $this->decodeContext($row['context_json'] ?? null);
-            $previousVisibility = (int) ($context['previous_visibility'] ?? 0);
-
-            if ($previousVisibility <= 0) {
-                $previousVisibility = self::COURSE_VISIBILITY_REGISTERED;
-            }
-
-            $context['last_action'] = 'reactivated';
-            $context['reactivated_at'] = $now;
-
-            $this->connection->update(
-                self::TABLE_COURSE,
-                ['visibility' => $previousVisibility],
-                ['id' => $courseId]
-            );
-
-            $updateData = [
-                'status' => self::SUBSCRIPTION_COURSE_STATUS_ACTIVE,
-                'context_json' => json_encode($context, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES),
-                'closed_at' => null,
-                'hidden_at' => null,
-                'updated_at' => $now,
-                'last_action' => 'reactivated',
-            ];
-
-            if ($serviceSaleId > 0 && $serviceId > 0 && $serviceId === (int) ($row['service_id'] ?? 0)) {
-                $updateData['service_sale_id'] = $serviceSaleId;
-            }
-
-            $this->connection->update(
-                self::TABLE_SUBSCRIPTION_COURSE,
-                $updateData,
-                ['id' => (int) $row['id']]
-            );
-
-            $reactivated++;
-        }
-
-        return $reactivated;
     }
 
     /**

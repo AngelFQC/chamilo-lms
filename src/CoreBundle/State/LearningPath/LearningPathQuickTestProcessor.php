@@ -30,7 +30,9 @@ use Symfony\Component\HttpKernel\Exception\ConflictHttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\Lock\LockFactory;
 
-/** @implements ProcessorInterface<LearningPathBuilderQuickTestInput, LearningPathBuilderQuickTestInput> */
+/**
+ * @implements ProcessorInterface<LearningPathBuilderQuickTestInput, LearningPathBuilderQuickTestInput>
+ */
 final readonly class LearningPathQuickTestProcessor implements ProcessorInterface
 {
     use LearningPathStateHelperTrait;

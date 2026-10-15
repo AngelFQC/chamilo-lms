@@ -312,28 +312,6 @@ XML
         }
     }
 
-    private function removeDirectory(string $directory): void
-    {
-        if (!is_dir($directory)) {
-            return;
-        }
-
-        foreach (scandir($directory) ?: [] as $entry) {
-            if ('.' === $entry || '..' === $entry) {
-                continue;
-            }
-
-            $path = $directory.'/'.$entry;
-            if (is_dir($path)) {
-                $this->removeDirectory($path);
-            } else {
-                unlink($path);
-            }
-        }
-
-        rmdir($directory);
-    }
-
     public function testLearnpathSidecarKeepsLevelAndNormalizesFinalItemOrderForOmittedRootCompatibility(): void
     {
         $tmp = sys_get_temp_dir().'/chamilo-lp-sidecar-'.bin2hex(random_bytes(6));
@@ -446,6 +424,28 @@ XML
                 rmdir($tmp);
             }
         }
+    }
+
+    private function removeDirectory(string $directory): void
+    {
+        if (!is_dir($directory)) {
+            return;
+        }
+
+        foreach (scandir($directory) ?: [] as $entry) {
+            if ('.' === $entry || '..' === $entry) {
+                continue;
+            }
+
+            $path = $directory.'/'.$entry;
+            if (is_dir($path)) {
+                $this->removeDirectory($path);
+            } else {
+                unlink($path);
+            }
+        }
+
+        rmdir($directory);
     }
 
     /**

@@ -69,8 +69,6 @@ class GradebookResultLog
     }
 
     /**
-     * Get createdAt.
-     *
      * @return DateTime
      */
     public function getCreatedAt()
@@ -79,8 +77,6 @@ class GradebookResultLog
     }
 
     /**
-     * Set createdAt.
-     *
      * @return GradebookResultLog
      */
     public function setCreatedAt(DateTime $createdAt)
@@ -91,8 +87,6 @@ class GradebookResultLog
     }
 
     /**
-     * Get score.
-     *
      * @return float
      */
     public function getScore()
@@ -101,8 +95,6 @@ class GradebookResultLog
     }
 
     /**
-     * Set score.
-     *
      * @return GradebookResultLog
      */
     public function setScore(float $score)
@@ -113,8 +105,6 @@ class GradebookResultLog
     }
 
     /**
-     * Get id.
-     *
      * @return int
      */
     public function getId()

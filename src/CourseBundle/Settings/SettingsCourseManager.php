@@ -142,24 +142,6 @@ class SettingsCourseManager extends SettingsManager
     }
 
     /**
-     * Load parameter from database.
-     */
-    private function getParameters(string $namespace): array
-    {
-        $repo = $this->manager->getRepository(CCourseSetting::class);
-        $list = [];
-        $parameters = $repo->findBy([
-            'cId' => (int) $this->getCourse()->getId(),
-            'category' => $namespace,
-        ]);
-        foreach ($parameters as $parameter) {
-            $list[$parameter->getVariable()] = $parameter->getValue();
-        }
-
-        return $list;
-    }
-
-    /**
      * Fetches the value of a specific setting for the given course and variable.
      *
      * @param string $variableName the name of the variable to fetch
@@ -175,5 +157,23 @@ class SettingsCourseManager extends SettingsManager
         ]);
 
         return $courseSetting ? $courseSetting->getValue() : null;
+    }
+
+    /**
+     * Load parameter from database.
+     */
+    private function getParameters(string $namespace): array
+    {
+        $repo = $this->manager->getRepository(CCourseSetting::class);
+        $list = [];
+        $parameters = $repo->findBy([
+            'cId' => (int) $this->getCourse()->getId(),
+            'category' => $namespace,
+        ]);
+        foreach ($parameters as $parameter) {
+            $list[$parameter->getVariable()] = $parameter->getValue();
+        }
+
+        return $list;
     }
 }

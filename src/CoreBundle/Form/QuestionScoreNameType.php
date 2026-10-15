@@ -28,7 +28,7 @@ class QuestionScoreNameType extends AbstractType
             'entity',
             [
                 'class' => 'Entity\QuestionScore',
-                'query_builder' => function ($repository) {
+                'query_builder' => static function ($repository) {
                     return $repository->createQueryBuilder('p')
                         ->orderBy('p.id', 'ASC')
                     ;

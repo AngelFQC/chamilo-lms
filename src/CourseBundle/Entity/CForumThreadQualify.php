@@ -50,8 +50,6 @@ class CForumThreadQualify
     }
 
     /**
-     * Get qualify.
-     *
      * @return float
      */
     public function getQualify()
@@ -67,8 +65,6 @@ class CForumThreadQualify
     }
 
     /**
-     * Get qualifyTime.
-     *
      * @return DateTime
      */
     public function getQualifyTime()
@@ -77,8 +73,6 @@ class CForumThreadQualify
     }
 
     /**
-     * Set cId.
-     *
      * @return CForumThreadQualify
      */
     public function setCId(int $cId)
@@ -89,8 +83,6 @@ class CForumThreadQualify
     }
 
     /**
-     * Get cId.
-     *
      * @return int
      */
     public function getCId()

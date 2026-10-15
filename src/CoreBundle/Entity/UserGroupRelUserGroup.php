@@ -30,8 +30,6 @@ class UserGroupRelUserGroup
     protected int $relationType;
 
     /**
-     * Get groupId.
-     *
      * @return int
      */
     public function getGroupId()
@@ -40,8 +38,6 @@ class UserGroupRelUserGroup
     }
 
     /**
-     * Set groupId.
-     *
      * @return $this
      */
     public function setGroupId(int $groupId)
@@ -52,8 +48,6 @@ class UserGroupRelUserGroup
     }
 
     /**
-     * Get subgroupId.
-     *
      * @return int
      */
     public function getSubgroupId()
@@ -62,8 +56,6 @@ class UserGroupRelUserGroup
     }
 
     /**
-     * Set subgroupId.
-     *
      * @return $this
      */
     public function setSubgroupId(int $subgroupId)
@@ -74,8 +66,6 @@ class UserGroupRelUserGroup
     }
 
     /**
-     * Get relationType.
-     *
      * @return int
      */
     public function getRelationType()
@@ -84,8 +74,6 @@ class UserGroupRelUserGroup
     }
 
     /**
-     * Set relationType.
-     *
      * @return $this
      */
     public function setRelationType(int $relationType)
@@ -96,8 +84,6 @@ class UserGroupRelUserGroup
     }
 
     /**
-     * Get id.
-     *
      * @return int
      */
     public function getId()

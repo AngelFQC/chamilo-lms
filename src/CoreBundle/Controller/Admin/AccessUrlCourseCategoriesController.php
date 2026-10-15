@@ -45,16 +45,6 @@ class AccessUrlCourseCategoriesController extends AbstractController
         private readonly UserHelper $userHelper,
     ) {}
 
-    private function currentUser(): User
-    {
-        $user = $this->userHelper->getCurrent();
-        if (null === $user) {
-            throw $this->createAccessDeniedException();
-        }
-
-        return $user;
-    }
-
     #[Route('', name: 'admin_access_urls_course_categories_data', methods: ['GET'])]
     public function list(Request $request): JsonResponse
     {
@@ -131,6 +121,16 @@ class AccessUrlCourseCategoriesController extends AbstractController
         UrlManager::updateUrlRelCourseCategory($categoryIds, $accessUrlId);
 
         return $this->json(['success' => true]);
+    }
+
+    private function currentUser(): User
+    {
+        $user = $this->userHelper->getCurrent();
+        if (null === $user) {
+            throw $this->createAccessDeniedException();
+        }
+
+        return $user;
     }
 
     /**

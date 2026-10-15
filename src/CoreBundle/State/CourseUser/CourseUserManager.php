@@ -32,10 +32,9 @@ use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 
 final readonly class CourseUserManager
 {
-    private const int UPGRADE_CTA_REMAINING_USERS_THRESHOLD = 5;
-
     public const int TYPE_TEACHER = CourseRelUser::TEACHER;
     public const int TYPE_STUDENT = CourseRelUser::STUDENT;
+    private const int UPGRADE_CTA_REMAINING_USERS_THRESHOLD = 5;
 
     public function __construct(
         private CidReqHelper $cidReqHelper,
@@ -206,51 +205,6 @@ final readonly class CourseUserManager
     public function getLimitWarning(Course $course, ?Session $session): string
     {
         return $this->getUsersPerCourseLimitState($course, $session)['warning'];
-    }
-
-    /**
-     * @return array{warning: string, reached: bool, showUpgradeCta: bool}
-     */
-    private function getUsersPerCourseLimitState(Course $course, ?Session $session): array
-    {
-        $state = [
-            'warning' => '',
-            'reached' => false,
-            'showUpgradeCta' => false,
-        ];
-
-        if ($session instanceof Session || !$this->canManage($course, $session)) {
-            return $state;
-        }
-
-        $courseId = (int) $course->getId();
-        $limit = CourseManager::getEffectiveUsersPerCourseLimit($courseId);
-        if ($limit <= 0) {
-            return $state;
-        }
-
-        $count = CourseManager::countStudentsForUsersPerCourseLimit($courseId);
-        $state['reached'] = $count >= $limit;
-
-        $warningFrom = max(0, $limit - self::UPGRADE_CTA_REMAINING_USERS_THRESHOLD);
-        $state['showUpgradeCta'] = $count >= $warningFrom
-            && $this->courseHelper->shouldOfferBuyCoursesHostingLimitUpgrade($course);
-
-        if ($state['reached']) {
-            $state['warning'] = CourseManager::getUsersPerCourseLimitCancelMessage($courseId);
-
-            return $state;
-        }
-
-        if ($state['showUpgradeCta']) {
-            $state['warning'] = \sprintf(
-                get_lang('This course is close to its user subscription limit (%d/%d).'),
-                $count,
-                $limit,
-            );
-        }
-
-        return $state;
     }
 
     /**
@@ -446,6 +400,111 @@ final readonly class CourseUserManager
             'warning' => $limitState['warning'],
             'showUpgradeCta' => $limitState['showUpgradeCta'],
         ];
+    }
+
+    /**
+     * @return array<int, int>
+     */
+    public function filterContextUserIds(Course $course, ?Session $session, array $userIds, int $type): array
+    {
+        $memberIds = $this->getContextMemberIds($course, $session, $type);
+
+        return array_values(array_filter(
+            array_values(array_unique(array_map('intval', $userIds))),
+            static fn (int $userId): bool => $userId > 0 && isset($memberIds[$userId]),
+        ));
+    }
+
+    /**
+     * @return array<int, true>
+     */
+    public function getContextMemberIds(Course $course, ?Session $session, ?int $type = null): array
+    {
+        $status = null;
+        if (null !== $type) {
+            $status = $session instanceof Session
+                ? (self::TYPE_TEACHER === $type ? Session::COURSE_COACH : Session::STUDENT)
+                : $type;
+        }
+
+        $rows = CourseManager::get_user_list_from_course_code(
+            $course->getCode(),
+            $session?->getId() ?? 0,
+            null,
+            null,
+            $status,
+        );
+        $result = [];
+
+        foreach ($rows as $key => $row) {
+            $userId = (int) ($row['user_id'] ?? $key);
+            if ($userId > 0) {
+                $result[$userId] = true;
+            }
+        }
+
+        return $result;
+    }
+
+    public function getCourseSettingAsInt(Course $course, string $name): int
+    {
+        return (int) api_get_course_setting($name, api_get_course_info($course->getCode()));
+    }
+
+    public function buildLegacyUrl(string $path, Course $course, ?Session $session, array $extra = []): string
+    {
+        $query = array_filter([
+            'cid' => (int) $course->getId(),
+            'sid' => $session?->getId(),
+            ...$extra,
+        ], static fn (mixed $value): bool => null !== $value && '' !== $value && 0 !== $value);
+
+        return $path.'?'.http_build_query($query);
+    }
+
+    /**
+     * @return array{warning: string, reached: bool, showUpgradeCta: bool}
+     */
+    private function getUsersPerCourseLimitState(Course $course, ?Session $session): array
+    {
+        $state = [
+            'warning' => '',
+            'reached' => false,
+            'showUpgradeCta' => false,
+        ];
+
+        if ($session instanceof Session || !$this->canManage($course, $session)) {
+            return $state;
+        }
+
+        $courseId = (int) $course->getId();
+        $limit = CourseManager::getEffectiveUsersPerCourseLimit($courseId);
+        if ($limit <= 0) {
+            return $state;
+        }
+
+        $count = CourseManager::countStudentsForUsersPerCourseLimit($courseId);
+        $state['reached'] = $count >= $limit;
+
+        $warningFrom = max(0, $limit - self::UPGRADE_CTA_REMAINING_USERS_THRESHOLD);
+        $state['showUpgradeCta'] = $count >= $warningFrom
+            && $this->courseHelper->shouldOfferBuyCoursesHostingLimitUpgrade($course);
+
+        if ($state['reached']) {
+            $state['warning'] = CourseManager::getUsersPerCourseLimitCancelMessage($courseId);
+
+            return $state;
+        }
+
+        if ($state['showUpgradeCta']) {
+            $state['warning'] = \sprintf(
+                get_lang('This course is close to its user subscription limit (%d/%d).'),
+                $count,
+                $limit,
+            );
+        }
+
+        return $state;
     }
 
     /**
@@ -652,66 +711,6 @@ final readonly class CourseUserManager
         $direction = 'desc' === strtolower((string) $request->query->get('order', 'asc')) ? 'DESC' : 'ASC';
 
         return [$field, $direction];
-    }
-
-    /**
-     * @return array<int, int>
-     */
-    public function filterContextUserIds(Course $course, ?Session $session, array $userIds, int $type): array
-    {
-        $memberIds = $this->getContextMemberIds($course, $session, $type);
-
-        return array_values(array_filter(
-            array_values(array_unique(array_map('intval', $userIds))),
-            static fn (int $userId): bool => $userId > 0 && isset($memberIds[$userId]),
-        ));
-    }
-
-    /**
-     * @return array<int, true>
-     */
-    public function getContextMemberIds(Course $course, ?Session $session, ?int $type = null): array
-    {
-        $status = null;
-        if (null !== $type) {
-            $status = $session instanceof Session
-                ? (self::TYPE_TEACHER === $type ? Session::COURSE_COACH : Session::STUDENT)
-                : $type;
-        }
-
-        $rows = CourseManager::get_user_list_from_course_code(
-            $course->getCode(),
-            $session?->getId() ?? 0,
-            null,
-            null,
-            $status,
-        );
-        $result = [];
-
-        foreach ($rows as $key => $row) {
-            $userId = (int) ($row['user_id'] ?? $key);
-            if ($userId > 0) {
-                $result[$userId] = true;
-            }
-        }
-
-        return $result;
-    }
-
-    public function getCourseSettingAsInt(Course $course, string $name): int
-    {
-        return (int) api_get_course_setting($name, api_get_course_info($course->getCode()));
-    }
-
-    public function buildLegacyUrl(string $path, Course $course, ?Session $session, array $extra = []): string
-    {
-        $query = array_filter([
-            'cid' => (int) $course->getId(),
-            'sid' => $session?->getId(),
-            ...$extra,
-        ], static fn (mixed $value): bool => null !== $value && '' !== $value && 0 !== $value);
-
-        return $path.'?'.http_build_query($query);
     }
 
     /**

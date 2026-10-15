@@ -157,15 +157,15 @@ class GradebookCategory
 
     #[ORM\Column(name: 'allow_skills_by_subcategory', type: 'integer', nullable: true, options: ['default' => 1])]
     protected ?int $allowSkillsBySubcategory;
-    #[Groups(['gradebookCategory:read', 'gradebookCategory:write'])]
-    #[ORM\ManyToOne(targetEntity: CDocument::class, inversedBy: 'gradebookCategories')]
-    #[ORM\JoinColumn(name: 'document_id', referencedColumnName: 'iid', onDelete: 'set null')]
-    private ?CDocument $document = null;
 
     #[Assert\NotNull]
     #[Groups(['gradebookCategory:read', 'gradebookCategory:write'])]
     #[ORM\Column(name: 'calculation_mode', type: 'string', length: 32, nullable: false, enumType: GradebookCalculationMode::class, options: ['default' => GradebookCalculationMode::WEIGHTED_AVERAGE->value])]
     protected GradebookCalculationMode $calculationMode = GradebookCalculationMode::WEIGHTED_AVERAGE;
+    #[Groups(['gradebookCategory:read', 'gradebookCategory:write'])]
+    #[ORM\ManyToOne(targetEntity: CDocument::class, inversedBy: 'gradebookCategories')]
+    #[ORM\JoinColumn(name: 'document_id', referencedColumnName: 'iid', onDelete: 'set null')]
+    private ?CDocument $document = null;
 
     public function __construct()
     {
@@ -182,8 +182,6 @@ class GradebookCategory
     }
 
     /**
-     * Get id.
-     *
      * @return int
      */
     public function getId()
@@ -216,8 +214,6 @@ class GradebookCategory
     }
 
     /**
-     * Get weight.
-     *
      * @return float
      */
     public function getWeight()
@@ -233,8 +229,6 @@ class GradebookCategory
     }
 
     /**
-     * Get visible.
-     *
      * @return bool
      */
     public function getVisible()
@@ -250,8 +244,6 @@ class GradebookCategory
     }
 
     /**
-     * Get certifMinScore.
-     *
      * @return int
      */
     public function getCertifMinScore()
@@ -279,8 +271,6 @@ class GradebookCategory
     }
 
     /**
-     * Get locked.
-     *
      * @return int
      */
     public function getLocked()
@@ -296,8 +286,6 @@ class GradebookCategory
     }
 
     /**
-     * Get defaultLowestEvalExclude.
-     *
      * @return bool
      */
     public function getDefaultLowestEvalExclude()
@@ -313,8 +301,6 @@ class GradebookCategory
     }
 
     /**
-     * Get generateCertificates.
-     *
      * @return bool
      */
     public function getGenerateCertificates()
@@ -384,8 +370,6 @@ class GradebookCategory
     }
 
     /**
-     * Get isRequirement.
-     *
      * @return bool
      */
     public function getIsRequirement()

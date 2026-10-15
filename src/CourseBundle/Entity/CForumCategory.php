@@ -281,9 +281,6 @@ class CForumCategory extends AbstractResource implements ResourceInterface, Reso
         return $this;
     }
 
-    /**
-     * Get title.
-     */
     public function getTitle(): string
     {
         return $this->title;

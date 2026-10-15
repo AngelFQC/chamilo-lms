@@ -17,7 +17,9 @@ use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 
-/** @implements ProviderInterface<WikiSettings> */
+/**
+ * @implements ProviderInterface<WikiSettings>
+ */
 final readonly class WikiSettingsProvider implements ProviderInterface
 {
     public function __construct(

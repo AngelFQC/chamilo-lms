@@ -56,6 +56,17 @@ final class PartialSearchOrFilter extends AbstractFilter
         parent::apply($queryBuilder, $queryNameGenerator, $resourceClass, $operation, $context);
     }
 
+    public function getDescription(string $resourceClass): array
+    {
+        return [
+            'search' => [
+                'type' => 'string',
+                'required' => false,
+                'description' => 'Search OR/LIKE across configured fields and scopes results to the current portal when multi-URL is enabled.',
+            ],
+        ];
+    }
+
     protected function filterProperty(
         string $property,
         $value,
@@ -99,17 +110,6 @@ final class PartialSearchOrFilter extends AbstractFilter
         if (!empty($ors)) {
             $queryBuilder->andWhere($queryBuilder->expr()->orX(...$ors));
         }
-    }
-
-    public function getDescription(string $resourceClass): array
-    {
-        return [
-            'search' => [
-                'type' => 'string',
-                'required' => false,
-                'description' => 'Search OR/LIKE across configured fields and scopes results to the current portal when multi-URL is enabled.',
-            ],
-        ];
     }
 
     /**

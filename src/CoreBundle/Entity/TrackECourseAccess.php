@@ -53,8 +53,6 @@ class TrackECourseAccess
     protected string $userIp;
 
     /**
-     * Get cId.
-     *
      * @return int
      */
     public function getCId()
@@ -63,8 +61,6 @@ class TrackECourseAccess
     }
 
     /**
-     * Set cId.
-     *
      * @return TrackECourseAccess
      */
     public function setCId(int $cId)
@@ -75,8 +71,6 @@ class TrackECourseAccess
     }
 
     /**
-     * Get loginCourseDate.
-     *
      * @return DateTime
      */
     public function getLoginCourseDate()
@@ -85,8 +79,6 @@ class TrackECourseAccess
     }
 
     /**
-     * Set loginCourseDate.
-     *
      * @return TrackECourseAccess
      */
     public function setLoginCourseDate(DateTime $loginCourseDate)
@@ -102,8 +94,6 @@ class TrackECourseAccess
     }
 
     /**
-     * Set logoutCourseDate.
-     *
      * @return TrackECourseAccess
      */
     public function setLogoutCourseDate(DateTime $logoutCourseDate)
@@ -114,8 +104,6 @@ class TrackECourseAccess
     }
 
     /**
-     * Get counter.
-     *
      * @return int
      */
     public function getCounter()
@@ -124,8 +112,6 @@ class TrackECourseAccess
     }
 
     /**
-     * Set counter.
-     *
      * @return TrackECourseAccess
      */
     public function setCounter(int $counter)
@@ -136,8 +122,6 @@ class TrackECourseAccess
     }
 
     /**
-     * Get sessionId.
-     *
      * @return int
      */
     public function getSessionId()
@@ -146,8 +130,6 @@ class TrackECourseAccess
     }
 
     /**
-     * Set sessionId.
-     *
      * @return TrackECourseAccess
      */
     public function setSessionId(int $sessionId)
@@ -158,8 +140,6 @@ class TrackECourseAccess
     }
 
     /**
-     * Get userIp.
-     *
      * @return string
      */
     public function getUserIp()
@@ -168,8 +148,6 @@ class TrackECourseAccess
     }
 
     /**
-     * Set userIp.
-     *
      * @return TrackECourseAccess
      */
     public function setUserIp(string $userIp)
@@ -180,8 +158,6 @@ class TrackECourseAccess
     }
 
     /**
-     * Get courseAccessId.
-     *
      * @return int
      */
     public function getCourseAccessId()

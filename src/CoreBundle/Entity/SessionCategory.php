@@ -83,8 +83,6 @@ class SessionCategory implements Stringable
     }
 
     /**
-     * Get id.
-     *
      * @return int
      */
     public function getId()
@@ -105,8 +103,6 @@ class SessionCategory implements Stringable
     }
 
     /**
-     * Get dateStart.
-     *
      * @return DateTime
      */
     public function getDateStart()
@@ -122,8 +118,6 @@ class SessionCategory implements Stringable
     }
 
     /**
-     * Get dateEnd.
-     *
      * @return DateTime
      */
     public function getDateEnd()

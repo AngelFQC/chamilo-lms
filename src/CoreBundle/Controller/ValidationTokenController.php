@@ -86,9 +86,6 @@ class ValidationTokenController extends AbstractController
         }
     }
 
-    /**
-     * Unsubscribes a user from a ticket.
-     */
     private function unsubscribeUserFromTicket(int $ticketId, ?int $userId): void
     {
         if (!$userId) {

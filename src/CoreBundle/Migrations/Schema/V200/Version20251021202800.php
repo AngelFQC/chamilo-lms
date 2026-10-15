@@ -13,11 +13,6 @@ final class Version20251021202800 extends AbstractMigrationChamilo
 {
     private const bool DEBUG = true;
 
-    public function getDescription(): string
-    {
-        return 'Update titles/comments for show_tabs and show_tabs_per_role and ensure they live under category "display".';
-    }
-
     private const array UPDATES = [
         'show_tabs' => [
             'title' => 'Main menu entries',
@@ -28,6 +23,11 @@ final class Version20251021202800 extends AbstractMigrationChamilo
             'comment' => 'Define header tabs visibility per role.',
         ],
     ];
+
+    public function getDescription(): string
+    {
+        return 'Update titles/comments for show_tabs and show_tabs_per_role and ensure they live under category "display".';
+    }
 
     public function up(Schema $schema): void
     {

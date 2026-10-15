@@ -14,7 +14,9 @@ use Chamilo\CoreBundle\Service\Ai\WysiwygTranslationService;
 use Symfony\Bundle\SecurityBundle\Security;
 use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 
-/** @implements ProviderInterface<WysiwygTranslation> */
+/**
+ * @implements ProviderInterface<WysiwygTranslation>
+ */
 final readonly class WysiwygTranslationProvider implements ProviderInterface
 {
     use WysiwygTranslationAccessHelperTrait;

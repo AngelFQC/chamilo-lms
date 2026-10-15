@@ -91,7 +91,8 @@ WHERE gc.resource_node_id IS NULL
   AND gc.id > :lastId
 ORDER BY gc.id ASC
 LIMIT %d
-SQL, self::METADATA_BATCH_SIZE),
+SQL
+                    , self::METADATA_BATCH_SIZE),
                 ['lastId' => $lastId]
             );
 
@@ -333,7 +334,8 @@ FROM resource_type
 WHERE title = :resourceTypeTitle
 ORDER BY id
 LIMIT 1
-SQL,
+SQL
+            ,
             ['resourceTypeTitle' => 'files']
         );
 

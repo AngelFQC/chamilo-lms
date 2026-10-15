@@ -141,7 +141,8 @@ PROMPT;
                 $providerName,
                 <<<'PROMPT'
 Return only the requested final educational content. Do not include explanations, apologies, Markdown code fences or JSON. Complete the original request directly.
-PROMPT,
+PROMPT
+                ,
                 "Original instructions:\n"
                     .mb_substr($systemPrompt, 0, self::MAX_REPAIR_CONTEXT_LENGTH)
                     ."\n\nOriginal request:\n"

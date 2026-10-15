@@ -204,7 +204,8 @@ WHERE source.variable = ?
             OR (existing.subkey IS NULL AND source.subkey IS NULL)
         )
   )
-SQL,
+SQL
+                ,
                 $table
             ),
             [

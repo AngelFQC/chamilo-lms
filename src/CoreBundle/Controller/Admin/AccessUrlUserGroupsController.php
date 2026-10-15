@@ -45,16 +45,6 @@ class AccessUrlUserGroupsController extends AbstractController
         private readonly UserHelper $userHelper,
     ) {}
 
-    private function currentUser(): User
-    {
-        $user = $this->userHelper->getCurrent();
-        if (null === $user) {
-            throw $this->createAccessDeniedException();
-        }
-
-        return $user;
-    }
-
     #[Route('', name: 'admin_access_urls_usergroups_data', methods: ['GET'])]
     public function list(Request $request): JsonResponse
     {
@@ -159,6 +149,16 @@ class AccessUrlUserGroupsController extends AbstractController
         }
 
         return $this->json(['success' => true]);
+    }
+
+    private function currentUser(): User
+    {
+        $user = $this->userHelper->getCurrent();
+        if (null === $user) {
+            throw $this->createAccessDeniedException();
+        }
+
+        return $user;
     }
 
     /**

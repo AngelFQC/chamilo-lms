@@ -76,19 +76,6 @@ class SessionAdminController extends BaseController
         return $this->json($data);
     }
 
-    private function normalizePath(?string $path): string
-    {
-        if (!\is_string($path) || '' === $path) {
-            return '/img/session_default.svg';
-        }
-        $p = trim($path);
-        if (str_starts_with($p, 'http://') || str_starts_with($p, 'https://') || str_starts_with($p, '/')) {
-            return $p;
-        }
-
-        return '/'.ltrim($p, '/');
-    }
-
     #[Route('/courses/completed', name: 'chamilo_core_admin_sessionadmin_courses_completed', methods: ['GET'])]
     public function listCompleted(
         Request $request,
@@ -112,7 +99,7 @@ class SessionAdminController extends BaseController
         $isSessionAdmin = $user && $user->isSessionAdmin();
 
         // Transform the certificate entities into a frontend-friendly structure
-        $mapCertificate = function (GradebookCertificate $gc) use (
+        $mapCertificate = static function (GradebookCertificate $gc) use (
             $allowPublic,
             $allowSessionAdmin,
             $isSessionAdmin,
@@ -176,7 +163,7 @@ class SessionAdminController extends BaseController
         $url = $accessUrlHelper->getCurrent();
         $results = $repo->findIncompleteCertificates($url->getId());
 
-        $items = array_map(function (SessionRelUser $sru) {
+        $items = array_map(static function (SessionRelUser $sru) {
             $user = $sru->getUser();
             $session = $sru->getSession();
 
@@ -394,7 +381,7 @@ class SessionAdminController extends BaseController
                 $localAccess = true;
             } else {
                 $localAccess = $user->getPortals()->exists(
-                    fn ($key, AccessUrlRelUser $rel) => $rel->getUrl() === $currentUrl
+                    static fn ($key, AccessUrlRelUser $rel) => $rel->getUrl() === $currentUrl
                 );
             }
 
@@ -413,5 +400,18 @@ class SessionAdminController extends BaseController
         return $this->json([
             'items' => $data,
         ]);
+    }
+
+    private function normalizePath(?string $path): string
+    {
+        if (!\is_string($path) || '' === $path) {
+            return '/img/session_default.svg';
+        }
+        $p = trim($path);
+        if (str_starts_with($p, 'http://') || str_starts_with($p, 'https://') || str_starts_with($p, '/')) {
+            return $p;
+        }
+
+        return '/'.ltrim($p, '/');
     }
 }

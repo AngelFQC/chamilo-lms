@@ -59,8 +59,6 @@ class CLpIvInteraction
     protected ?string $description = null;
 
     /**
-     * Set orderId.
-     *
      * @return CLpIvInteraction
      */
     public function setOrderId(int $orderId)
@@ -71,8 +69,6 @@ class CLpIvInteraction
     }
 
     /**
-     * Get orderId.
-     *
      * @return int
      */
     public function getOrderId()
@@ -81,8 +77,6 @@ class CLpIvInteraction
     }
 
     /**
-     * Set lpIvId.
-     *
      * @return CLpIvInteraction
      */
     public function setLpIvId(int $lpIvId)
@@ -93,8 +87,6 @@ class CLpIvInteraction
     }
 
     /**
-     * Get lpIvId.
-     *
      * @return int
      */
     public function getLpIvId()
@@ -103,8 +95,6 @@ class CLpIvInteraction
     }
 
     /**
-     * Set interactionId.
-     *
      * @return CLpIvInteraction
      */
     public function setInteractionId(string $interactionId)
@@ -115,8 +105,6 @@ class CLpIvInteraction
     }
 
     /**
-     * Get interactionId.
-     *
      * @return string
      */
     public function getInteractionId()
@@ -125,8 +113,6 @@ class CLpIvInteraction
     }
 
     /**
-     * Set interactionType.
-     *
      * @return CLpIvInteraction
      */
     public function setInteractionType(string $interactionType)
@@ -137,8 +123,6 @@ class CLpIvInteraction
     }
 
     /**
-     * Get interactionType.
-     *
      * @return string
      */
     public function getInteractionType()
@@ -147,8 +131,6 @@ class CLpIvInteraction
     }
 
     /**
-     * Set weighting.
-     *
      * @return CLpIvInteraction
      */
     public function setWeighting(float $weighting)
@@ -159,8 +141,6 @@ class CLpIvInteraction
     }
 
     /**
-     * Get weighting.
-     *
      * @return float
      */
     public function getWeighting()
@@ -169,8 +149,6 @@ class CLpIvInteraction
     }
 
     /**
-     * Set completionTime.
-     *
      * @return CLpIvInteraction
      */
     public function setCompletionTime(string $completionTime)
@@ -181,8 +159,6 @@ class CLpIvInteraction
     }
 
     /**
-     * Get completionTime.
-     *
      * @return string
      */
     public function getCompletionTime()
@@ -191,8 +167,6 @@ class CLpIvInteraction
     }
 
     /**
-     * Set correctResponses.
-     *
      * @return CLpIvInteraction
      */
     public function setCorrectResponses(string $correctResponses)
@@ -203,8 +177,6 @@ class CLpIvInteraction
     }
 
     /**
-     * Get correctResponses.
-     *
      * @return string
      */
     public function getCorrectResponses()
@@ -213,8 +185,6 @@ class CLpIvInteraction
     }
 
     /**
-     * Set studentResponse.
-     *
      * @return CLpIvInteraction
      */
     public function setStudentResponse(string $studentResponse)
@@ -225,8 +195,6 @@ class CLpIvInteraction
     }
 
     /**
-     * Get studentResponse.
-     *
      * @return string
      */
     public function getStudentResponse()
@@ -235,8 +203,6 @@ class CLpIvInteraction
     }
 
     /**
-     * Set result.
-     *
      * @return CLpIvInteraction
      */
     public function setResult(string $result)
@@ -247,8 +213,6 @@ class CLpIvInteraction
     }
 
     /**
-     * Get result.
-     *
      * @return string
      */
     public function getResult()
@@ -257,8 +221,6 @@ class CLpIvInteraction
     }
 
     /**
-     * Set latency.
-     *
      * @return CLpIvInteraction
      */
     public function setLatency(string $latency)
@@ -269,8 +231,6 @@ class CLpIvInteraction
     }
 
     /**
-     * Get latency.
-     *
      * @return string
      */
     public function getLatency()
@@ -279,8 +239,6 @@ class CLpIvInteraction
     }
 
     /**
-     * Set description.
-     *
      * @return CLpIvInteraction
      */
     public function setDescription(?string $description)
@@ -291,8 +249,6 @@ class CLpIvInteraction
     }
 
     /**
-     * Get description.
-     *
      * @return string|null
      */
     public function getDescription()
@@ -301,8 +257,6 @@ class CLpIvInteraction
     }
 
     /**
-     * Set cId.
-     *
      * @return CLpIvInteraction
      */
     public function setCId(int $cId)
@@ -313,8 +267,6 @@ class CLpIvInteraction
     }
 
     /**
-     * Get cId.
-     *
      * @return int
      */
     public function getCId()

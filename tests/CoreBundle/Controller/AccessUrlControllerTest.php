@@ -47,6 +47,76 @@ class AccessUrlControllerTest extends WebTestCase
         parent::tearDown();
     }
 
+    public function testPlainAdminIsRefusedEntirely(): void
+    {
+        $client = static::createClient();
+        $plainAdmin = $this->createUserOnUrl('auc_plain_admin', $this->getAccessUrl(), 'ROLE_ADMIN');
+
+        $client->loginUser($plainAdmin);
+        $client->request('GET', '/access-url/users/import');
+
+        $this->assertResponseStatusCodeSame(403);
+    }
+
+    public function testScopedAdminCannotImportAUserIntoAUrlOutsideTheirSubtree(): void
+    {
+        $client = static::createClient();
+        $child = $this->createChildUrl();
+        $scopedAdmin = $this->createUserOnUrl('auc_scoped_import_admin', $child, 'ROLE_GLOBAL_ADMIN');
+        $targetUser = $this->createUserOnUrl('auc_import_target', $child);
+        $root = $this->getAccessUrl();
+
+        $client->loginUser($scopedAdmin);
+        $client->request(
+            'POST',
+            '/access-url/users/import',
+            [],
+            ['csv_file' => $this->csvUploadFile($targetUser->getUsername(), $root->getUrl())],
+            ['HTTP_SEC_FETCH_SITE' => 'same-origin']
+        );
+
+        $this->assertResponseIsSuccessful();
+        $this->assertStringContainsString('not found', (string) $client->getResponse()->getContent());
+        $this->assertFalse($this->isUserOnUrl($targetUser, $root));
+    }
+
+    public function testUnrestrictedAdminCanImportAUserIntoAnyUrl(): void
+    {
+        $client = static::createClient();
+        $child = $this->createChildUrl();
+        $rootAdmin = $this->createUserOnUrl('auc_root_import_admin', $this->getAccessUrl(), 'ROLE_GLOBAL_ADMIN');
+        $targetUser = $this->createUserOnUrl('auc_import_target_2', $this->getAccessUrl());
+
+        $client->loginUser($rootAdmin);
+        $client->request(
+            'POST',
+            '/access-url/users/import',
+            [],
+            ['csv_file' => $this->csvUploadFile($targetUser->getUsername(), $child->getUrl())],
+            ['HTTP_SEC_FETCH_SITE' => 'same-origin']
+        );
+
+        $this->assertResponseIsSuccessful();
+        $this->assertStringContainsString('successfully assigned', (string) $client->getResponse()->getContent());
+        $this->assertTrue($this->isUserOnUrl($targetUser, $child));
+    }
+
+    public function testPlainAdminCanListAuthSourcesForAnyUrl(): void
+    {
+        $client = static::createClient();
+        $child = $this->createChildUrl();
+        // A plain admin registered only in the root URL -- not ROLE_GLOBAL_ADMIN, not registered
+        // in $child at all -- must still be able to read auth sources for $child: auth source is
+        // about authentication mechanism, not URL/portal ownership, so it is intentionally not
+        // gated by AccessUrlScopeHelper.
+        $plainAdmin = $this->createUserOnUrl('auc_plain_auth_admin', $this->getAccessUrl(), 'ROLE_ADMIN');
+
+        $client->loginUser($plainAdmin);
+        $client->request('GET', '/access-url/auth-sources/list', ['access_url' => '/api/access_urls/'.$child->getId()]);
+
+        $this->assertResponseIsSuccessful();
+    }
+
     private function createUserOnUrl(string $username, AccessUrl $url, string $role = ''): User
     {
         /** @var UserRepository $repo */
@@ -121,75 +191,5 @@ class AccessUrlControllerTest extends WebTestCase
         ;
 
         return $count > 0;
-    }
-
-    public function testPlainAdminIsRefusedEntirely(): void
-    {
-        $client = static::createClient();
-        $plainAdmin = $this->createUserOnUrl('auc_plain_admin', $this->getAccessUrl(), 'ROLE_ADMIN');
-
-        $client->loginUser($plainAdmin);
-        $client->request('GET', '/access-url/users/import');
-
-        $this->assertResponseStatusCodeSame(403);
-    }
-
-    public function testScopedAdminCannotImportAUserIntoAUrlOutsideTheirSubtree(): void
-    {
-        $client = static::createClient();
-        $child = $this->createChildUrl();
-        $scopedAdmin = $this->createUserOnUrl('auc_scoped_import_admin', $child, 'ROLE_GLOBAL_ADMIN');
-        $targetUser = $this->createUserOnUrl('auc_import_target', $child);
-        $root = $this->getAccessUrl();
-
-        $client->loginUser($scopedAdmin);
-        $client->request(
-            'POST',
-            '/access-url/users/import',
-            [],
-            ['csv_file' => $this->csvUploadFile($targetUser->getUsername(), $root->getUrl())],
-            ['HTTP_SEC_FETCH_SITE' => 'same-origin']
-        );
-
-        $this->assertResponseIsSuccessful();
-        $this->assertStringContainsString('not found', (string) $client->getResponse()->getContent());
-        $this->assertFalse($this->isUserOnUrl($targetUser, $root));
-    }
-
-    public function testUnrestrictedAdminCanImportAUserIntoAnyUrl(): void
-    {
-        $client = static::createClient();
-        $child = $this->createChildUrl();
-        $rootAdmin = $this->createUserOnUrl('auc_root_import_admin', $this->getAccessUrl(), 'ROLE_GLOBAL_ADMIN');
-        $targetUser = $this->createUserOnUrl('auc_import_target_2', $this->getAccessUrl());
-
-        $client->loginUser($rootAdmin);
-        $client->request(
-            'POST',
-            '/access-url/users/import',
-            [],
-            ['csv_file' => $this->csvUploadFile($targetUser->getUsername(), $child->getUrl())],
-            ['HTTP_SEC_FETCH_SITE' => 'same-origin']
-        );
-
-        $this->assertResponseIsSuccessful();
-        $this->assertStringContainsString('successfully assigned', (string) $client->getResponse()->getContent());
-        $this->assertTrue($this->isUserOnUrl($targetUser, $child));
-    }
-
-    public function testPlainAdminCanListAuthSourcesForAnyUrl(): void
-    {
-        $client = static::createClient();
-        $child = $this->createChildUrl();
-        // A plain admin registered only in the root URL -- not ROLE_GLOBAL_ADMIN, not registered
-        // in $child at all -- must still be able to read auth sources for $child: auth source is
-        // about authentication mechanism, not URL/portal ownership, so it is intentionally not
-        // gated by AccessUrlScopeHelper.
-        $plainAdmin = $this->createUserOnUrl('auc_plain_auth_admin', $this->getAccessUrl(), 'ROLE_ADMIN');
-
-        $client->loginUser($plainAdmin);
-        $client->request('GET', '/access-url/auth-sources/list', ['access_url' => '/api/access_urls/'.$child->getId()]);
-
-        $this->assertResponseIsSuccessful();
     }
 }

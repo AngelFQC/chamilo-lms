@@ -137,18 +137,6 @@ class SettingsCurrentFixtures extends Fixture implements FixtureGroupInterface
         $manager->flush();
     }
 
-    private function flattenConfigurationSettings(array $categorizedSettings): array
-    {
-        $flattenedSettings = [];
-        foreach ($categorizedSettings as $category => $settings) {
-            foreach ($settings as $setting) {
-                $flattenedSettings[] = $setting;
-            }
-        }
-
-        return $flattenedSettings;
-    }
-
     public static function getExistingSettings(): array
     {
         // registration.redirect_after_login (default for new installations only)
@@ -3921,5 +3909,17 @@ class SettingsCurrentFixtures extends Fixture implements FixtureGroupInterface
                 ],
             ],
         ];
+    }
+
+    private function flattenConfigurationSettings(array $categorizedSettings): array
+    {
+        $flattenedSettings = [];
+        foreach ($categorizedSettings as $category => $settings) {
+            foreach ($settings as $setting) {
+                $flattenedSettings[] = $setting;
+            }
+        }
+
+        return $flattenedSettings;
     }
 }

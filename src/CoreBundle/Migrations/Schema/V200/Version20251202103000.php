@@ -43,9 +43,9 @@ final class Version20251202103000 extends AbstractMigrationChamilo
         $offenders = $this->findUtf8mb3IncompatibleColumns($tables);
 
         if (!empty($offenders)) {
-            $message = "Cannot downgrade to utf8mb3. Found 4-byte Unicode characters in:\n- ".
-                implode("\n- ", $offenders).
-                "\n\nRemove those characters first or restore a pre-migration backup.";
+            $message = "Cannot downgrade to utf8mb3. Found 4-byte Unicode characters in:\n- "
+                .implode("\n- ", $offenders)
+                ."\n\nRemove those characters first or restore a pre-migration backup.";
 
             if (method_exists($this, 'throwIrreversibleMigrationException')) {
                 $this->throwIrreversibleMigrationException($message);
@@ -300,7 +300,8 @@ FROM information_schema.TABLES
 WHERE TABLE_SCHEMA = DATABASE()
   AND TABLE_NAME = :tableName
 LIMIT 1
-SQL,
+SQL
+            ,
             ['tableName' => $table]
         );
 
@@ -321,7 +322,8 @@ WHERE TABLE_SCHEMA = DATABASE()
   AND TABLE_NAME = :tableName
   AND DATA_TYPE IN ('char', 'varchar', 'tinytext', 'text', 'mediumtext', 'longtext', 'enum', 'set')
   AND COLLATION_NAME IS NOT NULL
-SQL,
+SQL
+            ,
             [
                 'tableName' => $table,
                 'charset' => $charset,

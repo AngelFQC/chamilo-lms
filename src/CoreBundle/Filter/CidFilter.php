@@ -47,6 +47,11 @@ class CidFilter extends AbstractFilter
         ];
     }
 
+    public function isRequired(): bool
+    {
+        return true;
+    }
+
     protected function filterProperty(
         string $property,
         $value,
@@ -74,10 +79,5 @@ class CidFilter extends AbstractFilter
             )
             ->setParameter('course', $course->getId())
         ;
-    }
-
-    public function isRequired(): bool
-    {
-        return true;
     }
 }

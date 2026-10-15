@@ -199,7 +199,8 @@ WHERE comment.resource_node_id IS NULL
   AND comment.iid > :lastIid
 ORDER BY comment.iid
 LIMIT %d
-SQL, self::COMMENT_BATCH_SIZE),
+SQL
+                    , self::COMMENT_BATCH_SIZE),
                 ['lastIid' => $lastIid]
             );
 
@@ -435,7 +436,8 @@ FROM resource_link rl
 WHERE rl.resource_node_id = :parentNodeId
   AND rl.c_id IS NOT NULL
 ORDER BY rl.id
-SQL,
+SQL
+            ,
             ['parentNodeId' => $parentNodeId]
         );
     }
@@ -686,7 +688,8 @@ WHERE publication.contains_file = 1
   AND publication.iid > :lastIid
 ORDER BY publication.iid
 LIMIT %d
-SQL, self::RESOURCE_BATCH_SIZE),
+SQL
+                    , self::RESOURCE_BATCH_SIZE),
                 ['lastIid' => $lastIid]
             );
 
@@ -843,7 +846,8 @@ WHERE publication.resource_node_id IS NOT NULL
   )
 ORDER BY publication.iid
 LIMIT %d
-SQL, self::RESOURCE_BATCH_SIZE),
+SQL
+                    , self::RESOURCE_BATCH_SIZE),
                 [
                     'lastIid' => $lastIid,
                     'resourceTypeId' => $correctionResourceTypeId,
@@ -985,7 +989,8 @@ WHERE comment.resource_node_id IS NOT NULL
   AND comment.iid > :lastIid
 ORDER BY comment.iid
 LIMIT %d
-SQL, self::COMMENT_BATCH_SIZE),
+SQL
+                    , self::COMMENT_BATCH_SIZE),
                 ['lastIid' => $lastIid]
             );
 

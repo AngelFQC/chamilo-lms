@@ -222,7 +222,8 @@ WHERE ef.item_type = :itemType
   AND TRIM(JSON_UNQUOTE(JSON_EXTRACT(efv.field_value, '$.source'))) <> ''
   AND JSON_UNQUOTE(JSON_EXTRACT(efv.field_value, '$.source')) <> :genericSource
 ORDER BY source
-SQL,
+SQL
+            ,
             [
                 'itemType' => $mapping['item_type'],
                 'variable' => $mapping['variable'],
@@ -252,7 +253,8 @@ WHERE ef.item_type = :itemType
   AND ef.variable = :variable
   AND JSON_VALID(efv.field_value) = 1
   AND JSON_UNQUOTE(JSON_EXTRACT(efv.field_value, '$.source')) = :source
-SQL,
+SQL
+            ,
             [
                 'itemType' => $mapping['item_type'],
                 'variable' => $mapping['variable'],
@@ -282,7 +284,8 @@ WHERE ef.item_type = :itemType
   AND ef.variable = :variable
   AND JSON_VALID(efv.field_value) = 1
   AND JSON_UNQUOTE(JSON_EXTRACT(efv.field_value, '$.source')) = :legacySource
-SQL,
+SQL
+            ,
             [
                 'genericSource' => $mapping['generic_source'],
                 'updatedAt' => date('Y-m-d H:i:s'),

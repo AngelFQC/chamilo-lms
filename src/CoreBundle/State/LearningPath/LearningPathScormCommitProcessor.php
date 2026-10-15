@@ -27,7 +27,9 @@ use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
-/** @implements ProcessorInterface<LearningPathScormCommitInput, void> */
+/**
+ * @implements ProcessorInterface<LearningPathScormCommitInput, void>
+ */
 final readonly class LearningPathScormCommitProcessor implements ProcessorInterface
 {
     use LearningPathStateHelperTrait;

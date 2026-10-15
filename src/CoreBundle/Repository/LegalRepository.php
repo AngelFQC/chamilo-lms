@@ -60,7 +60,6 @@ class LegalRepository extends ServiceEntityRepository
     }
 
     /**
-     * Get type of terms and conditions.
      * Type 0 is HTML Text
      * Type 1 is a link to a different terms and conditions page.
      *
@@ -93,7 +92,7 @@ class LegalRepository extends ServiceEntityRepository
     /**
      * Gets the last version of a Term and condition by language.
      *
-     * @return bool | int the version or false if does not exist
+     * @return bool|int the version or false if does not exist
      */
     public function getLastVersion(int $languageId)
     {
@@ -186,20 +185,6 @@ class LegalRepository extends ServiceEntityRepository
     }
 
     /**
-     * Replace tags in content.
-     *
-     * @param string $content the content with tags
-     *
-     * @return string the content with tags replaced
-     */
-    private function replaceTags(string $content): string
-    {
-        // Replace tags logic goes here
-        // For example: return str_replace('[SITE_NAME]', 'YourSiteName', $content);
-        return $content;
-    }
-
-    /**
      * Get a term and condition based on version and language.
      */
     public function findOneByVersionAndLanguage(int $versionId, int $languageId): ?Legal
@@ -243,5 +228,19 @@ class LegalRepository extends ServiceEntityRepository
             ->getQuery()
             ->getResult()
         ;
+    }
+
+    /**
+     * Replace tags in content.
+     *
+     * @param string $content the content with tags
+     *
+     * @return string the content with tags replaced
+     */
+    private function replaceTags(string $content): string
+    {
+        // Replace tags logic goes here
+        // For example: return str_replace('[SITE_NAME]', 'YourSiteName', $content);
+        return $content;
     }
 }

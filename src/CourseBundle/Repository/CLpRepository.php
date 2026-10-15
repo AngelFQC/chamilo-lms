@@ -109,8 +109,8 @@ final class CLpRepository extends ResourceRepository implements ResourceWithLink
         }
 
         unset($extraParams['action'], $extraParams['lp_id'], $extraParams['node']);
-        $extraParams['origin'] = $extraParams['origin'] ?? 'learnpath';
-        $extraParams['isStudentView'] = $extraParams['isStudentView'] ?? 'true';
+        $extraParams['origin'] ??= 'learnpath';
+        $extraParams['isStudentView'] ??= 'true';
 
         $url = $router->generate('resources_lp_runtime', [
             'node' => $courseNodeId,
@@ -132,15 +132,6 @@ final class CLpRepository extends ResourceRepository implements ResourceWithLink
         $result = $qb->getQuery()->getOneOrNullResult();
 
         return $result ? $result['iid'] : null;
-    }
-
-    protected function addNotDeletedQueryBuilder(?QueryBuilder $qb = null): QueryBuilder
-    {
-        $qb = $this->getOrCreateQueryBuilder($qb);
-
-        $qb->andWhere('resource.active <> -1');
-
-        return $qb;
     }
 
     public function getLpSessionId(int $lpId): ?int
@@ -335,5 +326,14 @@ final class CLpRepository extends ResourceRepository implements ResourceWithLink
         }
 
         $entityManager->flush();
+    }
+
+    protected function addNotDeletedQueryBuilder(?QueryBuilder $qb = null): QueryBuilder
+    {
+        $qb = $this->getOrCreateQueryBuilder($qb);
+
+        $qb->andWhere('resource.active <> -1');
+
+        return $qb;
     }
 }

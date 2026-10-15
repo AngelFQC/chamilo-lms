@@ -79,7 +79,8 @@ WHERE attempt.id > :lastId
   )
 ORDER BY attempt.id
 LIMIT %d
-SQL, self::SELECT_BATCH_SIZE),
+SQL
+                    , self::SELECT_BATCH_SIZE),
                 ['lastId' => $lastId]
             );
 
@@ -148,6 +149,11 @@ SQL, self::SELECT_BATCH_SIZE),
         ]);
     }
 
+    public function down(Schema $schema): void
+    {
+        // Filesystem migration is not reversible.
+    }
+
     /**
      * @param array<int, array{attempt_id: int, asset: Asset}> $queued
      */
@@ -193,10 +199,5 @@ SQL, self::SELECT_BATCH_SIZE),
         $this->entityManager->clear(Asset::class);
 
         return $inserted;
-    }
-
-    public function down(Schema $schema): void
-    {
-        // Filesystem migration is not reversible.
     }
 }

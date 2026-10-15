@@ -34,8 +34,6 @@ class GradeComponents
     protected GradeModel $gradeModel;
 
     /**
-     * Get percentage.
-     *
      * @return string
      */
     public function getPercentage()
@@ -51,8 +49,6 @@ class GradeComponents
     }
 
     /**
-     * Get title.
-     *
      * @return string
      */
     public function getTitle()
@@ -68,8 +64,6 @@ class GradeComponents
     }
 
     /**
-     * Get acronym.
-     *
      * @return string
      */
     public function getAcronym()
@@ -85,8 +79,6 @@ class GradeComponents
     }
 
     /**
-     * Get id.
-     *
      * @return int
      */
     public function getId()

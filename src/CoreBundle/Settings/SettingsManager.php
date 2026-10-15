@@ -35,6 +35,28 @@ use const PHP_URL_HOST;
  */
 class SettingsManager implements SettingsManagerInterface
 {
+    /**
+     * Platform -> Course settings propagation map.
+     * Add more categories/variables here to scale to other features.
+     *
+     * IMPORTANT:
+     * - Values are stored as strings in legacy course settings ("true"/"false" is common).
+     */
+    private const array COURSE_SETTINGS_PROPAGATION = [
+        'ai_helpers' => [
+            // Only propagate "feature flags" (not JSON providers, etc.)
+            'learning_path_generator',
+            'exercise_generator',
+            'open_answers_grader',
+            'tutor_chatbot',
+            'task_grader',
+            'content_analyser',
+            'image_generator',
+            'glossary_terms_generator',
+            'video_generator',
+            'course_analyser',
+        ],
+    ];
     protected ?AccessUrl $url = null;
 
     protected ServiceRegistryInterface $schemaRegistry;
@@ -60,29 +82,6 @@ class SettingsManager implements SettingsManagerInterface
     protected RequestStack $request;
 
     private ?AccessUrl $mainUrlCache = null;
-
-    /**
-     * Platform -> Course settings propagation map.
-     * Add more categories/variables here to scale to other features.
-     *
-     * IMPORTANT:
-     * - Values are stored as strings in legacy course settings ("true"/"false" is common).
-     */
-    private const array COURSE_SETTINGS_PROPAGATION = [
-        'ai_helpers' => [
-            // Only propagate "feature flags" (not JSON providers, etc.)
-            'learning_path_generator',
-            'exercise_generator',
-            'open_answers_grader',
-            'tutor_chatbot',
-            'task_grader',
-            'content_analyser',
-            'image_generator',
-            'glossary_terms_generator',
-            'video_generator',
-            'course_analyser',
-        ],
-    ];
 
     public function __construct(
         ServiceRegistryInterface $schemaRegistry,
@@ -264,7 +263,7 @@ class SettingsManager implements SettingsManagerInterface
 
             $knownParameters = array_filter(
                 $parameters,
-                fn ($key): bool => $settingsBuilder->isDefined($key),
+                static fn ($key): bool => $settingsBuilder->isDefined($key),
                 ARRAY_FILTER_USE_KEY
             );
 
@@ -512,25 +511,6 @@ class SettingsManager implements SettingsManagerInterface
     }
 
     /**
-     * Sync JSON-defined search fields into search_engine_field table.
-     */
-    private function applySearchEngineFieldsSyncIfNeeded(string $category, array $parameters): void
-    {
-        if ('search' !== $category) {
-            return;
-        }
-
-        if (!\array_key_exists('search_prefilter_prefix', $parameters)) {
-            return;
-        }
-
-        $json = (string) $parameters['search_prefilter_prefix'];
-
-        // Non-destructive by default (no deletes)
-        $this->searchEngineFieldSynchronizer->syncFromJson($json, true);
-    }
-
-    /**
      * @param string $keyword
      */
     public function getParametersFromKeywordOrderedByCategory($keyword): array
@@ -673,6 +653,25 @@ class SettingsManager implements SettingsManagerInterface
         }
 
         return $parameters;
+    }
+
+    /**
+     * Sync JSON-defined search fields into search_engine_field table.
+     */
+    private function applySearchEngineFieldsSyncIfNeeded(string $category, array $parameters): void
+    {
+        if ('search' !== $category) {
+            return;
+        }
+
+        if (!\array_key_exists('search_prefilter_prefix', $parameters)) {
+            return;
+        }
+
+        $json = (string) $parameters['search_prefilter_prefix'];
+
+        // Non-destructive by default (no deletes)
+        $this->searchEngineFieldSynchronizer->syncFromJson($json, true);
     }
 
     private function validateSetting(string $name): string
@@ -1620,12 +1619,12 @@ class SettingsManager implements SettingsManagerInterface
     private function deduplicateByEffectiveValue(array $rows): array
     {
         if (null === $this->url || $this->isMainUrlContext()) {
-            return array_values(array_filter($rows, fn ($r) => $r instanceof SettingsCurrent));
+            return array_values(array_filter($rows, static fn ($r) => $r instanceof SettingsCurrent));
         }
 
         $mainUrl = $this->getMainUrlEntity();
         if (null === $mainUrl) {
-            return array_values(array_filter($rows, fn ($r) => $r instanceof SettingsCurrent));
+            return array_values(array_filter($rows, static fn ($r) => $r instanceof SettingsCurrent));
         }
 
         $byVar = [];

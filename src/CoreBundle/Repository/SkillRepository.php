@@ -17,9 +17,6 @@ use Doctrine\Common\Collections\Criteria;
 use Doctrine\ORM\Query\Expr\Join;
 use Doctrine\Persistence\ManagerRegistry;
 
-/**
- * @author Angel Fernando Quiroz Campos <angel.quiroz@beeznest.com>
- */
 class SkillRepository extends ServiceEntityRepository
 {
     public function __construct(ManagerRegistry $registry)

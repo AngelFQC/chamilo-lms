@@ -26,8 +26,6 @@ class UsergroupRelCourse
     protected Course $course;
 
     /**
-     * Get id.
-     *
      * @return int
      */
     public function getId()

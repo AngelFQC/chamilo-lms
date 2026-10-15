@@ -24,29 +24,6 @@ final class FileHelper
     ) {}
 
     /**
-     * Normalize a relative path and prevent path traversal.
-     * It removes backslashes, null bytes and resolves "." / ".." segments.
-     */
-    private function normalize(string $path): string
-    {
-        $path = ltrim(str_replace(['\\', "\0"], ['/', ''], $path), '/');
-        $parts = [];
-        foreach (explode('/', $path) as $seg) {
-            if ('' === $seg || '.' === $seg) {
-                continue;
-            }
-            if ('..' === $seg) {
-                array_pop($parts);
-
-                continue;
-            }
-            $parts[] = $seg;
-        }
-
-        return implode('/', $parts);
-    }
-
-    /**
      * Writes contents to a file (overwrites if exists).
      * Equivalent to file_put_contents().
      *
@@ -331,5 +308,28 @@ final class FileHelper
         if (is_file($tempPath)) {
             @unlink($tempPath);
         }
+    }
+
+    /**
+     * Normalize a relative path and prevent path traversal.
+     * It removes backslashes, null bytes and resolves "." / ".." segments.
+     */
+    private function normalize(string $path): string
+    {
+        $path = ltrim(str_replace(['\\', "\0"], ['/', ''], $path), '/');
+        $parts = [];
+        foreach (explode('/', $path) as $seg) {
+            if ('' === $seg || '.' === $seg) {
+                continue;
+            }
+            if ('..' === $seg) {
+                array_pop($parts);
+
+                continue;
+            }
+            $parts[] = $seg;
+        }
+
+        return implode('/', $parts);
     }
 }

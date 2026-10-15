@@ -66,6 +66,58 @@ class GenericAuthenticator extends AbstractAuthenticator
         return 'chamilo.oauth2_generic_check' === $request->attributes->get('_route');
     }
 
+    /**
+     * Set user information from the resource owner's data or the user itself.
+     */
+    public function saveUserInfo(User $user, array $resourceOwnerData, array $providerParams): void
+    {
+        $status = $this->getUserStatus($resourceOwnerData, $user->getStatus(), $providerParams);
+
+        $user
+            ->setFirstname(
+                $this->getValueByKey(
+                    $resourceOwnerData,
+                    $providerParams['resource_owner_firstname_field'],
+                    $user->getFirstname()
+                )
+            )
+            ->setLastname(
+                $this->getValueByKey(
+                    $resourceOwnerData,
+                    $providerParams['resource_owner_lastname_field'],
+                    $user->getLastname()
+                )
+            )
+            ->setUsername(
+                $this->getValueByKey(
+                    $resourceOwnerData,
+                    $providerParams['resource_owner_username_field'],
+                    $user->getUsername()
+                )
+            )
+            ->setEmail(
+                $this->getValueByKey(
+                    $resourceOwnerData,
+                    $providerParams['resource_owner_email_field'],
+                    $user->getEmail()
+                )
+            )
+            ->addAuthSourceByAuthentication(
+                UserAuthSource::OAUTH2,
+                $this->accessUrlHelper->getCurrent()
+            )
+            ->setStatus($status)
+            ->setRoleFromStatus($status)
+        ;
+
+        $this->userRepository->updateUser($user);
+
+        $url = $this->accessUrlHelper->getCurrent();
+        $url->addUser($user);
+
+        $this->entityManager->flush();
+    }
+
     protected function userLoader(AccessToken $accessToken): User
     {
         $providerParams = $this->authenticationConfigHelper->getOAuthProviderConfig('generic');
@@ -154,56 +206,9 @@ class GenericAuthenticator extends AbstractAuthenticator
         return $user;
     }
 
-    /**
-     * Set user information from the resource owner's data or the user itself.
-     */
-    public function saveUserInfo(User $user, array $resourceOwnerData, array $providerParams): void
+    protected function getCustomBadge(): ?BadgeInterface
     {
-        $status = $this->getUserStatus($resourceOwnerData, $user->getStatus(), $providerParams);
-
-        $user
-            ->setFirstname(
-                $this->getValueByKey(
-                    $resourceOwnerData,
-                    $providerParams['resource_owner_firstname_field'],
-                    $user->getFirstname()
-                )
-            )
-            ->setLastname(
-                $this->getValueByKey(
-                    $resourceOwnerData,
-                    $providerParams['resource_owner_lastname_field'],
-                    $user->getLastname()
-                )
-            )
-            ->setUsername(
-                $this->getValueByKey(
-                    $resourceOwnerData,
-                    $providerParams['resource_owner_username_field'],
-                    $user->getUsername()
-                )
-            )
-            ->setEmail(
-                $this->getValueByKey(
-                    $resourceOwnerData,
-                    $providerParams['resource_owner_email_field'],
-                    $user->getEmail()
-                )
-            )
-            ->addAuthSourceByAuthentication(
-                UserAuthSource::OAUTH2,
-                $this->accessUrlHelper->getCurrent()
-            )
-            ->setStatus($status)
-            ->setRoleFromStatus($status)
-        ;
-
-        $this->userRepository->updateUser($user);
-
-        $url = $this->accessUrlHelper->getCurrent();
-        $url->addUser($user);
-
-        $this->entityManager->flush();
+        return new OAuth2Badge(UserAuthSource::OAUTH2);
     }
 
     private function getUserStatus(array $resourceOwnerData, int $defaultStatus, array $providerParams): int
@@ -296,11 +301,6 @@ class GenericAuthenticator extends AbstractAuthenticator
         }
 
         $this->entityManager->flush();
-    }
-
-    protected function getCustomBadge(): ?BadgeInterface
-    {
-        return new OAuth2Badge(UserAuthSource::OAUTH2);
     }
 
     private function decodeIdTokenClaims(AccessToken $accessToken): array

@@ -24,7 +24,9 @@ use Symfony\Component\HttpKernel\Exception\HttpException;
 
 use const PHP_SESSION_ACTIVE;
 
-/** @implements ProcessorInterface<ToolboxItem, ToolboxItem> */
+/**
+ * @implements ProcessorInterface<ToolboxItem, ToolboxItem>
+ */
 final readonly class ToolboxItemProcessor implements ProcessorInterface
 {
     use ToolboxAccessHelperTrait;

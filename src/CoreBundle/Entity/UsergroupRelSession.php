@@ -26,8 +26,6 @@ class UsergroupRelSession
     protected Session $session;
 
     /**
-     * Get id.
-     *
      * @return int
      */
     public function getId()

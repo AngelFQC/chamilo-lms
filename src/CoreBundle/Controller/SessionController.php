@@ -319,7 +319,7 @@ class SessionController extends AbstractController
 
         if ($accessUrl) {
             $hasAccess = $user->getPortals()->exists(
-                fn ($k, $rel) => $rel->getUrl()?->getId() === $accessUrl->getId()
+                static fn ($k, $rel) => $rel->getUrl()?->getId() === $accessUrl->getId()
             );
 
             if (!$hasAccess) {
@@ -356,7 +356,7 @@ class SessionController extends AbstractController
             'relationType' => Session::STUDENT,
         ]);
 
-        $activeSessions = array_filter($relSessions, function (SessionRelUser $rel) use ($now) {
+        $activeSessions = array_filter($relSessions, static function (SessionRelUser $rel) use ($now) {
             $s = $rel->getSession();
 
             return $s->getAccessStartDate() <= $now && $s->getAccessEndDate() >= $now;
@@ -375,12 +375,12 @@ class SessionController extends AbstractController
         $subject = $this->translator->trans('You have been enrolled in a new course');
 
         $bodyTemplate = $this->translator->trans(
-            'Hello %s,<br><br>'.
-            'You have been enrolled in a new session: <strong>%s</strong>.<br>'.
-            'You can access your courses from <a href="%s">here</a>.<br><br>'.
-            'Your current active sessions are:<br><ul>%s</ul><br>'.
-            'Best regards,<br>'.
-            'Chamilo'
+            'Hello %s,<br><br>'
+            .'You have been enrolled in a new session: <strong>%s</strong>.<br>'
+            .'You can access your courses from <a href="%s">here</a>.<br><br>'
+            .'Your current active sessions are:<br><ul>%s</ul><br>'
+            .'Best regards,<br>'
+            .'Chamilo'
         );
 
         $body = \sprintf(

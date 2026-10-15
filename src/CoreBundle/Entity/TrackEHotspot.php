@@ -49,8 +49,6 @@ class TrackEHotspot
     protected string $hotspotCoordinate;
 
     /**
-     * Get hotspotUserId.
-     *
      * @return int
      */
     public function getHotspotUserId()
@@ -59,8 +57,6 @@ class TrackEHotspot
     }
 
     /**
-     * Set hotspotUserId.
-     *
      * @return TrackEHotspot
      */
     public function setHotspotUserId(int $hotspotUserId)
@@ -71,8 +67,6 @@ class TrackEHotspot
     }
 
     /**
-     * Get hotspotExeId.
-     *
      * @return int
      */
     public function getHotspotExeId()
@@ -81,8 +75,6 @@ class TrackEHotspot
     }
 
     /**
-     * Set hotspotExeId.
-     *
      * @return TrackEHotspot
      */
     public function setHotspotExeId(int $hotspotExeId)
@@ -93,8 +85,6 @@ class TrackEHotspot
     }
 
     /**
-     * Get hotspotQuestionId.
-     *
      * @return int
      */
     public function getHotspotQuestionId()
@@ -103,8 +93,6 @@ class TrackEHotspot
     }
 
     /**
-     * Set hotspotQuestionId.
-     *
      * @return TrackEHotspot
      */
     public function setHotspotQuestionId(int $hotspotQuestionId)
@@ -115,8 +103,6 @@ class TrackEHotspot
     }
 
     /**
-     * Get hotspotAnswerId.
-     *
      * @return int
      */
     public function getHotspotAnswerId()
@@ -125,8 +111,6 @@ class TrackEHotspot
     }
 
     /**
-     * Set hotspotAnswerId.
-     *
      * @return TrackEHotspot
      */
     public function setHotspotAnswerId(int $hotspotAnswerId)
@@ -137,8 +121,6 @@ class TrackEHotspot
     }
 
     /**
-     * Get hotspotCorrect.
-     *
      * @return bool
      */
     public function getHotspotCorrect()
@@ -147,8 +129,6 @@ class TrackEHotspot
     }
 
     /**
-     * Set hotspotCorrect.
-     *
      * @return TrackEHotspot
      */
     public function setHotspotCorrect(bool $hotspotCorrect)
@@ -159,8 +139,6 @@ class TrackEHotspot
     }
 
     /**
-     * Get hotspotCoordinate.
-     *
      * @return string
      */
     public function getHotspotCoordinate()
@@ -169,8 +147,6 @@ class TrackEHotspot
     }
 
     /**
-     * Set hotspotCoordinate.
-     *
      * @return TrackEHotspot
      */
     public function setHotspotCoordinate(string $hotspotCoordinate)
@@ -181,8 +157,6 @@ class TrackEHotspot
     }
 
     /**
-     * Get hotspotId.
-     *
      * @return int
      */
     public function getHotspotId()

@@ -62,8 +62,6 @@ class CQuizQuestionOption
     }
 
     /**
-     * Get position.
-     *
      * @return int
      */
     public function getPosition()

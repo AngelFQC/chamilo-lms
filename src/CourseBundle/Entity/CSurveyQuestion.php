@@ -119,9 +119,6 @@ class CSurveyQuestion
         return $this;
     }
 
-    /**
-     * Get surveyQuestionComment.
-     */
     public function getSurveyQuestionComment(): ?string
     {
         return $this->surveyQuestionComment;
@@ -134,9 +131,6 @@ class CSurveyQuestion
         return $this;
     }
 
-    /**
-     * Get type.
-     */
     public function getType(): string
     {
         return $this->type;
@@ -149,9 +143,6 @@ class CSurveyQuestion
         return $this;
     }
 
-    /**
-     * Get display.
-     */
     public function getDisplay(): string
     {
         return $this->display;
@@ -164,9 +155,6 @@ class CSurveyQuestion
         return $this;
     }
 
-    /**
-     * Get sort.
-     */
     public function getSort(): int
     {
         return $this->sort;
@@ -179,9 +167,6 @@ class CSurveyQuestion
         return $this;
     }
 
-    /**
-     * Get sharedQuestionId.
-     */
     public function getSharedQuestionId(): ?int
     {
         return $this->sharedQuestionId;
@@ -194,17 +179,12 @@ class CSurveyQuestion
         return $this;
     }
 
-    /**
-     * Get maxValue.
-     */
     public function getMaxValue(): ?int
     {
         return $this->maxValue;
     }
 
     /**
-     * Set surveyGroupPri.
-     *
      * @return CSurveyQuestion
      */
     public function setSurveyGroupPri(int $surveyGroupPri): static
@@ -214,17 +194,12 @@ class CSurveyQuestion
         return $this;
     }
 
-    /**
-     * Get surveyGroupPri.
-     */
     public function getSurveyGroupPri(): int
     {
         return $this->surveyGroupPri;
     }
 
     /**
-     * Set surveyGroupSec1.
-     *
      * @return CSurveyQuestion
      */
     public function setSurveyGroupSec1(int $surveyGroupSec1): static
@@ -234,17 +209,12 @@ class CSurveyQuestion
         return $this;
     }
 
-    /**
-     * Get surveyGroupSec1.
-     */
     public function getSurveyGroupSec1(): int
     {
         return $this->surveyGroupSec1;
     }
 
     /**
-     * Set surveyGroupSec2.
-     *
      * @return CSurveyQuestion
      */
     public function setSurveyGroupSec2(int $surveyGroupSec2): static
@@ -254,9 +224,6 @@ class CSurveyQuestion
         return $this;
     }
 
-    /**
-     * Get surveyGroupSec2.
-     */
     public function getSurveyGroupSec2(): int
     {
         return $this->surveyGroupSec2;

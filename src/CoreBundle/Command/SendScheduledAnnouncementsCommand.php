@@ -78,8 +78,8 @@ class SendScheduledAnnouncementsCommand extends Command
                 $io->writeln('Session scheduled announcements sent: '.$messagesSent);
             } catch (Throwable $throwable) {
                 $io->error(
-                    'Error processing session scheduled announcements for portal #'.$urlId.': '.
-                    $throwable->getMessage(),
+                    'Error processing session scheduled announcements for portal #'.$urlId.': '
+                    .$throwable->getMessage(),
                 );
 
                 return Command::FAILURE;
@@ -95,8 +95,8 @@ class SendScheduledAnnouncementsCommand extends Command
                 $io->writeln('Course scheduled announcements sent: '.$courseMessagesSent);
             } catch (Throwable $throwable) {
                 $io->error(
-                    'Error processing course scheduled announcements for portal #'.$urlId.': '.
-                    $throwable->getMessage(),
+                    'Error processing course scheduled announcements for portal #'.$urlId.': '
+                    .$throwable->getMessage(),
                 );
 
                 return Command::FAILURE;

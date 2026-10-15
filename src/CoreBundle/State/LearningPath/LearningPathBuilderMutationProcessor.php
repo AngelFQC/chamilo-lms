@@ -63,7 +63,9 @@ use const ENT_QUOTES;
 use const FILTER_VALIDATE_BOOLEAN;
 use const PATHINFO_EXTENSION;
 
-/** @implements ProcessorInterface<object, object|null> */
+/**
+ * @implements ProcessorInterface<object, object|null>
+ */
 final readonly class LearningPathBuilderMutationProcessor implements ProcessorInterface
 {
     use LearningPathStateHelperTrait;

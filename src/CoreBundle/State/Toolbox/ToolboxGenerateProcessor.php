@@ -27,7 +27,9 @@ use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 use const PHP_SESSION_ACTIVE;
 
-/** @implements ProcessorInterface<ToolboxGenerateInput, JsonResponse> */
+/**
+ * @implements ProcessorInterface<ToolboxGenerateInput, JsonResponse>
+ */
 final readonly class ToolboxGenerateProcessor implements ProcessorInterface
 {
     use ToolboxAccessHelperTrait;

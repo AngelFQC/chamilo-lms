@@ -238,7 +238,7 @@ final class IsAllowedToEditHelperTest extends TestCase
         $security = $this->createMock(Security::class);
         $security->method('getUser')->willReturn($user);
         $security->method('isGranted')->willReturnCallback(
-            fn (mixed $attribute): bool => \is_string($attribute) && \in_array($attribute, $roles, true)
+            static fn (mixed $attribute): bool => \is_string($attribute) && \in_array($attribute, $roles, true)
         );
 
         $settings += [
@@ -250,7 +250,7 @@ final class IsAllowedToEditHelperTest extends TestCase
 
         $settingsManager = $this->createMock(SettingsManager::class);
         $settingsManager->method('getSetting')->willReturnCallback(
-            fn (string $variable): string => $settings[$variable] ?? ''
+            static fn (string $variable): string => $settings[$variable] ?? ''
         );
 
         $studentViewHelper = $this->createMock(StudentViewHelper::class);

@@ -297,7 +297,8 @@ WHERE field.item_type = :itemType
   AND field.variable = :variable
   AND value.item_id = :courseId
 ORDER BY value.id
-SQL,
+SQL
+            ,
             [
                 'itemType' => ExtraField::COURSE_FIELD_TYPE,
                 'variable' => self::COURSE_RULE_FIELD_VARIABLE,
@@ -516,7 +517,8 @@ INNER JOIN resource_link link
    AND link.group_id IS NULL
    AND link.user_id IS NULL
 WHERE entity.%s IN (:ids)
-SQL,
+SQL
+            ,
             $idColumn,
             $tableName,
             $idColumn
@@ -560,7 +562,8 @@ INNER JOIN resource_link thread_link
 WHERE post.poster_id = :userId
   AND post.thread_id IN (:threadIds)
 GROUP BY post.thread_id
-SQL,
+SQL
+            ,
             ['courseId' => $courseId, 'userId' => $userId, 'threadIds' => $threadIds],
             ['threadIds' => ArrayParameterType::INTEGER]
         );
@@ -612,7 +615,8 @@ ORDER BY
     submission.parent_id,
     CASE WHEN submission.active IN (0, 1) THEN 0 ELSE 1 END,
     submission.iid
-SQL,
+SQL
+            ,
             ['courseId' => $courseId, 'userId' => $userId, 'workIds' => $workIds],
             ['workIds' => ArrayParameterType::INTEGER]
         );
@@ -653,7 +657,8 @@ INNER JOIN gradebook_evaluation evaluation
 WHERE result.user_id = :userId
   AND result.evaluation_id IN (:evaluationIds)
 ORDER BY result.evaluation_id, result.id
-SQL,
+SQL
+            ,
             ['courseId' => $courseId, 'userId' => $userId, 'evaluationIds' => $evaluationIds],
             ['evaluationIds' => ArrayParameterType::INTEGER]
         );

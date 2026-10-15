@@ -87,8 +87,6 @@ class ChamiloHelper
     }
 
     /**
-     * Get the platform logo path.
-     *
      * @deprecated
      *
      * @throws Exception
@@ -156,7 +154,6 @@ class ChamiloHelper
     }
 
     /**
-     * Get the platform logo.
      * Return a <img> if the logo image exists.
      * Otherwise, return a <h2> with the institution name.
      *
@@ -861,34 +858,6 @@ class ChamiloHelper
         }
     }
 
-    private static function legacyFileUsable(string $filePath): bool
-    {
-        return is_file($filePath) && is_readable($filePath);
-    }
-
-    private static function legacyDetectMime(string $filePath): string
-    {
-        $mime = @mime_content_type($filePath);
-
-        return $mime ?: 'application/octet-stream';
-    }
-
-    /**
-     * Best-effort guess to find the resource repository via Doctrine.
-     * Returns null if the repo is not a ResourceRepository.
-     */
-    private static function guessResourceRepository(AbstractResource $resource): ?ResourceRepository
-    {
-        try {
-            $em = Database::getManager();
-            $repo = $em->getRepository($resource::class);
-
-            return $repo instanceof ResourceRepository ? $repo : null;
-        } catch (Throwable $e) {
-            return null;
-        }
-    }
-
     /**
      * Scan HTML for legacy /courses/<dir>/document/... references found in a ZIP,
      * ensure those files are created as Documents, and return URL maps to rewrite the HTML.
@@ -953,7 +922,7 @@ class ChamiloHelper
             }
 
             $basename = basename(parse_url($fullUrl, PHP_URL_PATH) ?: $fullUrl);
-            $byBase[$basename] = $byBase[$basename] ?? null;
+            $byBase[$basename] ??= null;
 
             // Convert "document/..." (package rel) to destination rel "/..."
             $dstRel = '/'.ltrim(substr($rel, \strlen('document/')), '/'); // e.g. "/Videos/img.png"
@@ -984,7 +953,7 @@ class ChamiloHelper
 
             // Collision check under parent
             $parentRes = $parentId ? $docRepo->find($parentId) : $courseEntity;
-            $findExisting = function ($t) use ($docRepo, $parentRes, $courseEntity, $session, $group) {
+            $findExisting = static function ($t) use ($docRepo, $parentRes, $courseEntity, $session, $group) {
                 $e = $docRepo->findCourseResourceByTitle($t, $parentRes->getResourceNode(), $courseEntity, $session, $group);
 
                 return $e && method_exists($e, 'getIid') ? $e->getIid() : null;
@@ -1003,7 +972,7 @@ class ChamiloHelper
                             $byBase[$basename] = $byBase[$basename] ?: $url;
 
                             $iidByRel[$rel] = (int) $existsIid;
-                            $iidByBase[$basename] = $iidByBase[$basename] ?? (int) $existsIid;
+                            $iidByBase[$basename] ??= (int) $existsIid;
 
                             $DBG('helper.dep.reuse', ['rel' => $rel, 'iid' => $existsIid, 'url' => $url]);
                         }
@@ -1044,7 +1013,7 @@ class ChamiloHelper
                 $iid = method_exists($entity, 'getIid') ? $entity->getIid() : 0;
                 $url = $docRepo->getResourceFileUrl($entity);
                 $iidByRel[$rel] = (int) $iid;
-                $iidByBase[$basename] = $iidByBase[$basename] ?? (int) $iid;
+                $iidByBase[$basename] ??= (int) $iid;
 
                 $DBG('helper.dep.created', ['rel' => $rel, 'iid' => $iid, 'url' => $url]);
 
@@ -1086,7 +1055,7 @@ class ChamiloHelper
 
         $pattern = '/(?P<attr>src|href)\s*=\s*["\'](?P<full>(?:(?P<scheme>https?:)?\/\/[^"\']+)?(?P<path>\/(?:app\/)?courses\/(?P<dir>[^\/]+)\/document\/[^"\']+\.[a-z0-9]{1,8}))["\']/i';
 
-        $html = preg_replace_callback($pattern, function ($m) use ($courseDir, $urlMapByRel, $urlMapByBase, &$replaced, &$misses) {
+        $html = preg_replace_callback($pattern, static function ($m) use ($courseDir, $urlMapByRel, $urlMapByBase, &$replaced, &$misses) {
             $attr = $m['attr'];
             $fullUrl = html_entity_decode($m['full'], ENT_QUOTES | ENT_HTML5);
             $path = $m['path']; // /courses/<dir>/document/...
@@ -1221,6 +1190,39 @@ class ChamiloHelper
         return ['html' => $html, 'replaced' => $replaced, 'misses' => $misses];
     }
 
+    public static function hasRenderableTermsConditionsContent(): bool
+    {
+        return null !== self::getRenderableTermsConditionsPayload();
+    }
+
+    private static function legacyFileUsable(string $filePath): bool
+    {
+        return is_file($filePath) && is_readable($filePath);
+    }
+
+    private static function legacyDetectMime(string $filePath): string
+    {
+        $mime = @mime_content_type($filePath);
+
+        return $mime ?: 'application/octet-stream';
+    }
+
+    /**
+     * Best-effort guess to find the resource repository via Doctrine.
+     * Returns null if the repo is not a ResourceRepository.
+     */
+    private static function guessResourceRepository(AbstractResource $resource): ?ResourceRepository
+    {
+        try {
+            $em = Database::getManager();
+            $repo = $em->getRepository($resource::class);
+
+            return $repo instanceof ResourceRepository ? $repo : null;
+        } catch (Throwable $e) {
+            return null;
+        }
+    }
+
     private static function getLastConditionForCurrentOrDefaultLanguage(): ?array
     {
         $languageIso = api_get_language_isocode();
@@ -1280,11 +1282,6 @@ class ChamiloHelper
         }
 
         return api_get_path(WEB_PATH).ltrim($returnUrl, '/');
-    }
-
-    public static function hasRenderableTermsConditionsContent(): bool
-    {
-        return null !== self::getRenderableTermsConditionsPayload();
     }
 
     private static function getRenderableTermsConditionsPayload(): ?array

@@ -32,6 +32,11 @@ class ToolResourceRight implements Stringable
     #[ORM\JoinColumn(name: 'tool_id', referencedColumnName: 'id')]
     protected ?Tool $tool = null;
 
+    public function __toString(): string
+    {
+        return (string) $this->getMask();
+    }
+
     public static function getDefaultRoles(): array
     {
         return [
@@ -49,11 +54,6 @@ class ToolResourceRight implements Stringable
             'Can read' => $readerMask,
             'Can edit' => $editorMask,
         ];
-    }
-
-    public function __toString(): string
-    {
-        return (string) $this->getMask();
     }
 
     /**

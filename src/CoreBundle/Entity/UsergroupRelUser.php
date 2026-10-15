@@ -36,8 +36,6 @@ class UsergroupRelUser
     protected int $relationType;
 
     /**
-     * Get id.
-     *
      * @return int
      */
     public function getId()
@@ -46,8 +44,6 @@ class UsergroupRelUser
     }
 
     /**
-     * Get usergroup.
-     *
      * @return Usergroup
      */
     public function getUsergroup()
@@ -63,8 +59,6 @@ class UsergroupRelUser
     }
 
     /**
-     * Get relationType.
-     *
      * @return int
      */
     public function getRelationType()

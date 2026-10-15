@@ -85,7 +85,7 @@ class PermissionsController extends AbstractController
             }
 
             $form = $this->createForm(PermissionType::class, $defaultData, [
-                'roles' => array_map(fn ($r) => $r->getCode(), $roles),
+                'roles' => array_map(static fn ($r) => $r->getCode(), $roles),
             ]);
 
             $forms[$permission->getSlug()] = $form->createView();

@@ -26,8 +26,6 @@ class SequenceRuleCondition
     protected ?SequenceCondition $condition = null;
 
     /**
-     * Get id.
-     *
      * @return int
      */
     public function getId()

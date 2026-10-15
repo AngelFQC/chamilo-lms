@@ -20,7 +20,9 @@ use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
-/** @implements ProcessorInterface<ToolboxVisibilityInput, null> */
+/**
+ * @implements ProcessorInterface<ToolboxVisibilityInput, null>
+ */
 final readonly class ToolboxVisibilityProcessor implements ProcessorInterface
 {
     use ToolboxAccessHelperTrait;

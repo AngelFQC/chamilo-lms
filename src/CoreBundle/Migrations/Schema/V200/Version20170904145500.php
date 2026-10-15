@@ -358,6 +358,27 @@ class Version20170904145500 extends AbstractMigrationChamilo
         }
     }
 
+    public function postUp(Schema $schema): void
+    {
+        // Finalize against the live database after all queued addSql() statements.
+        // This migration is non-transactional, so the initial Schema snapshot may no
+        // longer represent the actual table state after a partial or fresh upgrade.
+        $this->finalizeQuizAnswerSchema();
+        $this->finalizeQuizQuestionOptionSchema();
+        $this->finalizeQuizQuestionRelationSchema();
+
+        // Keep the resumable normalization state until every planned schema statement has succeeded.
+        // Doctrine executes addSql() statements after up(), so cleanup must happen in postUp().
+        // If the non-transactional migration fails during planned SQL execution, the state table
+        // remains available for a safe retry instead of applying id -> iid conversions twice.
+        $schemaManager = $this->connection->createSchemaManager();
+        if ($schemaManager->tablesExist([self::REFERENCE_STATE_TABLE])) {
+            $this->connection->executeStatement('DROP TABLE '.self::REFERENCE_STATE_TABLE);
+        }
+    }
+
+    public function down(Schema $schema): void {}
+
     private function finalizeQuizAnswerSchema(): void
     {
         $schemaManager = $this->connection->createSchemaManager();
@@ -515,25 +536,6 @@ class Version20170904145500 extends AbstractMigrationChamilo
             $this->connection->executeStatement(
                 'CREATE INDEX exercise ON c_quiz_rel_question (quiz_id)'
             );
-        }
-    }
-
-    public function postUp(Schema $schema): void
-    {
-        // Finalize against the live database after all queued addSql() statements.
-        // This migration is non-transactional, so the initial Schema snapshot may no
-        // longer represent the actual table state after a partial or fresh upgrade.
-        $this->finalizeQuizAnswerSchema();
-        $this->finalizeQuizQuestionOptionSchema();
-        $this->finalizeQuizQuestionRelationSchema();
-
-        // Keep the resumable normalization state until every planned schema statement has succeeded.
-        // Doctrine executes addSql() statements after up(), so cleanup must happen in postUp().
-        // If the non-transactional migration fails during planned SQL execution, the state table
-        // remains available for a safe retry instead of applying id -> iid conversions twice.
-        $schemaManager = $this->connection->createSchemaManager();
-        if ($schemaManager->tablesExist([self::REFERENCE_STATE_TABLE])) {
-            $this->connection->executeStatement('DROP TABLE '.self::REFERENCE_STATE_TABLE);
         }
     }
 
@@ -1659,6 +1661,4 @@ class Version20170904145500 extends AbstractMigrationChamilo
             ]);
         }
     }
-
-    public function down(Schema $schema): void {}
 }

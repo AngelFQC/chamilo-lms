@@ -24,17 +24,17 @@ use Throwable;
 )]
 final class ConfigureLegacyCertificateNotificationsCommand extends Command
 {
-    private const string SUBJECT_VARIABLE =
-        'plugin_gradingelectronic_certificate_notification_subject';
+    private const string SUBJECT_VARIABLE
+        = 'plugin_gradingelectronic_certificate_notification_subject';
 
-    private const string MESSAGE_VARIABLE =
-        'plugin_gradingelectronic_certificate_notification_message';
+    private const string MESSAGE_VARIABLE
+        = 'plugin_gradingelectronic_certificate_notification_message';
 
-    private const string GRADING_ELECTRONIC_COURSE_VARIABLE =
-        'plugin_gradingelectronic_course_id';
+    private const string GRADING_ELECTRONIC_COURSE_VARIABLE
+        = 'plugin_gradingelectronic_course_id';
 
-    private const string COMPLETION_RULE_VARIABLE =
-        'course_completion_rule';
+    private const string COMPLETION_RULE_VARIABLE
+        = 'course_completion_rule';
 
     private const string SUBJECT = 'Course Completion Certificate';
 
@@ -247,7 +247,8 @@ WHERE
           AND gc.generate_certificates = 1
     )
 ORDER BY c.id
-SQL,
+SQL
+            ,
             [
                 'courseItemType' => ExtraField::COURSE_FIELD_TYPE,
                 'completionVariable' => self::COMPLETION_RULE_VARIABLE,
@@ -454,7 +455,8 @@ SQL,
 </ol>
 <p>We hope you enjoyed your learning experience and look forward to seeing you in future classes. Please contact us if you need assistance.</p>
 <p>Sincerely,<br>((portal_name))</p>
-HTML,
+HTML
+            ,
             'tennessee' => <<<'HTML'
 <p>((user_first_name)) ((user_last_name)),</p>
 <p>Congratulations! You have successfully completed the course ((course_title)). You earned a passing score of ((score))%.</p>
@@ -468,7 +470,8 @@ HTML,
 </ol>
 <p>We look forward to seeing you in future classes. Please contact us if you need assistance.</p>
 <p>Sincerely,<br>((portal_name))</p>
-HTML,
+HTML
+            ,
             default => <<<'HTML'
 <p>((user_first_name)) ((user_last_name)),</p>
 <p>Congratulations! You have successfully completed the course ((course_title)). You earned a passing score of ((score))%, and your grade has been submitted to the State Fire College. Please allow a few days for it to appear in their system.</p>
@@ -482,7 +485,8 @@ HTML,
 </ol>
 <p>We hope you enjoyed your learning experience and look forward to seeing you in future classes. Please contact us if you need assistance.</p>
 <p>Sincerely,<br>((portal_name))</p>
-HTML,
+HTML
+            ,
         };
     }
 }

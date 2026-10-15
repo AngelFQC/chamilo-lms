@@ -26,7 +26,9 @@ use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
-/** @implements ProcessorInterface<LearningPathRuntimeItemInput, void> */
+/**
+ * @implements ProcessorInterface<LearningPathRuntimeItemInput, void>
+ */
 final readonly class LearningPathRuntimeItemProcessor implements ProcessorInterface
 {
     use LearningPathStateHelperTrait;

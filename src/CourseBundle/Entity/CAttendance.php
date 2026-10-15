@@ -264,9 +264,6 @@ class CAttendance extends AbstractResource implements ResourceInterface, Stringa
         return $this;
     }
 
-    /**
-     * Get attendanceQualifyMax.
-     */
     public function getAttendanceQualifyMax(): int
     {
         return $this->attendanceQualifyMax;
@@ -279,9 +276,6 @@ class CAttendance extends AbstractResource implements ResourceInterface, Stringa
         return $this;
     }
 
-    /**
-     * Get attendanceWeight.
-     */
     public function getAttendanceWeight(): float
     {
         return $this->attendanceWeight;
@@ -294,9 +288,6 @@ class CAttendance extends AbstractResource implements ResourceInterface, Stringa
         return $this;
     }
 
-    /**
-     * Get locked.
-     */
     public function getLocked(): int
     {
         return $this->locked;
@@ -340,7 +331,7 @@ class CAttendance extends AbstractResource implements ResourceInterface, Stringa
     public function getDoneCalendars(): int
     {
         return $this->calendars
-            ->filter(fn (CAttendanceCalendar $calendar) => $calendar->getDoneAttendance())
+            ->filter(static fn (CAttendanceCalendar $calendar) => $calendar->getDoneAttendance())
             ->count()
         ;
     }

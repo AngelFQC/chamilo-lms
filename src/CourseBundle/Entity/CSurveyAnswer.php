@@ -51,8 +51,6 @@ class CSurveyAnswer
     }
 
     /**
-     * Get value.
-     *
      * @return int
      */
     public function getValue()
@@ -92,8 +90,6 @@ class CSurveyAnswer
     }
 
     /**
-     * Get user.
-     *
      * @return string
      */
     public function getUser()
@@ -133,8 +129,6 @@ class CSurveyAnswer
     }
 
     /**
-     * Get the lp item Id.
-     *
      * @return int
      */
     public function getLpItemId()
@@ -143,8 +137,6 @@ class CSurveyAnswer
     }
 
     /**
-     * Set lp item Id.
-     *
      * @return CSurveyAnswer
      */
     public function setLpItemId(int $lpItemId)

@@ -23,36 +23,6 @@ final class DateTimeHelper
     ) {}
 
     /**
-     * Resolve timezone using platform + user settings.
-     * This is the instance implementation (DI-friendly).
-     */
-    private function resolveTimezoneFromSettings(?string $default = null): string
-    {
-        $tz = $default ?: (date_default_timezone_get() ?: 'UTC');
-
-        // Platform-specific timezone overrides server default
-        $platformTz = (string) ($this->settingsManager->getSetting('platform.timezone') ?? '');
-        if ('' !== $platformTz) {
-            $tz = $platformTz;
-        }
-
-        // User-specific timezone if allowed
-        $allowUserTz = (string) ($this->settingsManager->getSetting('profile.use_users_timezone') ?? '');
-        if ('true' === $allowUserTz) {
-            $user = $this->security->getUser();
-            if ($user && method_exists($user, 'getTimezone')) {
-                $userTz = (string) $user->getTimezone();
-                if ('' !== $userTz) {
-                    $tz = $userTz;
-                }
-            }
-        }
-
-        // Normalize wrong separators
-        return str_replace('\\', '/', $tz);
-    }
-
-    /**
      * Static timezone resolver for legacy/static contexts.
      * Uses the Symfony container when available, otherwise falls back to PHP default timezone.
      */
@@ -125,6 +95,36 @@ final class DateTimeHelper
         ?string $fromTimezone = null
     ): string {
         return self::localTime($time, $toTimezone, $fromTimezone, false, true, false, 'Y-m-d H:i:s') ?? '';
+    }
+
+    /**
+     * Resolve timezone using platform + user settings.
+     * This is the instance implementation (DI-friendly).
+     */
+    private function resolveTimezoneFromSettings(?string $default = null): string
+    {
+        $tz = $default ?: (date_default_timezone_get() ?: 'UTC');
+
+        // Platform-specific timezone overrides server default
+        $platformTz = (string) ($this->settingsManager->getSetting('platform.timezone') ?? '');
+        if ('' !== $platformTz) {
+            $tz = $platformTz;
+        }
+
+        // User-specific timezone if allowed
+        $allowUserTz = (string) ($this->settingsManager->getSetting('profile.use_users_timezone') ?? '');
+        if ('true' === $allowUserTz) {
+            $user = $this->security->getUser();
+            if ($user && method_exists($user, 'getTimezone')) {
+                $userTz = (string) $user->getTimezone();
+                if ('' !== $userTz) {
+                    $tz = $userTz;
+                }
+            }
+        }
+
+        // Normalize wrong separators
+        return str_replace('\\', '/', $tz);
     }
 
     private static function normalizeToDateTime(

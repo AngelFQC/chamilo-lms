@@ -18,15 +18,14 @@ use Throwable;
 
 class OpenAiProvider implements AiProviderInterface, AiImageProviderInterface, AiVideoJobProviderInterface, AiDocumentProviderInterface, AiDocumentProcessProviderInterface, AiSearchMediaTextProviderInterface
 {
-    private array $providerConfig;
-    private string $apiKey;
-    private string $organizationId;
-    private int $monthlyTokenLimit;
-
     // OpenAI Videos API constraints (validate early to avoid avoidable 400s).
     private const array ALLOWED_VIDEO_MODELS = ['sora-2', 'sora-2-pro'];
     private const array ALLOWED_VIDEO_SECONDS = ['4', '8', '12'];
     private const array ALLOWED_VIDEO_SIZES = ['720x1280', '1280x720', '1024x1792', '1792x1024'];
+    private array $providerConfig;
+    private string $apiKey;
+    private string $organizationId;
+    private int $monthlyTokenLimit;
 
     public function __construct(
         private readonly HttpClientInterface $httpClient,
@@ -379,347 +378,6 @@ class OpenAiProvider implements AiProviderInterface, AiImageProviderInterface, A
         }
 
         return $this->transcribeMediaForSearch($filename, $mimeType, $binaryContent, $mediaType, $options);
-    }
-
-    /**
-     * @param array<string, mixed> $options
-     */
-    private function describeImageForSearch(
-        string $filename,
-        string $mimeType,
-        string $binaryContent,
-        array $options = []
-    ): ?string {
-        $userId = $this->getUserId();
-        if (!$userId) {
-            error_log('[AI][OpenAI][search_image_description] User not authenticated.');
-
-            return null;
-        }
-
-        $cfg = $this->getTypeConfig('document_process');
-        if (empty($cfg)) {
-            $cfg = $this->getTypeConfig('text');
-        }
-
-        if (empty($cfg)) {
-            error_log('[AI][OpenAI][search_image_description] Missing config for type: document_process/text');
-
-            return null;
-        }
-
-        $prompt = trim((string) ($options['prompt'] ?? 'Describe this image for full-text search indexing. Return only concise searchable plain text. Include visible text if any.'));
-        $url = (string) ($cfg['url'] ?? 'https://api.openai.com/v1/responses');
-        $model = (string) ($options['model'] ?? ($cfg['model'] ?? 'gpt-4o-mini'));
-        $maxOutputTokens = (int) ($options['max_output_tokens'] ?? ($cfg['max_output_tokens'] ?? 500));
-        $temperature = (float) ($options['temperature'] ?? ($cfg['temperature'] ?? 0.1));
-
-        $payload = [
-            'model' => $model,
-            'temperature' => $temperature,
-            'max_output_tokens' => $maxOutputTokens,
-            'input' => [
-                [
-                    'role' => 'user',
-                    'content' => [
-                        [
-                            'type' => 'input_text',
-                            'text' => $prompt,
-                        ],
-                        [
-                            'type' => 'input_image',
-                            'image_url' => 'data:'.$mimeType.';base64,'.base64_encode($binaryContent),
-                        ],
-                    ],
-                ],
-            ],
-        ];
-
-        try {
-            $response = $this->httpClient->request('POST', $url, [
-                'headers' => $this->buildAuthHeaders(true),
-                'json' => $payload,
-            ]);
-
-            $raw = (string) $response->getContent(false);
-            $data = json_decode($raw, true);
-
-            if (!\is_array($data)) {
-                error_log('[AI][OpenAI][search_image_description] Invalid JSON response: '.mb_substr($raw, 0, 1200));
-
-                return null;
-            }
-
-            if (isset($data['error'])) {
-                $msg = $data['error']['message'] ?? 'OpenAI returned an error response.';
-                $msg = \is_string($msg) ? trim($msg) : 'OpenAI returned an error response.';
-                error_log('[AI][OpenAI][search_image_description] Error response: '.$msg);
-
-                return null;
-            }
-
-            $text = trim($this->extractResponsesApiText($data));
-            if ('' === $text) {
-                error_log('[AI][OpenAI][search_image_description] Empty output_text.');
-
-                return null;
-            }
-
-            $usage = \is_array($data['usage'] ?? null) ? $data['usage'] : [];
-            $this->saveAiRequest(
-                $userId,
-                'search_image_description',
-                mb_substr($filename.' '.$prompt, 0, 900),
-                'openai',
-                (int) ($usage['input_tokens'] ?? 0),
-                (int) ($usage['output_tokens'] ?? 0),
-                (int) ($usage['total_tokens'] ?? 0)
-            );
-
-            return $text;
-        } catch (Throwable $e) {
-            error_log('[AI][OpenAI][search_image_description] Exception: '.$e->getMessage());
-
-            return null;
-        }
-    }
-
-    /**
-     * @param array<string, mixed> $options
-     */
-    private function transcribeMediaForSearch(
-        string $filename,
-        string $mimeType,
-        string $binaryContent,
-        string $mediaType,
-        array $options = []
-    ): ?string {
-        $userId = $this->getUserId();
-        if (!$userId) {
-            error_log('[AI][OpenAI][search_media_transcript] User not authenticated.');
-
-            return null;
-        }
-
-        $cfg = $this->getTypeConfig('document_process');
-        if (empty($cfg)) {
-            $cfg = $this->getTypeConfig('text');
-        }
-
-        $url = (string) ($options['url'] ?? ($cfg['transcription_url'] ?? 'https://api.openai.com/v1/audio/transcriptions'));
-        $model = (string) ($options['model'] ?? ($cfg['transcription_model'] ?? 'whisper-1'));
-        $prompt = trim((string) ($options['prompt'] ?? ''));
-
-        try {
-            $formFields = [
-                'model' => $model,
-                'file' => new DataPart($binaryContent, $filename, $mimeType),
-            ];
-
-            if ('' !== $prompt) {
-                $formFields['prompt'] = $prompt;
-            }
-
-            $formData = new FormDataPart($formFields);
-            $headers = array_merge(
-                $this->buildAuthHeaders(false),
-                $formData->getPreparedHeaders()->toArray(),
-                ['Accept' => 'application/json']
-            );
-
-            $response = $this->httpClient->request('POST', $url, [
-                'headers' => $headers,
-                'body' => $formData->bodyToIterable(),
-            ]);
-
-            $raw = (string) $response->getContent(false);
-            $data = json_decode($raw, true);
-
-            if (!\is_array($data)) {
-                error_log('[AI][OpenAI][search_media_transcript] Invalid JSON response: '.mb_substr($raw, 0, 1200));
-
-                return null;
-            }
-
-            if (isset($data['error'])) {
-                $msg = $data['error']['message'] ?? 'OpenAI returned an error response.';
-                $msg = \is_string($msg) ? trim($msg) : 'OpenAI returned an error response.';
-                error_log('[AI][OpenAI][search_media_transcript] Error response: '.$msg);
-
-                return null;
-            }
-
-            $text = $data['text'] ?? null;
-            if (!\is_string($text) || '' === trim($text)) {
-                error_log('[AI][OpenAI][search_media_transcript] Empty transcript.');
-
-                return null;
-            }
-
-            $this->saveAiRequest(
-                $userId,
-                'search_'.$mediaType.'_transcript',
-                mb_substr($filename, 0, 900),
-                'openai'
-            );
-
-            return trim($text);
-        } catch (Throwable $e) {
-            error_log('[AI][OpenAI][search_media_transcript] Exception: '.$e->getMessage());
-
-            return null;
-        }
-    }
-
-    /**
-     * Upload a file to /v1/files to obtain file_id for Responses API.
-     */
-    private function uploadFileForResponses(string $filename, string $mimeType, string $binaryContent): ?string
-    {
-        $cfg = $this->getTypeConfig('files');
-        $url = (string) ($cfg['url'] ?? 'https://api.openai.com/v1/files');
-
-        try {
-            $filePart = new DataPart($binaryContent, $filename, $mimeType);
-
-            $formData = new FormDataPart([
-                'purpose' => 'user_data',
-                'file' => $filePart,
-            ]);
-
-            $headers = array_merge(
-                $this->buildAuthHeaders(false),
-                $formData->getPreparedHeaders()->toArray(),
-                ['Accept' => 'application/json']
-            );
-
-            $response = $this->httpClient->request('POST', $url, [
-                'headers' => $headers,
-                'body' => $formData->bodyToIterable(),
-            ]);
-
-            $raw = (string) $response->getContent(false);
-            $data = json_decode($raw, true);
-
-            if (!\is_array($data)) {
-                error_log('[AI][OpenAI][files] Invalid JSON response: '.mb_substr($raw, 0, 1200));
-
-                return null;
-            }
-
-            if (isset($data['error'])) {
-                $msg = $data['error']['message'] ?? 'OpenAI returned an error response.';
-                $msg = \is_string($msg) ? trim($msg) : 'OpenAI returned an error response.';
-                error_log('[AI][OpenAI][files] Error response: '.$msg);
-
-                return null;
-            }
-
-            $fileId = $data['id'] ?? null;
-            if (!\is_string($fileId) || '' === trim($fileId)) {
-                error_log('[AI][OpenAI][files] Missing file id in response.');
-
-                return null;
-            }
-
-            return $fileId;
-        } catch (Throwable $e) {
-            error_log('[AI][OpenAI][files] Upload exception: '.$e->getMessage());
-
-            return null;
-        }
-    }
-
-    /**
-     * Extract assistant text from Responses API payload.
-     */
-    private function extractResponsesApiText(array $data): string
-    {
-        if (isset($data['output_text']) && \is_string($data['output_text'])) {
-            return $data['output_text'];
-        }
-
-        if (!isset($data['output']) || !\is_array($data['output'])) {
-            return '';
-        }
-
-        $parts = [];
-        foreach ($data['output'] as $item) {
-            if (!\is_array($item) || !isset($item['content']) || !\is_array($item['content'])) {
-                continue;
-            }
-            foreach ($item['content'] as $c) {
-                if (!\is_array($c)) {
-                    continue;
-                }
-                if (
-                    isset($c['type']) && 'output_text' === $c['type']
-                    && isset($c['text']) && \is_string($c['text'])
-                ) {
-                    $parts[] = $c['text'];
-                }
-            }
-        }
-
-        return trim(implode("\n", $parts));
-    }
-
-    /**
-     * @param array<int, array{role:string,content:string}> $messages
-     *
-     * @return array<int, array{role:string,content:string}>
-     */
-    private function normalizeChatMessages(array $messages): array
-    {
-        $out = [];
-
-        foreach ($messages as $m) {
-            if (!\is_array($m)) {
-                continue;
-            }
-
-            $role = isset($m['role']) ? trim((string) $m['role']) : '';
-            $content = isset($m['content']) ? trim((string) $m['content']) : '';
-
-            if ('' === $role || '' === $content) {
-                continue;
-            }
-
-            $role = strtolower($role);
-            if (!\in_array($role, ['system', 'user', 'assistant', 'tool'], true)) {
-                $role = 'user';
-            }
-
-            $out[] = [
-                'role' => $role,
-                'content' => $content,
-            ];
-        }
-
-        return $out;
-    }
-
-    /**
-     * @param array<int, array{role:string,content:string}> $messages
-     */
-    private function messagesForLog(array $messages, int $maxChars = 900): string
-    {
-        $parts = [];
-        foreach ($messages as $m) {
-            $role = $m['role'] ?? 'user';
-            $content = $m['content'] ?? '';
-            $content = trim((string) $content);
-
-            if ('' === $content) {
-                continue;
-            }
-
-            $parts[] = strtoupper((string) $role).': '.mb_substr($content, 0, 300);
-        }
-
-        $s = implode(' | ', $parts);
-
-        return mb_substr($s, 0, $maxChars);
     }
 
     public function generateQuestions(string $topic, int $numQuestions, string $questionType, string $language): ?string
@@ -1237,6 +895,347 @@ class OpenAiProvider implements AiProviderInterface, AiImageProviderInterface, A
                 'error' => $e->getMessage(),
             ];
         }
+    }
+
+    /**
+     * @param array<string, mixed> $options
+     */
+    private function describeImageForSearch(
+        string $filename,
+        string $mimeType,
+        string $binaryContent,
+        array $options = []
+    ): ?string {
+        $userId = $this->getUserId();
+        if (!$userId) {
+            error_log('[AI][OpenAI][search_image_description] User not authenticated.');
+
+            return null;
+        }
+
+        $cfg = $this->getTypeConfig('document_process');
+        if (empty($cfg)) {
+            $cfg = $this->getTypeConfig('text');
+        }
+
+        if (empty($cfg)) {
+            error_log('[AI][OpenAI][search_image_description] Missing config for type: document_process/text');
+
+            return null;
+        }
+
+        $prompt = trim((string) ($options['prompt'] ?? 'Describe this image for full-text search indexing. Return only concise searchable plain text. Include visible text if any.'));
+        $url = (string) ($cfg['url'] ?? 'https://api.openai.com/v1/responses');
+        $model = (string) ($options['model'] ?? ($cfg['model'] ?? 'gpt-4o-mini'));
+        $maxOutputTokens = (int) ($options['max_output_tokens'] ?? ($cfg['max_output_tokens'] ?? 500));
+        $temperature = (float) ($options['temperature'] ?? ($cfg['temperature'] ?? 0.1));
+
+        $payload = [
+            'model' => $model,
+            'temperature' => $temperature,
+            'max_output_tokens' => $maxOutputTokens,
+            'input' => [
+                [
+                    'role' => 'user',
+                    'content' => [
+                        [
+                            'type' => 'input_text',
+                            'text' => $prompt,
+                        ],
+                        [
+                            'type' => 'input_image',
+                            'image_url' => 'data:'.$mimeType.';base64,'.base64_encode($binaryContent),
+                        ],
+                    ],
+                ],
+            ],
+        ];
+
+        try {
+            $response = $this->httpClient->request('POST', $url, [
+                'headers' => $this->buildAuthHeaders(true),
+                'json' => $payload,
+            ]);
+
+            $raw = (string) $response->getContent(false);
+            $data = json_decode($raw, true);
+
+            if (!\is_array($data)) {
+                error_log('[AI][OpenAI][search_image_description] Invalid JSON response: '.mb_substr($raw, 0, 1200));
+
+                return null;
+            }
+
+            if (isset($data['error'])) {
+                $msg = $data['error']['message'] ?? 'OpenAI returned an error response.';
+                $msg = \is_string($msg) ? trim($msg) : 'OpenAI returned an error response.';
+                error_log('[AI][OpenAI][search_image_description] Error response: '.$msg);
+
+                return null;
+            }
+
+            $text = trim($this->extractResponsesApiText($data));
+            if ('' === $text) {
+                error_log('[AI][OpenAI][search_image_description] Empty output_text.');
+
+                return null;
+            }
+
+            $usage = \is_array($data['usage'] ?? null) ? $data['usage'] : [];
+            $this->saveAiRequest(
+                $userId,
+                'search_image_description',
+                mb_substr($filename.' '.$prompt, 0, 900),
+                'openai',
+                (int) ($usage['input_tokens'] ?? 0),
+                (int) ($usage['output_tokens'] ?? 0),
+                (int) ($usage['total_tokens'] ?? 0)
+            );
+
+            return $text;
+        } catch (Throwable $e) {
+            error_log('[AI][OpenAI][search_image_description] Exception: '.$e->getMessage());
+
+            return null;
+        }
+    }
+
+    /**
+     * @param array<string, mixed> $options
+     */
+    private function transcribeMediaForSearch(
+        string $filename,
+        string $mimeType,
+        string $binaryContent,
+        string $mediaType,
+        array $options = []
+    ): ?string {
+        $userId = $this->getUserId();
+        if (!$userId) {
+            error_log('[AI][OpenAI][search_media_transcript] User not authenticated.');
+
+            return null;
+        }
+
+        $cfg = $this->getTypeConfig('document_process');
+        if (empty($cfg)) {
+            $cfg = $this->getTypeConfig('text');
+        }
+
+        $url = (string) ($options['url'] ?? ($cfg['transcription_url'] ?? 'https://api.openai.com/v1/audio/transcriptions'));
+        $model = (string) ($options['model'] ?? ($cfg['transcription_model'] ?? 'whisper-1'));
+        $prompt = trim((string) ($options['prompt'] ?? ''));
+
+        try {
+            $formFields = [
+                'model' => $model,
+                'file' => new DataPart($binaryContent, $filename, $mimeType),
+            ];
+
+            if ('' !== $prompt) {
+                $formFields['prompt'] = $prompt;
+            }
+
+            $formData = new FormDataPart($formFields);
+            $headers = array_merge(
+                $this->buildAuthHeaders(false),
+                $formData->getPreparedHeaders()->toArray(),
+                ['Accept' => 'application/json']
+            );
+
+            $response = $this->httpClient->request('POST', $url, [
+                'headers' => $headers,
+                'body' => $formData->bodyToIterable(),
+            ]);
+
+            $raw = (string) $response->getContent(false);
+            $data = json_decode($raw, true);
+
+            if (!\is_array($data)) {
+                error_log('[AI][OpenAI][search_media_transcript] Invalid JSON response: '.mb_substr($raw, 0, 1200));
+
+                return null;
+            }
+
+            if (isset($data['error'])) {
+                $msg = $data['error']['message'] ?? 'OpenAI returned an error response.';
+                $msg = \is_string($msg) ? trim($msg) : 'OpenAI returned an error response.';
+                error_log('[AI][OpenAI][search_media_transcript] Error response: '.$msg);
+
+                return null;
+            }
+
+            $text = $data['text'] ?? null;
+            if (!\is_string($text) || '' === trim($text)) {
+                error_log('[AI][OpenAI][search_media_transcript] Empty transcript.');
+
+                return null;
+            }
+
+            $this->saveAiRequest(
+                $userId,
+                'search_'.$mediaType.'_transcript',
+                mb_substr($filename, 0, 900),
+                'openai'
+            );
+
+            return trim($text);
+        } catch (Throwable $e) {
+            error_log('[AI][OpenAI][search_media_transcript] Exception: '.$e->getMessage());
+
+            return null;
+        }
+    }
+
+    /**
+     * Upload a file to /v1/files to obtain file_id for Responses API.
+     */
+    private function uploadFileForResponses(string $filename, string $mimeType, string $binaryContent): ?string
+    {
+        $cfg = $this->getTypeConfig('files');
+        $url = (string) ($cfg['url'] ?? 'https://api.openai.com/v1/files');
+
+        try {
+            $filePart = new DataPart($binaryContent, $filename, $mimeType);
+
+            $formData = new FormDataPart([
+                'purpose' => 'user_data',
+                'file' => $filePart,
+            ]);
+
+            $headers = array_merge(
+                $this->buildAuthHeaders(false),
+                $formData->getPreparedHeaders()->toArray(),
+                ['Accept' => 'application/json']
+            );
+
+            $response = $this->httpClient->request('POST', $url, [
+                'headers' => $headers,
+                'body' => $formData->bodyToIterable(),
+            ]);
+
+            $raw = (string) $response->getContent(false);
+            $data = json_decode($raw, true);
+
+            if (!\is_array($data)) {
+                error_log('[AI][OpenAI][files] Invalid JSON response: '.mb_substr($raw, 0, 1200));
+
+                return null;
+            }
+
+            if (isset($data['error'])) {
+                $msg = $data['error']['message'] ?? 'OpenAI returned an error response.';
+                $msg = \is_string($msg) ? trim($msg) : 'OpenAI returned an error response.';
+                error_log('[AI][OpenAI][files] Error response: '.$msg);
+
+                return null;
+            }
+
+            $fileId = $data['id'] ?? null;
+            if (!\is_string($fileId) || '' === trim($fileId)) {
+                error_log('[AI][OpenAI][files] Missing file id in response.');
+
+                return null;
+            }
+
+            return $fileId;
+        } catch (Throwable $e) {
+            error_log('[AI][OpenAI][files] Upload exception: '.$e->getMessage());
+
+            return null;
+        }
+    }
+
+    /**
+     * Extract assistant text from Responses API payload.
+     */
+    private function extractResponsesApiText(array $data): string
+    {
+        if (isset($data['output_text']) && \is_string($data['output_text'])) {
+            return $data['output_text'];
+        }
+
+        if (!isset($data['output']) || !\is_array($data['output'])) {
+            return '';
+        }
+
+        $parts = [];
+        foreach ($data['output'] as $item) {
+            if (!\is_array($item) || !isset($item['content']) || !\is_array($item['content'])) {
+                continue;
+            }
+            foreach ($item['content'] as $c) {
+                if (!\is_array($c)) {
+                    continue;
+                }
+                if (
+                    isset($c['type']) && 'output_text' === $c['type']
+                    && isset($c['text']) && \is_string($c['text'])
+                ) {
+                    $parts[] = $c['text'];
+                }
+            }
+        }
+
+        return trim(implode("\n", $parts));
+    }
+
+    /**
+     * @param array<int, array{role:string,content:string}> $messages
+     *
+     * @return array<int, array{role:string,content:string}>
+     */
+    private function normalizeChatMessages(array $messages): array
+    {
+        $out = [];
+
+        foreach ($messages as $m) {
+            if (!\is_array($m)) {
+                continue;
+            }
+
+            $role = isset($m['role']) ? trim((string) $m['role']) : '';
+            $content = isset($m['content']) ? trim((string) $m['content']) : '';
+
+            if ('' === $role || '' === $content) {
+                continue;
+            }
+
+            $role = strtolower($role);
+            if (!\in_array($role, ['system', 'user', 'assistant', 'tool'], true)) {
+                $role = 'user';
+            }
+
+            $out[] = [
+                'role' => $role,
+                'content' => $content,
+            ];
+        }
+
+        return $out;
+    }
+
+    /**
+     * @param array<int, array{role:string,content:string}> $messages
+     */
+    private function messagesForLog(array $messages, int $maxChars = 900): string
+    {
+        $parts = [];
+        foreach ($messages as $m) {
+            $role = $m['role'] ?? 'user';
+            $content = $m['content'] ?? '';
+            $content = trim((string) $content);
+
+            if ('' === $content) {
+                continue;
+            }
+
+            $parts[] = strtoupper((string) $role).': '.mb_substr($content, 0, 300);
+        }
+
+        $s = implode(' | ', $parts);
+
+        return mb_substr($s, 0, $maxChars);
     }
 
     private function requestChatCompletion(string $prompt, string $toolName, string $type): ?string

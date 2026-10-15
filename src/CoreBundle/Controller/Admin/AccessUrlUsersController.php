@@ -44,16 +44,6 @@ class AccessUrlUsersController extends AbstractController
         private readonly UserHelper $userHelper,
     ) {}
 
-    private function currentUser(): User
-    {
-        $user = $this->userHelper->getCurrent();
-        if (null === $user) {
-            throw $this->createAccessDeniedException();
-        }
-
-        return $user;
-    }
-
     #[Route('', name: 'admin_access_urls_users_data', methods: ['GET'])]
     public function list(Request $request): JsonResponse
     {
@@ -240,6 +230,16 @@ class AccessUrlUsersController extends AbstractController
             'totalUsers' => $totalUsers,
             'appliedFirstLetter' => '' === $firstLetter ? '__all__' : $firstLetter,
         ]);
+    }
+
+    private function currentUser(): User
+    {
+        $user = $this->userHelper->getCurrent();
+        if (null === $user) {
+            throw $this->createAccessDeniedException();
+        }
+
+        return $user;
     }
 
     /**

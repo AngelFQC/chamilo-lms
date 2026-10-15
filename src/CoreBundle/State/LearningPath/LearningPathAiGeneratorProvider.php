@@ -20,7 +20,9 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 
-/** @implements ProviderInterface<LearningPathAiGenerator> */
+/**
+ * @implements ProviderInterface<LearningPathAiGenerator>
+ */
 final readonly class LearningPathAiGeneratorProvider implements ProviderInterface
 {
     use LearningPathStateHelperTrait;

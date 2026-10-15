@@ -101,6 +101,20 @@ final readonly class SurveyQuestionProvider implements ProviderInterface
         return $response;
     }
 
+    public function getSurveyFromCurrentContext(int $surveyId, Course $course, ?Session $session): CSurvey
+    {
+        $survey = $this->surveyRepository->find($surveyId);
+        if (!$survey instanceof CSurvey) {
+            throw new NotFoundHttpException('The requested survey was not found.');
+        }
+
+        if ($this->isSurveyInContext($survey, $course, $session)) {
+            return $survey;
+        }
+
+        throw new AccessDeniedHttpException('The requested survey does not belong to the current course context.');
+    }
+
     private function canWriteSurvey(CSurvey $survey): bool
     {
         if (3 === $survey->getSurveyType()) {
@@ -116,20 +130,6 @@ final readonly class SurveyQuestionProvider implements ProviderInterface
         }
 
         return true;
-    }
-
-    public function getSurveyFromCurrentContext(int $surveyId, Course $course, ?Session $session): CSurvey
-    {
-        $survey = $this->surveyRepository->find($surveyId);
-        if (!$survey instanceof CSurvey) {
-            throw new NotFoundHttpException('The requested survey was not found.');
-        }
-
-        if ($this->isSurveyInContext($survey, $course, $session)) {
-            return $survey;
-        }
-
-        throw new AccessDeniedHttpException('The requested survey does not belong to the current course context.');
     }
 
     private function isSurveyInContext(CSurvey $survey, Course $course, ?Session $session): bool

@@ -242,6 +242,11 @@ final readonly class LearningPathRuntimeProgressManager
         return $latest;
     }
 
+    public function isCompletedStatus(string $status): bool
+    {
+        return \in_array(strtolower(trim($status)), self::COMPLETED_STATUSES, true);
+    }
+
     /**
      * @param array<int, CLpItemView> $latestViews
      */
@@ -560,10 +565,5 @@ final readonly class LearningPathRuntimeProgressManager
         $progress = (int) round(($progressSum / \count($progressItems)) * 100);
 
         return max(0, min(100, $progress));
-    }
-
-    public function isCompletedStatus(string $status): bool
-    {
-        return \in_array(strtolower(trim($status)), self::COMPLETED_STATUSES, true);
     }
 }

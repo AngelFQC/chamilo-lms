@@ -42,8 +42,8 @@ final class DocumentSearchEntityListener
             $this->indexer->indexDocument($document);
         } catch (Throwable $e) {
             error_log(
-                '[Xapian] DocumentSearchEntityListener postPersist: indexing failed: '.
-                $e->getMessage().' in '.$e->getFile().':'.$e->getLine()
+                '[Xapian] DocumentSearchEntityListener postPersist: indexing failed: '
+                .$e->getMessage().' in '.$e->getFile().':'.$e->getLine()
             );
         }
     }
@@ -66,8 +66,8 @@ final class DocumentSearchEntityListener
             $this->indexer->indexDocument($document);
         } catch (Throwable $e) {
             error_log(
-                '[Xapian] DocumentSearchEntityListener postUpdate: indexing failed: '.
-                $e->getMessage().' in '.$e->getFile().':'.$e->getLine()
+                '[Xapian] DocumentSearchEntityListener postUpdate: indexing failed: '
+                .$e->getMessage().' in '.$e->getFile().':'.$e->getLine()
             );
         }
     }
@@ -93,8 +93,8 @@ final class DocumentSearchEntityListener
             $this->indexer->deleteForResourceNodeId((int) $resourceNode->getId());
         } catch (Throwable $e) {
             error_log(
-                '[Xapian] DocumentSearchEntityListener '.$operation.': delete failed: '.
-                $e->getMessage().' in '.$e->getFile().':'.$e->getLine()
+                '[Xapian] DocumentSearchEntityListener '.$operation.': delete failed: '
+                .$e->getMessage().' in '.$e->getFile().':'.$e->getLine()
             );
         }
     }

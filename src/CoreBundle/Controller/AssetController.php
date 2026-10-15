@@ -47,7 +47,7 @@ class AssetController
             }
 
             $response = new StreamedResponse(
-                function () use ($assetRepository, $filePath): void {
+                static function () use ($assetRepository, $filePath): void {
                     $outputStream = fopen('php://output', 'wb');
                     $stream = $assetRepository->getFileSystem()->readStream($filePath);
 

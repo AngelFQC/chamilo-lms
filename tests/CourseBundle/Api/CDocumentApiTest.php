@@ -41,93 +41,6 @@ final class CDocumentApiTest extends AbstractApiTest
 {
     use ChamiloTestTrait;
 
-    /**
-     * Builds a private (REGISTERED) course owned by a teacher, subscribes a
-     * student and leaves an attacker user out of the course. Adds two documents
-     * to the course's root: one PUBLISHED and one DRAFT.
-     *
-     * @return array{
-     *     course: Course,
-     *     teacher: User,
-     *     student: User,
-     *     attacker: User,
-     *     publishedDoc: CDocument,
-     *     draftDoc: CDocument
-     * }
-     */
-    private function bootstrapDocumentScenario(string $suffix): array
-    {
-        /** @var CourseRepository $courseRepo */
-        $courseRepo = self::getContainer()->get(CourseRepository::class);
-
-        /** @var CDocumentRepository $documentRepo */
-        $documentRepo = self::getContainer()->get(CDocumentRepository::class);
-
-        $course = $this->createCourse('Doc Sec Course '.$suffix);
-        $course->setVisibility(Course::REGISTERED);
-
-        $teacher = $this->createUser('doc_sec_teacher_'.$suffix);
-        $student = $this->createUser('doc_sec_student_'.$suffix);
-        $attacker = $this->createUser('doc_sec_attacker_'.$suffix);
-
-        $course->addUserAsTeacher($teacher);
-        $course->addUserAsStudent($student);
-        $courseRepo->update($course);
-
-        $admin = $this->getAdmin();
-
-        $publishedDoc = (new CDocument())
-            ->setFiletype('file')
-            ->setTitle('published-doc-'.$suffix)
-            ->setTemplate(false)
-            ->setReadonly(false)
-            ->setParent($course)
-            ->setCreator($admin)
-            ->addCourseLink($course, null, null, ResourceLink::VISIBILITY_PUBLISHED)
-        ;
-        $documentRepo->create($publishedDoc);
-
-        $draftDoc = (new CDocument())
-            ->setFiletype('file')
-            ->setTitle('draft-doc-'.$suffix)
-            ->setTemplate(false)
-            ->setReadonly(false)
-            ->setParent($course)
-            ->setCreator($admin)
-            ->addCourseLink($course, null, null, ResourceLink::VISIBILITY_DRAFT)
-        ;
-        $documentRepo->create($draftDoc);
-
-        return [
-            'course' => $course,
-            'teacher' => $teacher,
-            'student' => $student,
-            'attacker' => $attacker,
-            'publishedDoc' => $publishedDoc,
-            'draftDoc' => $draftDoc,
-        ];
-    }
-
-    /**
-     * Extracts the list of document titles from a Hydra collection payload.
-     *
-     * @param array<string, mixed> $payload
-     *
-     * @return array<int, string>
-     */
-    private function extractTitles(array $payload): array
-    {
-        $members = $payload['hydra:member'] ?? [];
-        $titles = [];
-        foreach ($members as $member) {
-            if (isset($member['title'])) {
-                $titles[] = (string) $member['title'];
-            }
-        }
-
-        return $titles;
-    }
-
     // -------------------------------------------------------------------------
     // Cross-course enumeration
     // -------------------------------------------------------------------------
@@ -533,5 +446,92 @@ final class CDocumentApiTest extends AbstractApiTest
             $response->getStatusCode(),
             'Enrolled student with valid cid must pass the security expression.'
         );
+    }
+
+    /**
+     * Builds a private (REGISTERED) course owned by a teacher, subscribes a
+     * student and leaves an attacker user out of the course. Adds two documents
+     * to the course's root: one PUBLISHED and one DRAFT.
+     *
+     * @return array{
+     *     course: Course,
+     *     teacher: User,
+     *     student: User,
+     *     attacker: User,
+     *     publishedDoc: CDocument,
+     *     draftDoc: CDocument
+     * }
+     */
+    private function bootstrapDocumentScenario(string $suffix): array
+    {
+        /** @var CourseRepository $courseRepo */
+        $courseRepo = self::getContainer()->get(CourseRepository::class);
+
+        /** @var CDocumentRepository $documentRepo */
+        $documentRepo = self::getContainer()->get(CDocumentRepository::class);
+
+        $course = $this->createCourse('Doc Sec Course '.$suffix);
+        $course->setVisibility(Course::REGISTERED);
+
+        $teacher = $this->createUser('doc_sec_teacher_'.$suffix);
+        $student = $this->createUser('doc_sec_student_'.$suffix);
+        $attacker = $this->createUser('doc_sec_attacker_'.$suffix);
+
+        $course->addUserAsTeacher($teacher);
+        $course->addUserAsStudent($student);
+        $courseRepo->update($course);
+
+        $admin = $this->getAdmin();
+
+        $publishedDoc = (new CDocument())
+            ->setFiletype('file')
+            ->setTitle('published-doc-'.$suffix)
+            ->setTemplate(false)
+            ->setReadonly(false)
+            ->setParent($course)
+            ->setCreator($admin)
+            ->addCourseLink($course, null, null, ResourceLink::VISIBILITY_PUBLISHED)
+        ;
+        $documentRepo->create($publishedDoc);
+
+        $draftDoc = (new CDocument())
+            ->setFiletype('file')
+            ->setTitle('draft-doc-'.$suffix)
+            ->setTemplate(false)
+            ->setReadonly(false)
+            ->setParent($course)
+            ->setCreator($admin)
+            ->addCourseLink($course, null, null, ResourceLink::VISIBILITY_DRAFT)
+        ;
+        $documentRepo->create($draftDoc);
+
+        return [
+            'course' => $course,
+            'teacher' => $teacher,
+            'student' => $student,
+            'attacker' => $attacker,
+            'publishedDoc' => $publishedDoc,
+            'draftDoc' => $draftDoc,
+        ];
+    }
+
+    /**
+     * Extracts the list of document titles from a Hydra collection payload.
+     *
+     * @param array<string, mixed> $payload
+     *
+     * @return array<int, string>
+     */
+    private function extractTitles(array $payload): array
+    {
+        $members = $payload['hydra:member'] ?? [];
+        $titles = [];
+        foreach ($members as $member) {
+            if (isset($member['title'])) {
+                $titles[] = (string) $member['title'];
+            }
+        }
+
+        return $titles;
     }
 }

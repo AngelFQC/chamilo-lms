@@ -48,8 +48,6 @@ class CForumNotification
     }
 
     /**
-     * Set cId.
-     *
      * @return CForumNotification
      */
     public function setCId(int $cId)
@@ -60,8 +58,6 @@ class CForumNotification
     }
 
     /**
-     * Get cId.
-     *
      * @return int
      */
     public function getCId()
@@ -70,8 +66,6 @@ class CForumNotification
     }
 
     /**
-     * Set userId.
-     *
      * @return CForumNotification
      */
     public function setUserId(int $userId)
@@ -82,8 +76,6 @@ class CForumNotification
     }
 
     /**
-     * Get userId.
-     *
      * @return int
      */
     public function getUserId()
@@ -92,8 +84,6 @@ class CForumNotification
     }
 
     /**
-     * Set forumId.
-     *
      * @return CForumNotification
      */
     public function setForumId(int $forumId)
@@ -104,8 +94,6 @@ class CForumNotification
     }
 
     /**
-     * Get forumId.
-     *
      * @return int
      */
     public function getForumId()
@@ -114,8 +102,6 @@ class CForumNotification
     }
 
     /**
-     * Set threadId.
-     *
      * @return CForumNotification
      */
     public function setThreadId(int $threadId)
@@ -126,8 +112,6 @@ class CForumNotification
     }
 
     /**
-     * Get threadId.
-     *
      * @return int
      */
     public function getThreadId()
@@ -136,8 +120,6 @@ class CForumNotification
     }
 
     /**
-     * Set postId.
-     *
      * @return CForumNotification
      */
     public function setPostId(int $postId)
@@ -148,8 +130,6 @@ class CForumNotification
     }
 
     /**
-     * Get postId.
-     *
      * @return int
      */
     public function getPostId()

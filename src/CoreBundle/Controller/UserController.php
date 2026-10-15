@@ -20,9 +20,6 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 use UserGroupModel;
 
-/**
- * @author Julio Montoya <gugli100@gmail.com>
- */
 #[Route('/user')]
 class UserController extends AbstractController
 {

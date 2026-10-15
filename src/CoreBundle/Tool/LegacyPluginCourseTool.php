@@ -59,23 +59,6 @@ final class LegacyPluginCourseTool extends AbstractPlugin
         );
     }
 
-    private static function normalizeWebPath(string $path): string
-    {
-        if ('' === $path) {
-            return '/';
-        }
-
-        if (preg_match('#^[a-z][a-z0-9+.-]*://#i', $path) || str_starts_with($path, '//')) {
-            return $path;
-        }
-
-        if (str_starts_with($path, '/')) {
-            return $path;
-        }
-
-        return '/'.$path;
-    }
-
     public function getTitle(): string
     {
         return $this->title;
@@ -94,5 +77,22 @@ final class LegacyPluginCourseTool extends AbstractPlugin
     public function getIcon(): string
     {
         return $this->icon;
+    }
+
+    private static function normalizeWebPath(string $path): string
+    {
+        if ('' === $path) {
+            return '/';
+        }
+
+        if (preg_match('#^[a-z][a-z0-9+.-]*://#i', $path) || str_starts_with($path, '//')) {
+            return $path;
+        }
+
+        if (str_starts_with($path, '/')) {
+            return $path;
+        }
+
+        return '/'.$path;
     }
 }

@@ -288,7 +288,8 @@ Return JSON only using this schema:
   ]
 }
 Create exactly seven training-satisfaction questions: five five-option satisfaction questions, one recommendation yes/no question, and one open comments question. Write everything in the requested language.
-PROMPT,
+PROMPT
+            ,
             'Survey title: '.$title."\nLanguage: ".$language,
             2500,
         );

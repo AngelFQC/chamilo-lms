@@ -34,8 +34,6 @@ class UserRelTag
     private ?Tag $tag = null;
 
     /**
-     * Get id.
-     *
      * @return int
      */
     public function getId()

@@ -77,7 +77,7 @@ class StudentPublicationController extends AbstractController
 
         $assignments = $this->studentPublicationRepo->findVisibleAssignmentsForStudent($course, $session, $gid);
 
-        $data = array_map(function ($row) use ($serializer) {
+        $data = array_map(static function ($row) use ($serializer) {
             $publication = $row[0] ?? null;
             $commentsCount = (int) ($row['commentsCount'] ?? 0);
             $correctionsCount = (int) ($row['correctionsCount'] ?? 0);
@@ -523,10 +523,10 @@ class StudentPublicationController extends AbstractController
 
         $unsubmitted = array_filter(
             $studentsArray,
-            fn ($rel) => !\in_array($rel->getUser()->getId(), $submittedUserIds, true)
+            static fn ($rel) => !\in_array($rel->getUser()->getId(), $submittedUserIds, true)
         );
 
-        $data = array_values(array_map(fn ($rel) => $rel->getUser(), $unsubmitted));
+        $data = array_values(array_map(static fn ($rel) => $rel->getUser(), $unsubmitted));
 
         return $this->json([
             'hydra:member' => $data,
@@ -563,7 +563,7 @@ class StudentPublicationController extends AbstractController
 
         $unsubmitted = array_filter(
             $students->toArray(),
-            fn ($rel) => !\in_array($rel->getUser()->getId(), $submittedUserIds, true)
+            static fn ($rel) => !\in_array($rel->getUser()->getId(), $submittedUserIds, true)
         );
 
         foreach ($unsubmitted as $rel) {
@@ -1106,11 +1106,11 @@ class StudentPublicationController extends AbstractController
         $maxText = null !== $max ? (string) $max : 'N/A';
 
         return \sprintf(
-            "You are an assignment grader.\n".
-            "Language: %s.\n".
-            "Provide constructive feedback and actionable improvements.\n".
-            "At the end, add a final line exactly like: SCORE: <number> (0 to %s).\n".
-            'Return plain text only.',
+            "You are an assignment grader.\n"
+            ."Language: %s.\n"
+            ."Provide constructive feedback and actionable improvements.\n"
+            ."At the end, add a final line exactly like: SCORE: <number> (0 to %s).\n"
+            .'Return plain text only.',
             $language,
             $maxText
         );

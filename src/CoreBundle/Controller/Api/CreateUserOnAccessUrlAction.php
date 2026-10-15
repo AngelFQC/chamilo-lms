@@ -148,13 +148,13 @@ readonly class CreateUserOnAccessUrlAction
                 }
 
                 $body = $this->translator->trans(
-                    'Hello %s,<br><br>'.
-                    'You are registered on %s.<br>'.
-                    'Username: <strong>%s</strong><br><br>'.
-                    'Please click the link below to set your password and access your account:<br>'.
-                    '<a href="%s">Set your password</a><br><br>'.
-                    'Best regards,<br>'.
-                    '%s'
+                    'Hello %s,<br><br>'
+                    .'You are registered on %s.<br>'
+                    .'Username: <strong>%s</strong><br><br>'
+                    .'Please click the link below to set your password and access your account:<br>'
+                    .'<a href="%s">Set your password</a><br><br>'
+                    .'Best regards,<br>'
+                    .'%s'
                 );
 
                 $body = \sprintf(
@@ -169,14 +169,14 @@ readonly class CreateUserOnAccessUrlAction
                 $sessionUrl = rtrim($baseUrl, '/').'/sessions';
 
                 $body = $this->translator->trans(
-                    'Hello %s,<br><br>'.
-                    'You are registered on %s.<br>'.
-                    'You can access your account from <a href="%s">here</a>.<br><br>'.
-                    'Your login credentials are:<br>'.
-                    'Username: <strong>%s</strong><br>'.
-                    'Password: <strong>%s</strong><br><br>'.
-                    'Best regards,<br>'.
-                    '%s'
+                    'Hello %s,<br><br>'
+                    .'You are registered on %s.<br>'
+                    .'You can access your account from <a href="%s">here</a>.<br><br>'
+                    .'Your login credentials are:<br>'
+                    .'Username: <strong>%s</strong><br>'
+                    .'Password: <strong>%s</strong><br><br>'
+                    .'Best regards,<br>'
+                    .'%s'
                 );
 
                 $body = \sprintf(

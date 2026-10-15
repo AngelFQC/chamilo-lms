@@ -305,7 +305,8 @@ WHERE f.iid IN (:forumIds)
         AND ip.ref = f.iid
   )
 ORDER BY f.iid
-SQL,
+SQL
+            ,
             ['forumIds' => $forumIds],
             ['forumIds' => ArrayParameterType::INTEGER]
         )->fetchAllAssociative();
@@ -343,7 +344,8 @@ WHERE g.id IN (:groupIds)
   AND g.status = 1
   AND g.forum_state = 1
 ORDER BY g.c_id, g.id, g.iid
-SQL,
+SQL
+            ,
             ['groupIds' => $groupLegacyIds],
             ['groupIds' => ArrayParameterType::INTEGER]
         )->fetchAllAssociative();
@@ -428,7 +430,8 @@ SELECT
 FROM resource_link
 WHERE resource_node_id IN (:nodeIds)
 ORDER BY resource_node_id, id
-SQL,
+SQL
+            ,
             ['nodeIds' => $groupNodeIds],
             ['nodeIds' => ArrayParameterType::INTEGER]
         )->fetchAllAssociative();

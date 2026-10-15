@@ -142,12 +142,12 @@ final readonly class AiFeatureAccessHelper
             return $plugin->hasActiveAiCourseFeature($courseId, $feature);
         } catch (Throwable $exception) {
             error_log(
-                '[AI][PluginDefined] Unable to resolve BuyCourses AI feature. course_id='.
-                $courseId.
-                ' feature='.
-                $feature.
-                ' error='.
-                $exception->getMessage()
+                '[AI][PluginDefined] Unable to resolve BuyCourses AI feature. course_id='
+                .$courseId
+                .' feature='
+                .$feature
+                .' error='
+                .$exception->getMessage()
             );
 
             return false;

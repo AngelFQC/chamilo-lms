@@ -99,8 +99,6 @@ class CSurveyInvitation
     }
 
     /**
-     * Get invitationCode.
-     *
      * @return string
      */
     public function getInvitationCode()
@@ -116,8 +114,6 @@ class CSurveyInvitation
     }
 
     /**
-     * Get invitationDate.
-     *
      * @return DateTime
      */
     public function getInvitationDate()
@@ -133,8 +129,6 @@ class CSurveyInvitation
     }
 
     /**
-     * Get reminderDate.
-     *
      * @return DateTime
      */
     public function getReminderDate()
@@ -150,8 +144,6 @@ class CSurveyInvitation
     }
 
     /**
-     * Get answered.
-     *
      * @return int
      */
     public function getAnswered()
@@ -215,8 +207,6 @@ class CSurveyInvitation
     }
 
     /**
-     * Get LpItemId.
-     *
      * @return int
      */
     public function getLpItemId()
@@ -225,8 +215,6 @@ class CSurveyInvitation
     }
 
     /**
-     * Set LpItemId.
-     *
      * @param int $lpItemId
      *
      * @return CSurveyInvitation

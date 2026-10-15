@@ -81,7 +81,7 @@ class SessionDuplicateApiTest extends AbstractApiTest
         $this->assertFalse($copy->hasUserInCourse($courseCoach, $course), 'Course coaches belong to one run only.');
         $this->assertFalse($copy->hasUserInCourse($student, $course), 'Students are re-subscribed by the integration.');
         $this->assertTrue($copy->getUsers()->filter(
-            fn ($subscription) => \in_array($subscription->getUser()->getId(), [$drh->getId(), $student->getId()], true)
+            static fn ($subscription) => \in_array($subscription->getUser()->getId(), [$drh->getId(), $student->getId()], true)
         )->isEmpty(), 'HR managers and students of the model are not subscribed to the copy.');
     }
 

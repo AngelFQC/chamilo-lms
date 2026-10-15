@@ -9,8 +9,6 @@ namespace Chamilo\CoreBundle\AiProvider;
 interface AiDocumentProviderInterface
 {
     /**
-     * Generate a document.
-     *
      * @param string $prompt   The complete prompt, with language, question, context and answer
      * @param string $toolName A tag, e.g. 'open_answer_grade'.
      * @param ?array $options  An array of options (format etc.)

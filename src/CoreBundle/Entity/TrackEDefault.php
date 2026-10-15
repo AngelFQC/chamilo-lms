@@ -47,8 +47,6 @@ class TrackEDefault
     protected ?int $sessionId = null;
 
     /**
-     * Get defaultUserId.
-     *
      * @return int
      */
     public function getDefaultUserId()
@@ -57,8 +55,6 @@ class TrackEDefault
     }
 
     /**
-     * Set defaultUserId.
-     *
      * @return TrackEDefault
      */
     public function setDefaultUserId(int $defaultUserId)
@@ -69,8 +65,6 @@ class TrackEDefault
     }
 
     /**
-     * Get cId.
-     *
      * @return int
      */
     public function getCId()
@@ -86,8 +80,6 @@ class TrackEDefault
     }
 
     /**
-     * Get defaultDate.
-     *
      * @return DateTime
      */
     public function getDefaultDate()
@@ -103,8 +95,6 @@ class TrackEDefault
     }
 
     /**
-     * Get defaultEventType.
-     *
      * @return string
      */
     public function getDefaultEventType()
@@ -120,8 +110,6 @@ class TrackEDefault
     }
 
     /**
-     * Get defaultValueType.
-     *
      * @return string
      */
     public function getDefaultValueType()
@@ -137,8 +125,6 @@ class TrackEDefault
     }
 
     /**
-     * Get defaultValue.
-     *
      * @return string
      */
     public function getDefaultValue()
@@ -154,8 +140,6 @@ class TrackEDefault
     }
 
     /**
-     * Get sessionId.
-     *
      * @return int
      */
     public function getSessionId()
@@ -171,8 +155,6 @@ class TrackEDefault
     }
 
     /**
-     * Get defaultId.
-     *
      * @return int
      */
     public function getDefaultId()

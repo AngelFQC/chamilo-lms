@@ -47,7 +47,7 @@ class ResourceFileHelper
             }
         }
 
-        $resourceFile ??= $resourceFiles->filter(fn ($file) => null === $file->getAccessUrl())->first();
+        $resourceFile ??= $resourceFiles->filter(static fn ($file) => null === $file->getAccessUrl())->first();
 
         return $resourceFile;
     }

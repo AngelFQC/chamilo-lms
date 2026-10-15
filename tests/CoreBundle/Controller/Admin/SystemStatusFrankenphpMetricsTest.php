@@ -31,14 +31,6 @@ class SystemStatusFrankenphpMetricsTest extends TestCase
         $this->controller = $reflection->newInstanceWithoutConstructor();
     }
 
-    private function callParseFrankenphpMetrics(string $body): ?array
-    {
-        $method = new ReflectionMethod(SystemStatusController::class, 'parseFrankenphpMetrics');
-        $method->setAccessible(true);
-
-        return $method->invoke($this->controller, $body);
-    }
-
     public function testParsesTotalsAndPerWorkerBreakdown(): void
     {
         $body = <<<'METRICS'
@@ -113,5 +105,13 @@ class SystemStatusFrankenphpMetricsTest extends TestCase
         $this->assertNull($result['queueDepth']);
         $this->assertSame(0.0, $result['busyThreadsPercent']);
         $this->assertSame([], $result['workers']);
+    }
+
+    private function callParseFrankenphpMetrics(string $body): ?array
+    {
+        $method = new ReflectionMethod(SystemStatusController::class, 'parseFrankenphpMetrics');
+        $method->setAccessible(true);
+
+        return $method->invoke($this->controller, $body);
     }
 }

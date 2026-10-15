@@ -30,10 +30,6 @@ use const PHP_URL_HOST;
 #[IsGranted('ROLE_USER')]
 class OpenGraphController extends AbstractController
 {
-    public function __construct(
-        private readonly RateLimiterFactory $opengraphFetchLimiter,
-    ) {}
-
     /**
      * Domains from which OpenGraph metadata may be fetched.
      * Only public, well-known content platforms are allowed.
@@ -60,6 +56,9 @@ class OpenGraphController extends AbstractController
         'instagram.com',
         'facebook.com',
     ];
+    public function __construct(
+        private readonly RateLimiterFactory $opengraphFetchLimiter,
+    ) {}
 
     #[Route('/opengraph', name: 'social_opengraph_fetch', methods: ['POST'])]
     public function fetch(Request $request): JsonResponse

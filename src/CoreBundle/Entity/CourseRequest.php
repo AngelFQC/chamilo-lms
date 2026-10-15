@@ -74,8 +74,6 @@ class CourseRequest
     }
 
     /**
-     * Get code.
-     *
      * @return string
      */
     public function getCode()
@@ -91,8 +89,6 @@ class CourseRequest
     }
 
     /**
-     * Get courseLanguage.
-     *
      * @return string
      */
     public function getCourseLanguage()
@@ -108,8 +104,6 @@ class CourseRequest
     }
 
     /**
-     * Get title.
-     *
      * @return string
      */
     public function getTitle()
@@ -125,8 +119,6 @@ class CourseRequest
     }
 
     /**
-     * Get description.
-     *
      * @return string
      */
     public function getDescription()
@@ -154,8 +146,6 @@ class CourseRequest
     }
 
     /**
-     * Get tutorName.
-     *
      * @return string
      */
     public function getTutorName()
@@ -171,8 +161,6 @@ class CourseRequest
     }
 
     /**
-     * Get visualCode.
-     *
      * @return string
      */
     public function getVisualCode()
@@ -188,8 +176,6 @@ class CourseRequest
     }
 
     /**
-     * Get requestDate.
-     *
      * @return DateTime
      */
     public function getRequestDate()
@@ -205,8 +191,6 @@ class CourseRequest
     }
 
     /**
-     * Get objetives.
-     *
      * @return string
      */
     public function getObjetives()
@@ -222,8 +206,6 @@ class CourseRequest
     }
 
     /**
-     * Get targetAudience.
-     *
      * @return string
      */
     public function getTargetAudience()
@@ -239,8 +221,6 @@ class CourseRequest
     }
 
     /**
-     * Get status.
-     *
      * @return int
      */
     public function getStatus()
@@ -256,8 +236,6 @@ class CourseRequest
     }
 
     /**
-     * Get info.
-     *
      * @return int
      */
     public function getInfo()
@@ -273,8 +251,6 @@ class CourseRequest
     }
 
     /**
-     * Get exemplaryContent.
-     *
      * @return int
      */
     public function getExemplaryContent()
@@ -290,8 +266,6 @@ class CourseRequest
     }
 
     /**
-     * Get id.
-     *
      * @return int
      */
     public function getId()

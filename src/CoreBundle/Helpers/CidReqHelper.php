@@ -26,18 +26,6 @@ class CidReqHelper
         private readonly EntityManagerInterface $em,
     ) {}
 
-    private function getRequest(): ?Request
-    {
-        return $this->requestStack->getCurrentRequest();
-    }
-
-    private function getSessionHandler(): ?SessionInterface
-    {
-        $request = $this->getRequest();
-
-        return $request?->getSession();
-    }
-
     public function getSessionId(): ?int
     {
         $session = $this->getSessionHandler();
@@ -119,5 +107,17 @@ class CidReqHelper
         }
 
         return $this->em->getRepository(Session::class)->find((int) $sessionId);
+    }
+
+    private function getRequest(): ?Request
+    {
+        return $this->requestStack->getCurrentRequest();
+    }
+
+    private function getSessionHandler(): ?SessionInterface
+    {
+        $request = $this->getRequest();
+
+        return $request?->getSession();
     }
 }

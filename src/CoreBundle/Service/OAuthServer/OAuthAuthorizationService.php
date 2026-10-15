@@ -188,6 +188,16 @@ final readonly class OAuthAuthorizationService
     }
 
     /**
+     * @param array<string, string> $params
+     */
+    public function buildRedirectUrl(string $redirectUri, array $params): string
+    {
+        $separator = str_contains($redirectUri, '?') ? '&' : '?';
+
+        return $redirectUri.$separator.http_build_query($params);
+    }
+
+    /**
      * @return array{0: ?string, 1: ?string}
      */
     private function normalizeResourceForClient(?string $resource, OAuthClient $client): array
@@ -257,15 +267,5 @@ final readonly class OAuthAuthorizationService
         }
 
         return array_values(array_unique(preg_split('/\s+/', trim($scope)) ?: []));
-    }
-
-    /**
-     * @param array<string, string> $params
-     */
-    public function buildRedirectUrl(string $redirectUri, array $params): string
-    {
-        $separator = str_contains($redirectUri, '?') ? '&' : '?';
-
-        return $redirectUri.$separator.http_build_query($params);
     }
 }

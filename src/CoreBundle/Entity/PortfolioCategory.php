@@ -54,25 +54,21 @@ class PortfolioCategory implements Stringable
         $this->items = new ArrayCollection();
     }
 
-    /**
-     * Get id.
-     */
+    public function __toString(): string
+    {
+        return $this->title;
+    }
+
     public function getId(): ?int
     {
         return $this->id;
     }
 
-    /**
-     * Get title.
-     */
     public function getTitle(): string
     {
         return $this->title;
     }
 
-    /**
-     * Set title.
-     */
     public function setTitle(string $title): self
     {
         $this->title = $title;
@@ -85,9 +81,6 @@ class PortfolioCategory implements Stringable
         return $this->description;
     }
 
-    /**
-     * Set description.
-     */
     public function setDescription(?string $description): self
     {
         $this->description = $description;
@@ -100,9 +93,6 @@ class PortfolioCategory implements Stringable
         return $this->isVisible;
     }
 
-    /**
-     * Set isVisible.
-     */
     public function setIsVisible(bool $isVisible): self
     {
         $this->isVisible = $isVisible;
@@ -110,9 +100,6 @@ class PortfolioCategory implements Stringable
         return $this;
     }
 
-    /**
-     * Get items.
-     */
     public function getItems(
         ?Course $course = null,
         ?Session $session = null,
@@ -183,10 +170,5 @@ class PortfolioCategory implements Stringable
         $this->parent = $parent;
 
         return $this;
-    }
-
-    public function __toString(): string
-    {
-        return $this->title;
     }
 }

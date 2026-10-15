@@ -451,7 +451,7 @@ final readonly class ExerciseQti2ImportService
                         $nodeValue = trim($node->textContent);
                         if ('' !== $currentAnswerId && str_starts_with($currentAnswerId, 'fill_')) {
                             $package['questions'][$currentQuestionIdent]['type'] = self::FILL_IN_BLANKS;
-                            $package['questions'][$currentQuestionIdent]['subtype'] = $package['questions'][$currentQuestionIdent]['subtype'] ?? 'TEXTFIELD_FILL';
+                            $package['questions'][$currentQuestionIdent]['subtype'] ??= 'TEXTFIELD_FILL';
                             $package['questions'][$currentQuestionIdent]['correct_answers'][$currentAnswerId] = $nodeValue;
                             if (empty($package['questions'][$currentQuestionIdent]['response_text'])) {
                                 $package['questions'][$currentQuestionIdent]['response_text'] = $nodeValue;

@@ -45,8 +45,6 @@ class SystemTemplate
     }
 
     /**
-     * Get title.
-     *
      * @return string
      */
     public function getTitle()
@@ -62,8 +60,6 @@ class SystemTemplate
     }
 
     /**
-     * Get comment.
-     *
      * @return string
      */
     public function getComment()
@@ -96,8 +92,6 @@ class SystemTemplate
     }
 
     /**
-     * Get content.
-     *
      * @return string
      */
     public function getContent()
@@ -113,8 +107,6 @@ class SystemTemplate
     }
 
     /**
-     * Get id.
-     *
      * @return int
      */
     public function getId()

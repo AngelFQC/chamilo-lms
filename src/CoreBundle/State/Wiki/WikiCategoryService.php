@@ -211,7 +211,8 @@ final readonly class WikiCategoryService
                 WHERE wiki.c_id = :courseId
                   AND COALESCE(wiki.session_id, 0) = :sessionId
                 GROUP BY relation.category_id
-                SQL,
+                SQL
+            ,
             [
                 'courseId' => $courseId,
                 'sessionId' => $sessionId,

@@ -146,6 +146,8 @@ abstract class AbstractResource implements ResourceInterface
      */
     public array $resourceLinkEntityList = [];
 
+    abstract public function __toString(): string;
+
     /**
      * This function separates the users from the groups users have a value
      * USER:XXX (with XXX the groups id have a value
@@ -183,8 +185,6 @@ abstract class AbstractResource implements ResourceInterface
 
         return $sendTo;
     }
-
-    abstract public function __toString(): string;
 
     abstract public function getResourceIdentifier(): int|Uuid;
 
@@ -251,7 +251,7 @@ abstract class AbstractResource implements ResourceInterface
         if ($this->hasResourceNode()) {
             $resourceNode = $this->getResourceNode();
             $exists = $resourceNode->getResourceLinks()->exists(
-                fn ($key, $element) => $course === $element->getCourse()
+                static fn ($key, $element) => $course === $element->getCourse()
                     && $session === $element->getSession()
                     && $group === $element->getGroup()
             );
@@ -348,7 +348,7 @@ abstract class AbstractResource implements ResourceInterface
         if ($this->hasResourceNode()) {
             $resourceNode = $this->getResourceNode();
             $exists = $resourceNode->getResourceLinks()->exists(
-                function ($key, $element) use ($user) {
+                static function ($key, $element) use ($user) {
                     if ($element->hasUser()) {
                         return $user->getId() === $element->getUser()->getId();
                     }
@@ -393,7 +393,7 @@ abstract class AbstractResource implements ResourceInterface
         if ($this->hasResourceNode()) {
             $resourceNode = $this->getResourceNode();
             $exists = $resourceNode->getResourceLinks()->exists(
-                function ($key, $element) use ($group) {
+                static function ($key, $element) use ($group) {
                     if ($element->getGroup()) {
                         return $group->getIid() === $element->getGroup()->getIid();
                     }

@@ -93,7 +93,7 @@ class TagRepository extends ServiceEntityRepository
         ;
 
         $exists = $user->getUserRelTags()->exists(
-            function ($key, $element) use ($userRelTag) {
+            static function ($key, $element) use ($userRelTag) {
                 return $userRelTag->getTag() === $element->getTag();
             }
         );
@@ -115,7 +115,7 @@ class TagRepository extends ServiceEntityRepository
         $em = $this->getEntityManager();
 
         $userRelTags = $user->getUserRelTags()->filter(
-            function ($element) use ($tag) {
+            static function ($element) use ($tag) {
                 return $tag->getId() === $element->getTag()->getId();
             }
         );

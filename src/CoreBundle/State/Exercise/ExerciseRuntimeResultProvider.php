@@ -219,7 +219,8 @@ final readonly class ExerciseRuntimeResultProvider implements ProviderInterface
                 LEFT JOIN user u ON u.id = taq.author
                 WHERE taq.exe_id = :attemptId
                 ORDER BY taq.insert_date ASC, taq.id ASC
-            SQL,
+            SQL
+            ,
             [
                 'attemptId' => $attemptId,
             ]

@@ -61,7 +61,9 @@ use const JSON_UNESCAPED_UNICODE;
 use const PATHINFO_EXTENSION;
 use const PHP_URL_SCHEME;
 
-/** @implements ProviderInterface<LearningPathRuntime> */
+/**
+ * @implements ProviderInterface<LearningPathRuntime>
+ */
 final readonly class LearningPathRuntimeProvider implements ProviderInterface
 {
     use LearningPathStateHelperTrait;
@@ -499,7 +501,7 @@ final readonly class LearningPathRuntimeProvider implements ProviderInterface
 
         $ordered = [];
         $visited = [];
-        $appendChildren = function (int $parentId) use (&$appendChildren, &$childrenByParent, &$ordered, &$visited): void {
+        $appendChildren = static function (int $parentId) use (&$appendChildren, &$childrenByParent, &$ordered, &$visited): void {
             foreach ($childrenByParent[$parentId] ?? [] as $item) {
                 $itemId = (int) $item->getIid();
                 if (isset($visited[$itemId])) {

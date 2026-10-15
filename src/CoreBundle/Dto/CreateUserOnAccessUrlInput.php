@@ -11,6 +11,8 @@ use Symfony\Component\Validator\Constraints as Assert;
 
 class CreateUserOnAccessUrlInput
 {
+    #[Groups(['user:write'])]
+    public ?array $extraFields = null;
     #[Assert\NotBlank]
     #[Groups(['user:write'])]
     private string $username;
@@ -37,9 +39,6 @@ class CreateUserOnAccessUrlInput
 
     #[Groups(['user:write'])]
     private ?int $status = null;
-
-    #[Groups(['user:write'])]
-    public ?array $extraFields = null;
 
     #[Groups(['user:write'])]
     private bool $sendEmail = true;

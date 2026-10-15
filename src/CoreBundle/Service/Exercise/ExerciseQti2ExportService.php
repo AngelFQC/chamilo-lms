@@ -241,8 +241,8 @@ final readonly class ExerciseQti2ExportService
     {
         if (self::FREE_ANSWER === (int) $question->getType()) {
             $xml = '  <responseDeclaration identifier="'.$questionIdent.'" cardinality="single" baseType="string">';
-            $xml .= '<outcomeDeclaration identifier="SCORE" cardinality="single" baseType="float">'.
-                '<defaultValue><value>'.$this->formatScore((float) $question->getPonderation()).'</value></defaultValue></outcomeDeclaration>';
+            $xml .= '<outcomeDeclaration identifier="SCORE" cardinality="single" baseType="float">'
+                .'<defaultValue><value>'.$this->formatScore((float) $question->getPonderation()).'</value></defaultValue></outcomeDeclaration>';
             $xml .= '  </responseDeclaration>'."\n";
 
             return $xml;

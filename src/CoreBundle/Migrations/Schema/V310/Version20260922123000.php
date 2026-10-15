@@ -117,7 +117,8 @@ LEFT JOIN c_tool existing_tool
    AND existing_tool.title = :title
 WHERE existing_tool.iid IS NULL
 ORDER BY c.id
-SQL,
+SQL
+            ,
             ['title' => self::TOOL_TITLE]
         );
 
@@ -322,7 +323,8 @@ WHERE source.variable = ?
             OR (existing.subkey IS NULL AND source.subkey IS NULL)
         )
   )
-SQL,
+SQL
+                ,
                 $table
             ),
             [

@@ -35,8 +35,6 @@ class CCalendarEventRepeatNot
     }
 
     /**
-     * Get calDate.
-     *
      * @return int
      */
     public function getCalDate()

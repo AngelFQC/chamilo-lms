@@ -30,54 +30,6 @@ final class PluginHelper
         $this->titleMap = [];
     }
 
-    private static function normalize(string $s): string
-    {
-        return strtolower(preg_replace('/[^a-z0-9]/i', '', $s));
-    }
-
-    private function buildTitleMap(): void
-    {
-        if (!empty($this->titleMap)) {
-            return;
-        }
-        $all = $this->pluginRepo->findAll();
-        foreach ($all as $p) {
-            /** @var PluginEntity $p */
-            $title = $p->getTitle();
-            $norm = self::normalize($title);
-            $this->titleMap[$norm] = $title;
-        }
-    }
-
-    private function resolveTitle(string $name): ?string
-    {
-        $this->buildTitleMap();
-
-        $norm = self::normalize($name);
-        if (isset($this->titleMap[$norm])) {
-            return $this->titleMap[$norm];
-        }
-
-        $studly = implode('', array_map('ucfirst', preg_split('/[^a-z0-9]+/i', $name)));
-        $candidates = array_unique([
-            $name,
-            ucfirst(strtolower($name)),
-            strtolower($name),
-            strtoupper($name),
-            $studly,
-            self::normalize($studly),
-        ]);
-
-        foreach ($candidates as $cand) {
-            $normCand = self::normalize((string) $cand);
-            if (isset($this->titleMap[$normCand])) {
-                return $this->titleMap[$normCand];
-            }
-        }
-
-        return null;
-    }
-
     public function loadLegacyPlugin(string $pluginName): ?object
     {
         $name = $this->resolveTitle($pluginName) ?? $pluginName;
@@ -173,5 +125,53 @@ final class PluginHelper
             : [];
 
         return array_merge($defaults, $urlSpecific);
+    }
+
+    private static function normalize(string $s): string
+    {
+        return strtolower(preg_replace('/[^a-z0-9]/i', '', $s));
+    }
+
+    private function buildTitleMap(): void
+    {
+        if (!empty($this->titleMap)) {
+            return;
+        }
+        $all = $this->pluginRepo->findAll();
+        foreach ($all as $p) {
+            /** @var PluginEntity $p */
+            $title = $p->getTitle();
+            $norm = self::normalize($title);
+            $this->titleMap[$norm] = $title;
+        }
+    }
+
+    private function resolveTitle(string $name): ?string
+    {
+        $this->buildTitleMap();
+
+        $norm = self::normalize($name);
+        if (isset($this->titleMap[$norm])) {
+            return $this->titleMap[$norm];
+        }
+
+        $studly = implode('', array_map('ucfirst', preg_split('/[^a-z0-9]+/i', $name)));
+        $candidates = array_unique([
+            $name,
+            ucfirst(strtolower($name)),
+            strtolower($name),
+            strtoupper($name),
+            $studly,
+            self::normalize($studly),
+        ]);
+
+        foreach ($candidates as $cand) {
+            $normCand = self::normalize((string) $cand);
+            if (isset($this->titleMap[$normCand])) {
+                return $this->titleMap[$normCand];
+            }
+        }
+
+        return null;
     }
 }
