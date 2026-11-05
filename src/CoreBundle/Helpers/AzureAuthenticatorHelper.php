@@ -203,6 +203,15 @@ readonly class AzureAuthenticatorHelper
     {
         $selectedOrder = $this->getExistingUserVerificationOrder();
 
+        // The email (organisationemail) and mailNickname are token-asserted and only
+        // trustworthy inside a single, configured tenant, whose directory the customer
+        // controls. In multi-tenant mode a foreign tenant can assert a victim's address
+        // (nOAuth), so identity may then be resolved only by the immutable object id.
+        $singleTenant = $this->isSingleTenant();
+        if (!$singleTenant) {
+            $selectedOrder = array_values(array_filter($selectedOrder, fn (int $position): bool => 3 === $position));
+        }
+
         $organisationEmailField = $this->getOrganizationEmailField();
         $azureIdField = $this->getAzureIdField();
         $azureUidField = $this->getAzureUidField();
@@ -224,8 +233,26 @@ readonly class AzureAuthenticatorHelper
             }
         }
 
-        return $this->userRepository->findByEmailCaseInsensitive($azureUserData['mail'])
-            ?? $this->userRepository->findByUsernameCaseInsensitive($azureUserData['userPrincipalName']);
+        // The email / userPrincipalName fallback matches by a token-asserted claim, so it
+        // is likewise restricted to a single configured tenant.
+        if ($singleTenant) {
+            return $this->userRepository->findByEmailCaseInsensitive($azureUserData['mail'])
+                ?? $this->userRepository->findByUsernameCaseInsensitive($azureUserData['userPrincipalName']);
+        }
+
+        return null;
+    }
+
+    /**
+     * Whether the Azure app is pinned to one tenant. A specific tenant (GUID or verified
+     * domain) means the directory is the customer's own; the multi-tenant endpoints
+     * (common / organizations / consumers) or an empty value accept foreign tenants.
+     */
+    public function isSingleTenant(): bool
+    {
+        $tenant = strtolower(trim((string) ($this->providerParams['tenant'] ?? '')));
+
+        return '' !== $tenant && !\in_array($tenant, ['common', 'organizations', 'consumers'], true);
     }
 
     public function getExistingUserVerificationOrder(): array
