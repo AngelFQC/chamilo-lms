@@ -130,6 +130,46 @@ final class AzureAuthenticatorHelperTest extends TestCase
     }
 
     /**
+     * The backfill reads the claims from the directory listing, which the administrator
+     * queries, and not from a token an attacker can forge. It therefore keeps the old
+     * matching even on a multi-tenant portal, which is what lets it store the azure_uid
+     * that older accounts never got. The login path above must stay the strict one.
+     */
+    public function testBackfillKeepsMutableClaimMatchingWhenMultiTenant(): void
+    {
+        $user = $this->activeUser(42);
+
+        $emailMatch = $this->extraFieldValue(42);
+
+        $helper = $this->makeHelper(
+            ['tenant' => 'common', 'existing_user_verification_order' => '1,2,3'],
+            function (
+                ExtraFieldRepository $extraFieldRepo,
+                ExtraFieldValuesRepository $valuesRepo,
+                UserRepository $userRepo
+            ) use ($user, $emailMatch): void {
+                [$emailField] = $this->fieldMocks($extraFieldRepo);
+
+                $valuesRepo->method('findByVariableAndValue')->willReturnCallback(
+                    static fn (ExtraField $field, int|string|null $value): array => $field === $emailField
+                        ? [$emailMatch]
+                        : []
+                );
+                $userRepo->method('find')->with(42)->willReturn($user);
+            }
+        );
+
+        $result = $helper->findUserByMutableClaimsForBackfill([
+            'mail' => 'user@contoso.com',
+            'mailNickname' => 'user',
+            'id' => 'object-id',
+            'userPrincipalName' => 'user@contoso.com',
+        ]);
+
+        self::assertSame($user, $result, 'The backfill must still reach the account the email used to match.');
+    }
+
+    /**
      * The collaborator helpers are `readonly` and cannot be doubled, and the tested methods
      * only read the two extra-field repositories, the user repository and providerParams,
      * so the helper is built without its constructor and only those are injected.
