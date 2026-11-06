@@ -23,6 +23,12 @@ parameters:
                         responseResourceOwnerId: 'sub'
                     allow_create_new_users: true
                     allow_update_user_info: false
+                    # Links a federated login to a pre-existing account by username when no
+                    # stored oauth2_id matches. The username is a token-asserted claim, so an
+                    # attacker who controls it at the IdP could take an account over. Enable it
+                    # only when this provider's usernames are trusted. A password account is
+                    # never matched this way.
+                    allow_existing_user_match_by_username: false
                     resource_owner_username_field: null
                     resource_owner_firstname_field: null
                     resource_owner_lastname_field: null
