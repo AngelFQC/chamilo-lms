@@ -112,7 +112,17 @@ class GenericAuthenticator extends AbstractAuthenticator
             /** @var User $user */
             $user = $this->userRepository->findOneBy(['username' => $username]);
 
-            if (!$user || $user->hasAuthSourceByAuthentication(UserAuthSource::PLATFORM)) {
+            // The username is a token-asserted claim. Linking a federated login to a
+            // pre-existing account by username lets an attacker who controls that claim
+            // at the IdP take the account over, so it is only done when the admin has
+            // explicitly declared this provider's usernames trustworthy. A password
+            // account is never matched this way.
+            $mayMatchByUsername = (bool) ($providerParams['allow_existing_user_match_by_username'] ?? false);
+
+            if (!$user
+                || !$mayMatchByUsername
+                || $user->hasAuthSourceByAuthentication(UserAuthSource::PLATFORM)
+            ) {
                 if (!$providerParams['allow_create_new_users']) {
                     throw new AuthenticationException('This user doesn\'t have an account yet and auto-provisioning is not enabled. Please contact this portal administration team to request access.');
                 }
