@@ -69,9 +69,13 @@ abstract class AzureSyncAbstractCommand extends Command
     /**
      * @throws Exception
      */
-    protected function getAzureUsers(): Generator
+    protected function getAzureUsers(bool $useDelta = true): Generator
     {
-        if ($this->providerParams['script_users_delta']) {
+        // A caller that needs the whole directory must also leave the stored delta link
+        // untouched, or the next incremental sync would skip everything read here.
+        $readDelta = $useDelta && $this->providerParams['script_users_delta'];
+
+        if ($readDelta) {
             $usersDeltaLink = $this->syncStateRepo->findOneBy(['title' => AzureSyncState::USERS_DATALINK]);
 
             $query = $usersDeltaLink
@@ -93,7 +97,7 @@ abstract class AzureSyncAbstractCommand extends Command
 
                 $azureUsersRequest = $this->provider->request(
                     'get',
-                    $this->providerParams['script_users_delta'] ? "/v1.0/users/delta?$query" : "/v1.0/users?$query",
+                    $readDelta ? "/v1.0/users/delta?$query" : "/v1.0/users?$query",
                     $token
                 );
             } catch (Exception|GuzzleException $e) {
@@ -117,7 +121,7 @@ abstract class AzureSyncAbstractCommand extends Command
                 $query = parse_url($azureUsersRequest['@odata.nextLink'], PHP_URL_QUERY);
             }
 
-            if ($this->providerParams['script_users_delta'] && !empty($azureUsersRequest['@odata.deltaLink'])) {
+            if ($readDelta && !empty($azureUsersRequest['@odata.deltaLink'])) {
                 $this->syncStateRepo->save(
                     AzureSyncState::USERS_DATALINK,
                     parse_url($azureUsersRequest['@odata.deltaLink'], PHP_URL_QUERY),

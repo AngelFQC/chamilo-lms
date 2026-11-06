@@ -212,6 +212,39 @@ readonly class AzureAuthenticatorHelper
             $selectedOrder = array_values(array_filter($selectedOrder, fn (int $position): bool => 3 === $position));
         }
 
+        return $this->matchUserByOrder($azureUserData, $selectedOrder, $singleTenant);
+    }
+
+    /**
+     * Resolves the account the way identity matching worked before the object id became
+     * decisive, so an administrator can store the azure_uid that older accounts never got.
+     * It ignores the tenant restriction on purpose and must never run on a login: only the
+     * backfill command may call it, where the claims come from the directory listing
+     * instead of an attacker-controlled token.
+     */
+    public function findUserByMutableClaimsForBackfill(array $azureUserData): ?User
+    {
+        return $this->matchUserByOrder($azureUserData, $this->getExistingUserVerificationOrder(), true);
+    }
+
+    public function getStoredAzureUid(User $user): ?string
+    {
+        return $this->extraFieldValuesRepo
+            ->getValueByVariableAndItem(self::EXTRA_FIELD_AZURE_UID, (int) $user->getId(), ExtraField::USER_FIELD_TYPE)
+            ?->getFieldValue()
+        ;
+    }
+
+    public function bindAzureUid(User $user, string $azureUid): void
+    {
+        $this->extraFieldValuesRepo->updateItemData($this->getAzureUidField(), $user, $azureUid);
+    }
+
+    /**
+     * @param array<int, int> $selectedOrder
+     */
+    private function matchUserByOrder(array $azureUserData, array $selectedOrder, bool $allowClaimFallback): ?User
+    {
         $organisationEmailField = $this->getOrganizationEmailField();
         $azureIdField = $this->getAzureIdField();
         $azureUidField = $this->getAzureUidField();
@@ -235,12 +268,15 @@ readonly class AzureAuthenticatorHelper
 
         // The email / userPrincipalName fallback matches by a token-asserted claim, so it
         // is likewise restricted to a single configured tenant.
-        if ($singleTenant) {
-            return $this->userRepository->findByEmailCaseInsensitive($azureUserData['mail'])
-                ?? $this->userRepository->findByUsernameCaseInsensitive($azureUserData['userPrincipalName']);
+        if (!$allowClaimFallback) {
+            return null;
         }
 
-        return null;
+        $email = $azureUserData['mail'] ?? null;
+        $userPrincipalName = $azureUserData['userPrincipalName'] ?? null;
+
+        return ($email ? $this->userRepository->findByEmailCaseInsensitive($email) : null)
+            ?? ($userPrincipalName ? $this->userRepository->findByUsernameCaseInsensitive($userPrincipalName) : null);
     }
 
     /**
